@@ -134,4 +134,8 @@ export class Vec2 {
         }
         return new Vec2(obj.x, obj.y);
     }
+
+    public equals(other: Vec2): boolean {
+        return this.x === other.x && this.y === other.y;
+    }
 }

@@ -19,6 +19,9 @@ export function createTransform() {
 }
 
 export function validateTransform(transform: Transform): ValidateResult<Transform> {
+    if (typeof transform !== 'object') {
+        return { type: 'invalid', message: 'Transform must be an object' };
+    }
     if (!transform.right || !transform.up || !transform.offset) {
         return { type: 'invalid', message: 'Transform must have right, up, and offset vectors' };
     }

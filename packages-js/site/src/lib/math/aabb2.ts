@@ -10,6 +10,7 @@ export class AABB2 {
     public static readonly ZEROZERO = new AABB2(Vec2.ZERO, Vec2.ZERO);
     public static readonly ONEONE = new AABB2(Vec2.ONE, Vec2.ONE);
     public static readonly ZEROONE = new AABB2(Vec2.ZERO, Vec2.ONE);
+    public static readonly CLIPSPACE = new AABB2(new Vec2(-1, -1), new Vec2(1, 1));
 
     constructor(
         public readonly min: Vec2,
@@ -244,5 +245,9 @@ export class AABB2 {
 
     public get height(): number {
         return this.max.y - this.min.y;
+    }
+
+    public equals(other: AABB2) {
+        return this.min.equals(other.min) && this.max.equals(other.max);
     }
 }

@@ -53,8 +53,9 @@ export class AttributeImage implements AttributeHandler<AttrImage> {
                 title: `画像を読み込み中: ${JSON.stringify(attr.asset)}`,
             });
             // Promiseが解決されたらタスクを完了させる
-            await assetState.promise;
-            task.resolve();
+            assetState.promise.then(() => {
+                task.resolve();
+            });
         }
     }
 
@@ -112,15 +113,11 @@ export class AttributeImage implements AttributeHandler<AttrImage> {
     async renderPre({ attr }: AttributeInvoke<AttrImage>): Promise<void> {
         const textureResult = this.game.asset.getTexture(attr.asset);
 
-        if (textureResult.type !== 'ready') {
-            throw new Error(`[AttributeImage] レンダリングに失敗: アセットが準備できていません (${JSON.stringify(attr.asset)})`);
-        }
+        if (textureResult.type !== 'ready') return;
 
-        const { draw, matrices } = this.game.pipeline;
+        const { draw } = this.game.pipeline;
         const tex = textureResult.data.texture;
 
-        matrices.model.scope(() => {
-            draw.texture(-tex.width / 2, -tex.height / 2, tex.width / 2, tex.height / 2, tex);
-        });
+        draw.texture(-tex.width / 2, -tex.height / 2, tex.width / 2, tex.height / 2, tex);
     }
 }

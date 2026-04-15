@@ -1,12 +1,25 @@
 import { Timer } from '$lib/timer';
 import type { Asset } from '../core/asset';
 import type { Game } from '../core/game';
-import { generateUid } from '../core/helper';
+import { generateUid, type ValidateResult } from '../core/helper';
 
 export interface AudioClip {
     asset: Asset;
     start: number;
     duration: number;
+}
+
+export function validateAudioClip(clip: AudioClip): ValidateResult<AudioClip> {
+    if (typeof clip.asset !== 'object' || typeof clip.asset.type !== 'string') {
+        return { type: 'invalid', message: 'assetはAsset型でなければなりません' };
+    }
+    if (typeof clip.start !== 'number') {
+        return { type: 'invalid', message: 'startはnumberでなければなりません' };
+    }
+    if (typeof clip.duration !== 'number') {
+        return { type: 'invalid', message: 'durationはnumberでなければなりません' };
+    }
+    return { type: 'valid', value: clip };
 }
 
 export interface AudioPlayback {

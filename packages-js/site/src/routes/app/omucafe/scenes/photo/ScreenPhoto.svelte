@@ -2,7 +2,7 @@
     import Ticker from '$lib/components/Ticker.svelte';
     import { Vec4 } from '$lib/math/vec4';
     import { Timer } from '$lib/timer';
-    import { obs, Slider, Tooltip } from '@omujs/ui';
+    import { Checkbox, obs, Slider, Tooltip } from '@omujs/ui';
     import { oklch2rgb, rgb2oklch } from '../../colors';
     import type { Game } from '../../core/game';
     import type { ScenePhotoData } from './photo';
@@ -205,6 +205,20 @@
                 <i class="ti ti-chevron-left"></i>
             </button>
         </div>
+        <div class="toggles">
+            <label>
+                フォトフレーム
+                <Checkbox bind:value={$config.photo.frame} />
+            </label>
+            <label>
+                ブルーム
+                <Checkbox bind:value={$config.photo.effects.bloom} />
+            </label>
+            <label>
+                フラッシュ
+                <Checkbox bind:value={$config.photo.effects.flash} />
+            </label>
+        </div>
         {#if scene.receipt}
             <div class="receipt-client">
                 <Receipt receipt={scene.receipt} />
@@ -330,7 +344,7 @@
 
     .receipt {
         position: fixed;
-        right: 4rem;
+        left: 4rem;
         bottom: 28rem;
         filter: drop-shadow(0.25rem 0.5rem 0 rgba(0,0,0,0.5)) drop-shadow(0.25rem 0.5rem 2rem rgba(0,0,0,0.3));
         transform: rotate(10deg) translateY(100%);
@@ -377,9 +391,10 @@
 
     .receipt-client {
         position: fixed;
-        left: calc(50% - 4rem);
-        bottom: -1rem;
+        left: 2rem;
+        bottom: 16rem;
         transform-origin: left bottom;
+        transform: translateY(100%);
         scale: 0.75;
         filter: drop-shadow(1px 1px 2px black);
     }
@@ -389,6 +404,7 @@
         outline: 1px solid var(--color-1);
         border-radius: 8px;
         padding: 4px;
+        filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.4));
 
         > button {
             position: relative;
@@ -460,6 +476,7 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.4));
 
         > button {
             width: 14rem;
@@ -478,6 +495,22 @@
                 background: var(--color-1);
                 color: var(--color-bg-2);
             }
+        }
+    }
+
+    .toggles {
+        display: flex;
+        gap: 4rem;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        padding: 1rem 2rem;
+        border-radius: 2rem;
+        filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.4));
+
+        > label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
     }
 </style>

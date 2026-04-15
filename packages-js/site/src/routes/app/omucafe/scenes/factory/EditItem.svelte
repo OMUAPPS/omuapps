@@ -5,7 +5,7 @@
     import type { AttributeKey } from '../../item/attribute';
     import { validateItem } from '../../item/item';
     import EditItemJson from './EditItemJson.svelte';
-    import { preview } from './factory';
+    import { attributeClipboard, preview } from './factory';
 
     interface Props {
         id: string;
@@ -42,9 +42,17 @@
     }
 
     function addAttribute(event: Event & { currentTarget: HTMLSelectElement }) {
-        const key = event.currentTarget.value as AttributeKey;
+        if (!$itemStore) return;
+        const key = event.currentTarget.value as AttributeKey | 'clipboard';
+        if (key === 'clipboard') {
+            if ($attributeClipboard) {
+                // @ts-expect-error Union vs Intersection
+                $itemStore.attrs[$attributeClipboard.type] = $attributeClipboard.data;
+            }
+            return;
+        }
         const attribute = game.attribute.values[key];
-        if (!attribute || !$itemStore) return;
+        if (!attribute) return;
         $itemStore.attrs[key] = attribute.create() as never;
     }
 </script>
@@ -59,14 +67,43 @@
     <Textbox bind:value={$itemStore.name} />
     <h2>変形</h2>
     <EditTransform bind:transform={$itemStore.transform} />
-    <h2>属性</h2>
+    <h2>
+        属性
+        <select onchange={addAttribute}>
+            <option value="">
+                追加
+                <i class="ti ti-plus"></i>
+            </option>
+            {#if $attributeClipboard}
+                <option value="clipboard">
+                    ペースト
+                    <i class="ti ti-clipboard"></i>
+                </option>
+            {/if}
+            {#each Object.entries(game.attribute.values) as [key, attribute] (key)}
+                {@const attr = $itemStore.attrs[key as AttributeKey]}
+                {#if !attr}
+                    <option value={key}>{attribute.name}</option>
+                {/if}
+            {/each}
+        </select>
+    </h2>
     <div class="attributes">
         {#each Object.entries(game.attribute.values) as [key, attribute] (key)}
             {@const attr = $itemStore.attrs[key as AttributeKey]}
             {#if attr}
                 <div class="attr">
                     <h3>
-                        {attribute.name}
+                        <span>{attribute.name}</span>
+                        <button onclick={() => {
+                            $attributeClipboard = {
+                                type: key as AttributeKey,
+                                data: attr,
+                            };
+                        }}>
+                            <Tooltip>コピー</Tooltip>
+                            <i class="ti ti-copy"></i>
+                        </button>
                         <button onclick={() => deleteAttribute(key as AttributeKey)}>
                             <Tooltip>削除</Tooltip>
                             <i class="ti ti-x"></i>
@@ -80,19 +117,6 @@
                 </div>
             {/if}
         {/each}
-
-        <select onchange={addAttribute}>
-            <option value="">
-                追加
-                <i class="ti ti-plus"></i>
-            </option>
-            {#each Object.entries(game.attribute.values) as [key, attribute] (key)}
-                {@const attr = $itemStore.attrs[key as AttributeKey]}
-                {#if !attr}
-                    <option value={key}>{attribute.name}</option>
-                {/if}
-            {/each}
-        </select>
     </div>
     <h2>JSON</h2>
     <EditItemJson bind:item={$itemStore} />
@@ -124,7 +148,9 @@
         color: var(--color-1);
         corner-shape: squircle;
         padding: 0.5rem 0;
-        width: fit-content;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .attributes {
@@ -148,13 +174,16 @@
         > h3 {
             display: flex;
             align-items: center;
-            justify-content: space-between;
             text-align: center;
             border-bottom: 1px solid var(--color-1);
             font-size: 1rem;
             height: 3rem;
             color: var(--color-1);
             text-align: left;
+
+            > span {
+                margin-right: auto;
+            }
 
             > button {
                 height: 2rem;

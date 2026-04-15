@@ -1,7 +1,8 @@
 import { type Vec2Like } from '$lib/math/vec2';
-import type { AudioClip } from '../../audio';
+import { validateAudioClip, type AudioClip } from '../../audio';
 import { PALETTE_RGB } from '../../colors';
 import type { Game } from '../../core/game';
+import { validateAssetTransform, type AssetTransform } from '../../core/game-renderer';
 import { validateVec2, type ValidateResult } from '../../core/helper';
 import type { Action } from '../../core/input-system';
 import type { AttributeHandler, AttributeInvoke, ItemMouseEvent, ItemRender } from '../attribute-handler';
@@ -16,6 +17,10 @@ export interface AttrDragging {
     };
     dragSound?: AudioClip;
     dropSound?: AudioClip;
+    hand?: {
+        behind?: AssetTransform;
+        front?: AssetTransform;
+    };
 }
 
 /** * アイテムの「つかみ」操作を管理する属性ハンドラー
@@ -47,12 +52,51 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
                 return { type: 'invalid', message: `lastDrag.offsetが無効: ${offsetResult.message}` };
             }
         }
+        if (value.dragSound) {
+            const dragSoundResult = validateAudioClip(value.dragSound);
+            if (dragSoundResult.type === 'invalid') {
+                return { type: 'invalid', message: `dragSoundが無効: ${dragSoundResult.message}` };
+            }
+        }
+        if (value.dropSound) {
+            const dropSoundResult = validateAudioClip(value.dropSound);
+            if (dropSoundResult.type === 'invalid') {
+                return { type: 'invalid', message: `dropSoundが無効: ${dropSoundResult.message}` };
+            }
+        }
+        if (value.hand) {
+            if (value.hand.behind) {
+                const behindResult = validateAssetTransform(value.hand.behind);
+                if (behindResult.type === 'invalid') {
+                    return { type: 'invalid', message: `hand.behindが無効: ${behindResult.message}` };
+                }
+            }
+            if (value.hand.front) {
+                const frontResult = validateAssetTransform(value.hand.front);
+                if (frontResult.type === 'invalid') {
+                    return { type: 'invalid', message: `hand.frontが無効: ${frontResult.message}` };
+                }
+            }
+        }
         return { type: 'valid', value: value };
     }
 
     /** * ホバー時やドラッグ直後のエフェクト描画
      */
-    async renderOverlay(
+    async renderOverlayPre(
+        { item, attr }: AttributeInvoke<AttrDragging>,
+        pool: ItemPool,
+        render: ItemRender,
+    ): Promise<void> {
+        const behind = attr.hand?.behind;
+        if (behind) {
+            await this.game.renderer.drawAssetTransform(behind);
+        }
+    }
+
+    /** * ホバー時やドラッグ直後のエフェクト描画
+     */
+    async renderOverlayPost(
         { item, attr }: AttributeInvoke<AttrDragging>,
         pool: ItemPool,
         render: ItemRender,
@@ -77,6 +121,11 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
             const width = Math.pow(t, 6) * AttributeDragging.DRAG_EFFECT_MAX_WIDTH;
 
             draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.TOOLTIP_TEXT, width);
+        }
+
+        const front = attr.hand?.front;
+        if (front) {
+            await this.game.renderer.drawAssetTransform(front);
         }
     }
 
@@ -118,12 +167,16 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
                 });
             }
         }
+        if (scene.type === 'export' && item.parent) {
+            return;
+        }
 
         ctx.actions.push({
-            title: `${item.name}を持つ`,
+            title: `${item.name}を持つ (マウスホイールで複製)`,
             priority: 100,
             invoke: async () => {
-                if (states.scene.value.type !== 'factory' && pool.id === 'fridge') {
+                const shouldClone = event.mouse.buttons[1];
+                if (shouldClone) {
                     item = this.game.item.clone(item);
                 }
                 if (states.scene.value.type === 'factory' && (!states.scene.value.selecting || states.scene.value.selecting.type === 'edit_item')) {

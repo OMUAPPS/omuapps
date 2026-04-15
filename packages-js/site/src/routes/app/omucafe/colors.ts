@@ -9,7 +9,7 @@ export const PALETTE_RGB = {
     OVERLAY_BACKGROUND: new Vec4(1, 1, 1, 0.5),
     OVERLAY_OUTLINE: new Vec4(1, 1, 1, 0.75),
     TOOLTIP_TEXT: new Vec4(1, 1, 1, 1),
-    TOOLTIP_BG: new Vec4(0, 0, 0, 1),
+    TOOLTIP_BG: new Vec4(0, 0, 0, 0.9),
     ITEM_SHADOW: new Vec4(0, 0, 0, 0.2),
     CONTAINER_HOVERED: Vec4.fromColorHex('#fff0f033'),
     DISPLAY_BUTTON_TEXT: Vec4.fromColorHex('#ffffff'),
@@ -24,6 +24,11 @@ export const PALETTE_RGB = {
     PHOTO_BACKGROUND_OVERLAY: Vec4.fromColorHex('#7C7A6544'),
     KITCHN_EDITMODE_GRADIENT_1: Vec4.fromColorHex('#ffff'),
     KITCHN_EDITMODE_GRADIENT_2: Vec4.fromColorHex('#fff0'),
+    NOTIFICATION_BACKGROUND: ACCENT,
+    NOTIFICATION_SHADOW: ACCENT,
+    NOTIFICATION_TEXT: Vec4.fromColorHex('#fff'),
+    DRAGFILE_BG: Vec4.fromColorHex('#f6f2eb80'),
+    DRAGFILE_TEXT: ACCENT,
 };
 
 // https://gist.github.com/dkaraush/65d19d61396f5f3cd8ba7d1b4b3c9432

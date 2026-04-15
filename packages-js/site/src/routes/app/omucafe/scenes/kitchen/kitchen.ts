@@ -79,8 +79,9 @@ class Display {
     constructor(private readonly game: Game) {}
 
     public async render(scene: SceneKitchenData) {
-        const { matrices, input } = this.game.pipeline;
+        const { draw, matrices, input } = this.game.pipeline;
         this.action = undefined;
+        draw.fontFamily = 'Noto Sans JP';
 
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
 
@@ -160,7 +161,7 @@ class Display {
     private async renderButton(text: string, bounds: AABB2, action: Action) {
         const { matrices, draw, input } = this.game.pipeline;
         draw.roundedRect(bounds.min, bounds.max, 8, PALETTE_RGB.DISPLAY_BUTTON_BG);
-        draw.fontSize = 24;
+        draw.fontSize = 32;
         draw.fontWeight = '600';
         await draw.textAlign(bounds.center, text, Vec2.CENTER, PALETTE_RGB.DISPLAY_BUTTON_TEXT);
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
@@ -222,7 +223,7 @@ class Display {
                     title: 'クリックで納品',
                     priority: 0,
                     invoke: async () => {
-                        this.game.scene.photo.openPhotoMode(order);
+                        await this.game.scene.photo.openPhotoMode(order);
                     },
                 };
             }

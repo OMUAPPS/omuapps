@@ -216,6 +216,13 @@
 <main>
     {#if !scene.task}
         <Spinner />
+    {:else if scene.task.type === 'obs_waiting'}
+        {#if game.app.side === 'client'}
+            <div class="task">
+                <h1>OBSを起動してください</h1>
+                <p>OBSと接続すると、次のステップに進めます</p>
+            </div>
+        {/if}
     {:else if scene.task.type === 'omucafe'}
         {#if game.app.side === 'client'}
             <div class="task">
@@ -265,6 +272,7 @@
         <div class="task" in:fly={{ y: 4, duration: 250, opacity: 1 }}>
             {#if game.app.side === 'client'}
                 <h1>この順番になっていますか？</h1>
+                <small>「背景」の上に「あなた」があり、その上に「オーバーレイ」になっていることを確認してください</small>
                 <div class="obs">
                     <SourceList title="ソース" items={[
                         {
@@ -295,6 +303,8 @@
         </div>
     {:else if scene.task.type === 'setup'}
         {#if game.side === 'client'}
+            <h1>最後にお店の情報を入力しましょう</h1>
+            <small>後で入力も変更もできます</small>
             <BusinessRegistration />
         {:else if game.side === 'background'}
             <div class="overlay background">
@@ -302,7 +312,9 @@
         {/if}
     {/if}
     {#if game.side === 'client'}
-        {@render breadcrumbs()}
+        {#if scene.task?.type !== 'obs_waiting'}
+            {@render breadcrumbs()}
+        {/if}
     {/if}
 </main>
 
@@ -316,7 +328,7 @@
         flex-direction: column;
         margin: auto;
         top: unset;
-        height: min(60rem, 100% - 10rem);
+        height: min(60rem, 100% - 8rem);
         flex: 1;
         gap: 2rem;
     }
@@ -341,6 +353,7 @@
         flex-direction: column;
         gap: 4rem;
         flex: 1;
+        font-size: 1.1rem;
     }
 
     .obs {
@@ -365,7 +378,7 @@
             font-weight: 600;
             background: var(--color-1);
             color: var(--color-bg-2);
-            border-radius: 4px;
+            border-radius: 2px;
             cursor: pointer;
             min-width: 10rem;
 

@@ -11,7 +11,7 @@ import fridge_step from './img/fridge_step.png';
 import fridge_top from './img/fridge_top.png';
 
 export class FridgeSystem {
-    public width = 620 * 1.5;
+    public width = 620 * 1.75;
     public offsetX = 0;
     public scroll = 0;
     public hovered = false;
@@ -34,7 +34,7 @@ export class FridgeSystem {
             { x: 0, y: 1 },
             new Vec2(CLIENT_WORLD_BOUNDS.max.x - this.offsetX, CLIENT_WORLD_BOUNDS.min.y - this.scroll),
         ]);
-        const scale = 1.5;
+        const scale = 1.75;
         const renderBounds = transform.getMat4().transformAABB2(this.bounds);
         this.hovered = renderBounds.contains(matrices.getViewToWorld().transform2(input.mouse.pos));
         const { texture: fridgeTop } = (await this.game.asset.getTextureByUrl(fridge_top).promise).unwrap;

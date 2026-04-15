@@ -103,8 +103,9 @@ export class AttributeParticle implements AttributeHandler<AttrParticle> {
                 const task = ctx.create({
                     title: `画像を読み込み中: ${JSON.stringify(asset)}`,
                 });
-                await assetState.promise;
-                task.resolve();
+                assetState.promise.then(() => {
+                    task.resolve();
+                });
             }
         }
     }
@@ -199,18 +200,15 @@ export class AttributeParticle implements AttributeHandler<AttrParticle> {
         );
     }
 
-    async renderOverlay({ attr, item }: AttributeInvoke<AttrParticle>): Promise<void> {
+    async renderOverlayPost({ attr, item }: AttributeInvoke<AttrParticle>): Promise<void> {
         if (attr.assets.length === 0) return;
 
-        const currentTimeInSeconds = Timer.now() / 1000;
-        const timeOffset = attr.duration / attr.count;
-        const itemRandom = ARC4.fromString(item.id);
-
+        const timeInSeconds = Timer.now() / 1000;
+        const time = timeInSeconds / attr.duration;
         for (let index = 0; index < attr.count; index++) {
-            // 各パーティクルの進行度を計算
-            const particleTime = (currentTimeInSeconds / attr.duration) + (timeOffset * index) + (itemRandom.next() * attr.duration);
-            const particleIndex = Math.floor(particleTime);
-            const particleT = particleTime - particleIndex; // 0.0 ~ 1.0 の正規化された時間
+            const particleTime = time - index / attr.count;
+            const particleT = particleTime % 1;
+            const particleIndex = Math.floor(particleTime) * attr.count + index;
 
             this.drawSingleParticle(attr, item.id, particleIndex, particleT);
         }

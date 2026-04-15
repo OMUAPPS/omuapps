@@ -195,6 +195,7 @@ export class ItemSystem {
             ...item,
             children: [],
         });
+        poolOptions.pool.items[clonedItem.id] = { id: clonedItem.id };
 
         for (const childId of item.children) {
             const data = this.get(childId);
@@ -480,7 +481,7 @@ export class ItemSystem {
 
         this.inputPass!.actions.push({
             title: `${options.name}に置く`,
-            priority: 0,
+            priority: pool.id === 'export' ? 1000 : 0,
             invoke: async () => {
                 await this.dropItem();
                 this.setPool(held, pool);
@@ -618,7 +619,7 @@ export class ItemSystem {
 
         for (let i = item.children.length - 1; i >= 0; i--) {
             const child = this.items.get(item.children[i]);
-            if (child) this.traverseDispatch(child, pool, localEvent);
+            if (child) await this.traverseDispatch(child, pool, localEvent);
         }
 
         await this.game.attribute.emit('mouse', item, pool, localEvent);
@@ -630,7 +631,7 @@ export class ItemSystem {
         for (let i = item.children.length - 1; i >= 0; i--) {
         // for (let i = 0; i < item.children.length; i++) {
             const child = this.items.get(item.children[i]);
-            if (child) this.traverseCollision(child, pool, localEvent, ctx);
+            if (child) await this.traverseCollision(child, pool, localEvent, ctx);
         }
 
         await this.game.attribute.emit('collide', item, pool, localEvent, ctx);
@@ -641,7 +642,7 @@ export class ItemSystem {
 
         for (let i = item.children.length - 1; i >= 0; i--) {
             const child = this.items.get(item.children[i]);
-            if (child) this.traverseActions(child, pool, localEvent, ctx);
+            if (child) await this.traverseActions(child, pool, localEvent, ctx);
         }
 
         await this.game.attribute.emit('actions', item, pool, localEvent, ctx);

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button } from '@omujs/ui';
+    import { Button, Tooltip } from '@omujs/ui';
     import EditText from '../../common/EditText.svelte';
     import type { Game } from '../../core/game';
     import EditItem from './EditItem.svelte';
@@ -31,14 +31,28 @@
                 <p>
                     商品やアイテムを編集できます。
                 </p>
+
+                <div class="actions">
+                    <Button primary onclick={() => {
+                        game.startTransition({
+                            type: 'export',
+                        });
+                    }}>
+                        <Tooltip>
+                            他の人に共有することができます。
+                        </Tooltip>
+                        輸出
+                    </Button>
+                </div>
             </div>
             {#if !scene.selecting}
-                <div class="panel">
+                <div class="panel omu-scroll">
+                    <h1>商品化</h1>
                     <Button primary onclick={() => {
                         scene.selecting = { type: 'pick_product' };
                         scene = { ...scene };
                     }}>
-                        商品にするアイテムを選択する
+                        アイテムを選択する
                         <i class="ti ti-pointer"></i>
                     </Button>
                     <div class="product-list">
@@ -63,7 +77,7 @@
             {:else if scene.selecting.type === 'pick_product'}
                 {@const { selecting } = scene}
                 <div class="panel">
-                    アイテムを選択してください
+                    <h1>商品にするアイテムを選択してください</h1>
                     <Button onclick={() => {
                         scene.selecting = selecting.back;
                         scene = { ...scene };
@@ -145,7 +159,6 @@
     }
 
     h1 {
-        color: var(--color-1);
         margin: 0.5rem 0;
         margin-top: 1rem;
         text-align: left;
@@ -153,10 +166,6 @@
         color: var(--color-1);
         corner-shape: squircle;
         padding: 0.5rem 0;
-        width: fit-content;
-    }
-
-    h1 {
         border-bottom: 2px solid var(--color-1);
         width: 100%;
         margin-bottom: 1rem;
@@ -193,5 +202,9 @@
                 }
             }
         }
+    }
+
+    .actions {
+        margin-top: 2rem;
     }
 </style>

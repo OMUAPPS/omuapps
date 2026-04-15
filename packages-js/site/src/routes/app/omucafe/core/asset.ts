@@ -21,6 +21,9 @@ export function getAssetKey(asset: Asset): string {
 }
 
 export function validateAsset(value: Asset): ValidateResult<Asset> {
+    if (typeof value !== 'object' || typeof value.type !== 'string') {
+        return { type: 'invalid', message: 'Assetはオブジェクトで、typeプロパティを持つ必要があります' };
+    }
     if (value.type === 'asset') {
         if (!value.id) {
             return { type: 'invalid', message: 'アセットIDが指定されていません' };

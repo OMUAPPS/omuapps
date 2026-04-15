@@ -1,11 +1,13 @@
 import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext';
 import { AABB2 } from '$lib/math/aabb2';
 import { Vec2 } from '$lib/math/vec2';
+import type { FileData } from '@omujs/omu/api/dashboard';
 import { get, writable } from 'svelte/store';
 import type { Game } from '../../core/game';
 import type { Product } from '../../core/game-state';
 import { generateUid } from '../../core/helper';
 import { createTransform, DEFAULT_TRANSFORM } from '../../core/transform';
+import type { AttributeKey, Attributes } from '../../item/attribute';
 import { type Item, type ItemPool, type PoolOptions } from '../../item/item';
 import client_background from '../../resources/client_background.png';
 import type { SceneHandler } from '../scene';
@@ -34,6 +36,13 @@ export const preview = writable<Record<string, {
     update: number;
     url: string;
 }>>({});
+
+type AttributeClipboard<K extends AttributeKey = AttributeKey> = {
+    type: K;
+    data: Attributes[K];
+};
+
+export const attributeClipboard = writable<AttributeClipboard | undefined>();
 
 // アセットデータの型定義
 interface SceneAssets {
@@ -86,10 +95,11 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         const { selecting } = scene.value;
         if (!selecting) return;
         if (selecting.type !== 'pick_product') return;
+        const clone = this.game.item.clone(item);
         if (selecting.productId) {
             const product = products.get(selecting.productId);
             if (!product) return;
-            product.itemId = item.id;
+            product.itemId = clone.id;
             scene.value = {
                 type: 'factory',
                 selecting: {
@@ -100,8 +110,8 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         } else {
             const product: Product = {
                 id: generateUid(),
-                itemId: item.id,
-                name: item.name,
+                itemId: clone.id,
+                name: clone.name,
                 aliases: [],
             };
             products.set(product.id, product);
@@ -281,17 +291,29 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
     /**
      * ファイルアップロード処理
      */
-    async handleFile(scene: SceneFactoryData, buffer: Uint8Array): Promise<void> {
+    async handleFile(scene: SceneFactoryData, data: FileData): Promise<void> {
+        const asset = await this.game.asset.uploadBuffer(data.buffer);
+        const result = (await this.game.asset.getTexture(asset).promise);
+        if (result.type === 'error') {
+            this.game.notification.add({
+                duration: 5000,
+                icon: '⚠️',
+                title: '読み込みに失敗しました',
+                description: result.error.message,
+            });
+            console.error(result.error);
+            return;
+        }
         const transform = createTransform();
         transform.offset = { x: 0, y: 300 };
         const item = this.game.item.allocateItem({
             attrs: {
                 image: {
-                    asset: await this.game.asset.uploadBuffer(buffer),
+                    asset,
                 },
                 dragging: this.game.attribute.dragging.create(),
             },
-            name: '新しいアイテム',
+            name: data.file.name.split('.')[0] ?? '新しいアイテム',
             children: [],
             transform,
             tags: [],

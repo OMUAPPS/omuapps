@@ -1,12 +1,14 @@
+import type { FileData } from '@omujs/omu/api/dashboard';
 import type { TypedComponent } from '@omujs/ui';
 import type { Game } from '../core/game';
+import { SceneExport, type SceneExportData } from './export/export';
 import { SceneFactory, type SceneFactoryData } from './factory/factory';
 import { SceneKitchen, type SceneKitchenData } from './kitchen/kitchen';
 import { SceneMainMenu, type SceneMainMenuData } from './main';
 import { ScenePhoto, type ScenePhotoData } from './photo/photo';
 import { SceneSettings, type SceneSettingsData } from './settings/settings';
 
-export type SceneData = SceneMainMenuData | SceneKitchenData | SceneFactoryData | ScenePhotoData | SceneSettingsData;
+export type SceneData = SceneMainMenuData | SceneKitchenData | SceneFactoryData | ScenePhotoData | SceneSettingsData | SceneExportData;
 
 export interface SceneHandler<T> {
     component?: TypedComponent<{
@@ -14,7 +16,7 @@ export interface SceneHandler<T> {
         game: Game;
     }>;
     handle(scene: T): Promise<void>;
-    handleFile?(scene: T, buffer: Uint8Array): Promise<void>;
+    handleFile?(scene: T, data: FileData): Promise<void>;
 }
 
 export class SceneSystem {
@@ -26,6 +28,7 @@ export class SceneSystem {
     public readonly factory: SceneFactory;
     public readonly photo: ScenePhoto;
     public readonly settings: SceneSettings;
+    public readonly export: SceneExport;
 
     constructor(
         private readonly game: Game,
@@ -36,6 +39,7 @@ export class SceneSystem {
             factory: this.factory = new SceneFactory(game),
             photo: this.photo = new ScenePhoto(game),
             settings: this.settings = new SceneSettings(game),
+            export: this.export = new SceneExport(game),
         };
     }
 
@@ -49,11 +53,11 @@ export class SceneSystem {
         await handler.handle(scene);
     }
 
-    async handleFile(buffer: Uint8Array) {
+    async handleFile(data: FileData) {
         const scene = this.game.states.scene.value;
         const handler = this.registry[scene.type];
         // @ts-expect-error Union vs Intersection
-        await handler.handleFile?.(scene, buffer);
+        await handler.handleFile?.(scene, data);
     }
 
     public getComponent(data: SceneData) {

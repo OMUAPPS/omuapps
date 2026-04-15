@@ -79,7 +79,8 @@ export interface AttributeHandler<T> {
     renderPre?(invoke: AttributeInvoke<T>, render: ItemRender): Promise<void>;
     renderChildren?(invoke: AttributeInvoke<T>, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
     renderPost?(invoke: AttributeInvoke<T>, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
-    renderOverlay?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
+    renderOverlayPre?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
+    renderOverlayPost?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
     overlay?(invoke: AttributeInvoke<T>, render: ItemRender): Promise<void>;
     actions?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent, ctx: ActionContext): Promise<void>;
     collide?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent, ctx: CollideContext): Promise<void>;

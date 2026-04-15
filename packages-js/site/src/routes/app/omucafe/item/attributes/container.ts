@@ -4,25 +4,20 @@ import { lerp } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
 import { Vec4, type Vec4Like } from '$lib/math/vec4';
 import { PALETTE_RGB } from '../../colors';
-import { getAssetKey, validateAsset, type Asset } from '../../core/asset';
+import { getAssetKey } from '../../core/asset';
 import type { Game } from '../../core/game';
+import { validateAssetTransform, type AssetTransform } from '../../core/game-renderer';
 import { validateEnum, type ValidateResult } from '../../core/helper';
 import type { Action } from '../../core/input-system';
-import { getTransform, validateTransform, type Transform } from '../../core/transform';
+import { getTransform } from '../../core/transform';
 import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, ItemRender, LoadContext } from '../attribute-handler';
 import type { Item, ItemPool } from '../item';
 import ContainerEditor from './ContainerEditor.svelte';
 
 export interface AttrContainer {
     active: boolean;
-    cover?: {
-        asset: Asset;
-        transform: Transform;
-    };
-    mask?: {
-        asset: Asset;
-        transform: Transform;
-    };
+    cover?: AssetTransform;
+    mask?: AssetTransform;
     maskInverted?: boolean;
     layerOrder: 'upper' | 'lower';
     constraints?: {
@@ -43,7 +38,7 @@ export interface AttrContainer {
 }
 
 export class AttributeContainer implements AttributeHandler<AttrContainer> {
-    readonly name = '容器';
+    readonly name = '上に乗せられる';
     readonly editor = ContainerEditor;
     private readonly maskBuffer: GlFramebuffer;
     private readonly maskTexture: GlTexture;
@@ -97,61 +92,20 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         return {
             active: true,
             layerOrder: 'lower',
-            constraints: {
-                bounds: {
-                    horizontal: 'both',
-                    vertical: 'bottom',
-                    padding: {
-                        left: 0,
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                    },
-                },
-            },
         };
     }
 
     validate(value: AttrContainer): ValidateResult<AttrContainer> {
         if (value.cover) {
-            if (!value.cover.asset) {
-                return { type: 'invalid', message: 'カバーのアセットが指定されていません' };
-            }
-            if (value.cover.transform) {
-                const transformResult = validateTransform(value.cover.transform);
-                if (transformResult.type === 'invalid') {
-                    return { type: 'invalid', message: `カバーのトランスフォームが無効: ${transformResult.message}` };
-                }
-            }
-            const assetResult = validateAsset(value.cover.asset);
-            if (assetResult.type === 'invalid') {
-                return { type: 'invalid', message: `カバーのアセットが無効: ${assetResult.message}` };
-            }
-
-            const assetState = this.game.asset.getTexture(value.cover.asset);
-            if (assetState.type === 'error') {
-                return { type: 'invalid', message: `テクスチャの読み込みに失敗: ${getAssetKey(value.cover.asset)}` };
+            const coverResult = validateAssetTransform(value.cover);
+            if (coverResult.type === 'invalid') {
+                return { type: 'invalid', message: `coverが無効: ${coverResult.message}` };
             }
         }
-
         if (value.mask) {
-            if (!value.mask.asset) {
-                return { type: 'invalid', message: 'マスクのアセットが指定されていません' };
-            }
-            if (value.mask.transform) {
-                const transformResult = validateTransform(value.mask.transform);
-                if (transformResult.type === 'invalid') {
-                    return { type: 'invalid', message: `マスクのトランスフォームが無効: ${transformResult.message}` };
-                }
-            }
-            const assetResult = validateAsset(value.mask.asset);
-            if (assetResult.type === 'invalid') {
-                return { type: 'invalid', message: `マスクのアセットが無効: ${assetResult.message}` };
-            }
-
-            const assetState = this.game.asset.getTexture(value.mask.asset);
-            if (assetState.type === 'error') {
-                return { type: 'invalid', message: `テクスチャの読み込みに失敗: ${getAssetKey(value.mask.asset)}` };
+            const maskResult = validateAssetTransform(value.mask);
+            if (maskResult.type === 'invalid') {
+                return { type: 'invalid', message: `maskが無効: ${maskResult.message}` };
             }
         }
 
@@ -200,8 +154,9 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             const assetState = this.game.asset.getTexture(attr.cover.asset);
             if (assetState.type !== 'ready') {
                 const task = ctx.create({ title: `テクスチャ読込中: ${getAssetKey(attr.cover.asset)}` });
-                await assetState.promise;
-                task.resolve();
+                assetState.promise.then(() => {
+                    task.resolve();
+                });
             }
         }
 
@@ -209,8 +164,9 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             const maskState = this.game.asset.getTexture(attr.mask.asset);
             if (maskState.type !== 'ready') {
                 const task = ctx.create({ title: `テクスチャ読込中: ${getAssetKey(attr.mask.asset)}` });
-                await maskState.promise;
-                task.resolve();
+                maskState.promise.then(() => {
+                    task.resolve();
+                });
             }
         }
     }
@@ -235,9 +191,9 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
     /** * コンテナ自体のカバーやデバッグ情報の描画
      */
-    async renderOverlay({ item, attr }: AttributeInvoke<AttrContainer>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
-        const { draw } = this.game.pipeline;
-
+    async renderOverlayPost({ item, attr }: AttributeInvoke<AttrContainer>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
+        const { matrices, draw } = this.game.pipeline;
+        const scene = this.game.states.scene.value;
         const { states } = this.game.item;
         const hoveringId = states.hovered;
         const hoveringItem = hoveringId && this.game.item.get(hoveringId);
@@ -245,7 +201,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         const isHovered = hoveringId === item.id ||
                          (hoveringItem && this.game.item.getParents(hoveringItem).includes(item));
 
-        if (isHovered && heldItem && await this.isItemWithinLimits(item, attr, heldItem)) {
+        if (isHovered && heldItem && await this.isItemWithinLimits(item, render, attr, heldItem)) {
             const { min, max } = render.renderBounds;
             const { texture } = render;
 
@@ -253,7 +209,23 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         }
 
         if (isHovered && this.game.side === 'client') {
-            this.renderChildrenToTarget(children, Vec4.ONE.with({ w: 0.25 }));
+            this.renderChildrenToTarget(children, Vec4.ONE.with({ w: 0.1 }));
+        }
+        const { mask } = attr;
+        if (mask && scene.type === 'factory' && scene.selecting?.type === 'edit_item' && scene.selecting.itemId === item.id) {
+            const textureState = this.game.asset.getTexture(mask.asset);
+            if (textureState.type !== 'ready') return;
+            const tex = textureState.data.texture;
+            const halfSize = new Vec2(tex.width / 2, tex.height / 2);
+
+            // 中心基準の描画範囲
+            const bounds = new AABB2(halfSize.scale(-1), halfSize);
+            const mat = getTransform(mask.transform).getMat4();
+
+            matrices.model.scope(() => {
+                matrices.model.multiply(mat);
+                draw.texture(...bounds.toArray(), tex, Vec4.ONE.with({ w: 0.2 }));
+            });
         }
     }
 
@@ -261,20 +233,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         const { draw, matrices } = this.game.pipeline;
         const { cover } = attr;
         if (cover) {
-            const textureState = this.game.asset.getTexture(cover.asset);
-            if (textureState.type !== 'ready') return;
-
-            const tex = textureState.data.texture;
-            const halfSize = new Vec2(tex.width / 2, tex.height / 2);
-
-            // 中心基準の描画範囲
-            const bounds = new AABB2(halfSize.scale(-1), halfSize);
-            const mat = getTransform(cover.transform).getMat4();
-
-            matrices.model.scope(() => {
-                matrices.model.multiply(mat);
-                draw.texture(...bounds.toArray(), tex);
-            });
+            await this.game.renderer.drawAssetTransform(cover);
         }
     }
 
@@ -288,14 +247,14 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         }
         const textureState = this.game.asset.getTexture(mask.asset);
         if (textureState.type !== 'ready') return;
-        const { context, matrices, draw } = this.game.pipeline;
+        const { context, draw } = this.game.pipeline;
         const { gl } = context;
 
         // マスクの準備
         this.maskTexture.use(() => {
             this.maskTexture.ensureSize(render.renderBounds.width, render.renderBounds.height);
         });
-        this.maskBuffer.use(() => {
+        await this.maskBuffer.useAsync(async () => {
             const inverted = attr.maskInverted;
             if (inverted) {
                 gl.clearColor(1, 1, 1, 1);
@@ -308,17 +267,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                 gl.clear(gl.COLOR_BUFFER_BIT);
             }
 
-            const tex = textureState.data.texture;
-            const halfSize = new Vec2(tex.width / 2, tex.height / 2);
-
-            // 中心基準の描画範囲
-            const bounds = new AABB2(halfSize.scale(-1), halfSize);
-            const mat = getTransform(mask.transform).getMat4();
-
-            matrices.model.scope(() => {
-                matrices.model.multiply(mat);
-                draw.texture(...bounds.toArray(), tex);
-            });
+            await this.game.renderer.drawAssetTransform(mask);
 
             if (inverted) {
                 this.game.renderer.resetBlending();
@@ -379,7 +328,9 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
         const heldItem = this.game.item.items.get(states.held);
         if (!heldItem) return;
-        if (isHovered && await this.isItemWithinLimits(item, attr, heldItem)) {
+        const renderResult = await this.game.itemRenderer.getItemRender(item);
+        if (renderResult.type !== 'rendered') return;
+        if (isHovered && await this.isItemWithinLimits(item, renderResult.render, attr, heldItem)) {
             ctx.actions.push({
                 title: `${item.name}に乗せる`,
                 priority: 200,
@@ -394,7 +345,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         }
     }
 
-    private async isItemWithinLimits(item: Item, attr: AttrContainer, child: Item): Promise<boolean> {
+    private async isItemWithinLimits(item: Item, render: ItemRender, attr: AttrContainer, child: Item): Promise<boolean> {
         const { constraints } = attr;
         if (!constraints) return true;
         // アイテム数制約の確認
@@ -410,10 +361,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         }
         // 境界制約の確認
         if (constraints.bounds) {
-            const containerRender = await this.game.itemRenderer.getItemRender(item);
-            if (containerRender.type !== 'rendered') return true;
-
-            const bounds = containerRender.render.bounds;
+            const bounds = render.bounds;
             const containerBounds = new AABB2(
                 new Vec2(bounds.min.x + constraints.bounds.padding.left, bounds.min.y + constraints.bounds.padding.top),
                 new Vec2(bounds.max.x - constraints.bounds.padding.right, bounds.max.y - constraints.bounds.padding.bottom),

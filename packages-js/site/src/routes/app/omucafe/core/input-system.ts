@@ -1,8 +1,9 @@
 import type { InputEvent } from '$lib/components/canvas/pipeline';
 import { comparator } from '$lib/helper';
-import { clamp } from '$lib/math/math';
+import { clamp, lerp } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
 import { PALETTE_RGB } from '../colors';
+import shadowUrl from '../resources/img/shadow.png';
 import type { Game } from './game';
 
 export interface Action {
@@ -34,6 +35,7 @@ export class InputSystem {
         if (event.kind === 'mouse-down') {
             const action = this.actions.at(this.currentIndex);
             await action?.invoke();
+            console.log(action?.title);
             this.currentIndex = 0;
         } else if (event.kind === 'mouse-wheel') {
             this.currentIndex += event.delta > 0 ? 1 : -1;
@@ -41,39 +43,79 @@ export class InputSystem {
         }
     }
 
+    private readonly animationTimes: number[] = [];
+
     public async render() {
         const { draw, input, matrices } = this.game.pipeline;
-        // Render Actions (UI overlay)
         if (!this.actions.length) return;
-        const padding = 10;
+
+        const padding = 32 + this.actions.length * 4; // メニュー外枠の余白
+        const itemHeight = 36; // 1項目あたりの高さ
         draw.fontSize = 16;
+        draw.fontFamily = 'Noto Sans JP';
+
+        const shadow = (await this.game.asset.getTextureByUrl(shadowUrl).promise).unwrap.texture;
+
+        // 1. メニューの横幅を決定するため、最も長いテキストの幅を計算する
+        let maxTextWidth = 0;
+        for (const action of this.actions) {
+            const bounds = draw.measureTextActual(action.title);
+            maxTextWidth = Math.max(maxTextWidth, bounds.width);
+        }
+
+        // パネル全体のサイズ
+        const menuWidth = maxTextWidth + padding * 3 + 12; // テキスト幅 + 余白 + アクセントライン用のスペース
+        const menuHeight = this.actions.length * itemHeight + padding * 2;
+
+        // マウスカーソルから少し右下にずらして表示
+        const startX = 16;
+        const startY = 24;
+
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
         matrices.model.push();
-        matrices.model.translate(mouse.x, mouse.y, 1);
+        matrices.model.translate(mouse.x - menuWidth / 2, mouse.y, 1);
         matrices.model.scale(1 / this.game.renderer.scale, 1 / this.game.renderer.scale, 1);
+
+        draw.texture(
+            startX, startY,
+            startX + menuWidth, startY + menuHeight,
+            shadow,
+            { x: 0, y: 0, z: 0, w: 2 },
+        );
+
+        // 4. 各アクションの項目を描画
         for (let index = 0; index < this.actions.length; index++) {
             const action = this.actions[index];
-            const title = action.title;
-            const bounds = draw.measureTextActual(title);
-            const offsetY = 30 * index;
-            const pos = new Vec2(padding * 2, offsetY + padding);
-            draw.rectangle(bounds.min.x + pos.x - padding, bounds.min.y + pos.y - padding / 2, bounds.max.x + pos.x + padding, bounds.max.y + pos.y + padding / 2, PALETTE_RGB.TOOLTIP_BG);
-            draw.fontWeight = '500';
+            const isSelected = index === this.currentIndex;
+            const itemY = startY + padding + index * itemHeight;
+
+            const lastT = this.animationTimes[index] ??= isSelected ? 1 : 0;
+            const t = lerp(lastT, isSelected ? 1 : 0, 0.6);
+            this.animationTimes[index] = t;
+            if (isSelected) {
+                const offsetX = (1 - t) * -16;
+                draw.rectangle(
+                    startX + padding + 12 + offsetX, itemY + itemHeight - 3 - 4,
+                    startX + padding + 12 + maxTextWidth + offsetX, itemY + itemHeight - 2 - 4,
+                    PALETTE_RGB.TOOLTIP_TEXT,
+                );
+                draw.fontWeight = '700';
+            } else {
+                draw.fontWeight = '600';
+            }
+            draw.fontSize = isSelected ? 16 : 12;
+
+            // テキストの描画
+            const offsetX = (1 - t) * 16;
+            const textPos = new Vec2(startX + padding + 12 + offsetX, itemY + 6); // Y位置はフォントに合わせて微調整してください
             await draw.textAlign(
-                pos,
-                title,
+                textPos,
+                action.title,
                 Vec2.ZERO,
                 PALETTE_RGB.TOOLTIP_TEXT,
             );
         }
 
-        const pos = new Vec2(padding * 2, 30 * this.currentIndex + padding);
-        draw.triangle(
-            pos.add({ x: 0 - 9, y: -6 + 8 }),
-            pos.add({ x: 6 - 9, y: 0 + 8 }),
-            pos.add({ x: 0 - 9, y: 6 + 8 }),
-            PALETTE_RGB.TOOLTIP_TEXT,
-        );
         matrices.model.pop();
     }
 }

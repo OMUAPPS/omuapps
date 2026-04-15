@@ -1,4 +1,7 @@
 
+import { AABB2 } from '$lib/math/aabb2';
+import { invLerp, lerp } from '$lib/math/math';
+import { Vec2 } from '$lib/math/vec2';
 import type { Vec4Like } from '$lib/math/vec4';
 import type { Identifier } from '@omujs/omu';
 import type { Registry } from '@omujs/omu/api/registry';
@@ -12,6 +15,8 @@ import type { ItemPool, ItemSystemState } from '../item/item';
 import type { OmucafeApp } from '../omucafe-app';
 import type { SceneData } from '../scenes/scene';
 import { getAssetKey, type Asset } from './asset';
+import type { Game } from './game';
+import { createTransform } from './transform';
 
 interface State {
     wait(): Promise<void>;
@@ -20,6 +25,7 @@ interface State {
     ignore: boolean;
     serialize(): Uint8Array;
     deserialize(buffer: Uint8Array): void;
+    resetState(): Promise<void>;
 }
 
 class ProxyTracker<T extends object> {
@@ -156,7 +162,7 @@ export class BufferedMap<T extends object> implements State {
     private unlisten: (() => void)[] = [];
 
     constructor(
-        private readonly table: Table<T>,
+        public readonly table: Table<T>,
         listen: boolean,
         public readonly ignore = false,
     ) {
@@ -318,26 +324,38 @@ export class BufferedMap<T extends object> implements State {
         return JSON.stringify(obj);
     }
 
-    public serialize(): Uint8Array {
+    public serialize(keys?: string[]): Uint8Array {
         const writer = new ByteWriter();
-        writer.writeULEB128(this.map.size);
-        for (const [key, value] of this.map.entries()) {
+        const entries: [string, T][] = keys
+            ? keys.map(key => [key, this.map.get(key)] as [string, T | undefined])
+                .filter(([, value]) => value !== undefined) as [string, T][]
+            : Array.from(this.map.entries());
+        writer.writeULEB128(entries.length);
+        for (const [key, value] of entries) {
             writer.writeString(key);
             writer.writeUint8Array(this.table.type.serializer.serialize(value));
         }
         return writer.toUint8Array();
     }
 
-    public deserialize(buffer: Uint8Array) {
-        this.clear();
+    public async deserialize(buffer: Uint8Array): Promise<Map<string, T>> {
         const reader = ByteReader.fromUint8Array(buffer);
         const size = reader.readULEB128();
+        const added = new Map<string, T>();
         for (let i = 0; i < size; i++) {
             const key = reader.readString();
             const valueBuffer = reader.readUint8Array();
             const value = this.table.type.serializer.deserialize(valueBuffer);
             this.map.set(key, value);
+            added.set(key, value);
         }
+        this.updated = new Set(this.map.keys());
+        this.table.update(...added.values());
+        return added;
+    }
+
+    public async resetState() {
+        this.map.clear();
     }
 }
 
@@ -353,7 +371,7 @@ export class BufferedRegistry<T extends object> implements State {
         // Registryの値監視
         this.#tracker = new ProxyTracker(registry.value, () => {
             // Svelte storeにも通知が必要ならここで行う
-            this.store.set(this.#tracker.value);
+            // this.store.set(this.#tracker.value);
         });
 
         this.store = registry.compatSvelte();
@@ -403,15 +421,29 @@ export class BufferedRegistry<T extends object> implements State {
         return this.registry.type.serializer.serialize(this.value);
     }
 
-    public deserialize(buffer: Uint8Array) {
+    public async deserialize(buffer: Uint8Array) {
         this.value = this.registry.type.serializer.deserialize(buffer);
+        this.#tracker.flush();
+        await this.registry.set(this.#tracker.value);
+    }
+
+    public async resetState() {
+        await this.registry.set(this.registry.type.defaultValue);
+        this.#tracker.value = this.registry.type.defaultValue;
+        this.#tracker.flush();
     }
 }
 
-interface TransitionData {
+export interface TransitionOptions {
+    title: string;
+    duration: number;
+}
+
+export interface TransitionData {
     current: {
         to: SceneData;
         start: number;
+        options: TransitionOptions;
     } | null;
 }
 
@@ -489,6 +521,20 @@ export interface CanvasEditChunk {
     c: CanvasCommand[];
 }
 
+export const DEFAULT_PHOTO_CONFIG = {
+    frame: true,
+    effects: {
+        bloom: true,
+        flash: true,
+    },
+};
+
+export type PhotoConfig = typeof DEFAULT_PHOTO_CONFIG;
+
+export interface ExportConfig {
+    name: string;
+}
+
 interface Config {
     obs?: {
         scene_uuid: string;
@@ -511,6 +557,8 @@ interface Config {
             type: 'move';
         };
     };
+    photo: PhotoConfig;
+    export?: ExportConfig;
 }
 
 export interface Customer {
@@ -556,6 +604,7 @@ export class GameState {
     public counter: BufferedRegistry<ItemPool>;
     public fridge: BufferedRegistry<ItemPool>;
     public factory: BufferedRegistry<ItemPool>;
+    public exportPool: BufferedRegistry<ItemPool>;
     public itemStates: BufferedRegistry<ItemSystemState>;
     public scene: BufferedRegistry<SceneData>;
     public transition: BufferedRegistry<TransitionData>;
@@ -609,6 +658,12 @@ export class GameState {
                 items: {},
             },
         }), listen));
+        const exportPool = this.register(new BufferedRegistry(omu.registries.json<ItemPool>('export', {
+            default: {
+                id: 'export',
+                items: {},
+            },
+        }), listen));
         const itemStates = this.register(new BufferedRegistry(omu.registries.json<ItemSystemState>('itemStates', {
             default: { },
         }), listen));
@@ -638,6 +693,13 @@ export class GameState {
                     },
                     eraser: {
                         width: 20,
+                    },
+                },
+                photo: {
+                    frame: true,
+                    effects: {
+                        bloom: true,
+                        flash: true,
                     },
                 },
             },
@@ -673,6 +735,7 @@ export class GameState {
         this.counter = counter;
         this.fridge = fridge;
         this.factory = factory;
+        this.exportPool = exportPool;
         this.itemStates = itemStates;
         this.scene = scene;
         this.transition = transition;
@@ -697,7 +760,13 @@ export class GameState {
         }
     }
 
-    public getAllJsonStringified(ignore: State) {
+    public async resetAll() {
+        for (const state of this.states) {
+            await state.resetState();
+        }
+    }
+
+    public getAllJsonStringified(ignore?: State): string {
         const result = [];
         for (const state of this.states) {
             if (state === ignore) continue;
@@ -706,11 +775,24 @@ export class GameState {
         return result.join('');
     }
 
-    public async serializeAssets() {
+    private getReferencedAssets(references: string): Map<string, Asset> {
+        const referenced = new Map<string, Asset>();
+        for (const asset of this.assets.values()) {
+            if (asset.type === 'url') continue;
+            const id = getAssetKey(asset);
+            const included = references.includes(id) || references.includes(asset.id);
+            if (included) {
+                referenced.set(id, asset);
+            }
+        }
+        return referenced;
+    }
+
+    public async serializeAssets(references?: string) {
+        const assets = this.getReferencedAssets(references ?? this.getAllJsonStringified(this.assets));
         const writer = new ByteWriter();
-        const entries = [...this.assets.entries()];
-        writer.writeULEB128(entries.length);
-        for (const [id, asset] of entries) {
+        writer.writeULEB128(assets.size);
+        for (const [id, asset] of assets.entries()) {
             if (asset.type === 'url') continue;
             const id = this.getAssetId(asset.id);
             const { buffer } = await this.omucafe.omu.assets.download(id);
@@ -735,7 +817,9 @@ export class GameState {
                 type: 'asset',
                 id,
             };
-            await this.omucafe.omu.assets.upload(this.getAssetId(id), data);
+            if (!this.assets.has(id)) {
+                await this.omucafe.omu.assets.upload(this.getAssetId(id), data);
+            }
             this.assets.set(id, asset);
         }
     }
@@ -799,11 +883,17 @@ type KitchenPackBuffers = {
 
 type KitchenPackData = {
     type: 'kitchen';
+    name: string;
 };
-export class KitchenPack {
+
+export class CafePack {
     constructor(
-        private readonly data: AssetPackData<KitchenPackBuffers, KitchenPackData>,
+        private readonly pack: AssetPackData<KitchenPackBuffers, KitchenPackData>,
     ) {}
+
+    get data() {
+        return this.pack.data;
+    }
 
     public static async create(state: GameState) {
         const assets = await state.serializeAssets();
@@ -825,28 +915,131 @@ export class KitchenPack {
             skin,
         }, {
             type: 'kitchen',
+            name: state.shop.value.shop.name,
         });
-        return new KitchenPack(data);
+        return new CafePack(data);
     }
 
-    public static load(buffer: Uint8Array): KitchenPack {
+    public static load(buffer: Uint8Array): CafePack {
         const data = AssetPackData.deserialize<KitchenPackBuffers, KitchenPackData>(buffer);
-        return new KitchenPack(data);
+        return new CafePack(data);
     }
 
-    public async apply(state: GameState) {
-        state.items.deserialize(this.data.buffers.items);
-        await state.deserializeAssets(this.data.buffers.assets);
-        state.kitchen.deserialize(this.data.buffers.kitchen);
-        state.counter.deserialize(this.data.buffers.counter);
-        state.fridge.deserialize(this.data.buffers.fridge);
-        state.factory.deserialize(this.data.buffers.factory);
-        state.products.deserialize(this.data.buffers.products);
-        state.skin.deserialize(this.data.buffers.skin);
+    public async apply(game: Game) {
+        const { states } = game;
+        states.items.clear();
+        states.products.clear();
+        await states.items.deserialize(this.pack.buffers.items);
+        await states.deserializeAssets(this.pack.buffers.assets);
+        await states.kitchen.deserialize(this.pack.buffers.kitchen);
+        await states.counter.deserialize(this.pack.buffers.counter);
+        await states.fridge.deserialize(this.pack.buffers.fridge);
+        await states.factory.deserialize(this.pack.buffers.factory);
+        await states.products.deserialize(this.pack.buffers.products);
+        await states.skin.deserialize(this.pack.buffers.skin);
+
+        game.addTask(async () => {
+            game.startTransition({
+                type: 'kitchen',
+            }, {
+                title: `${this.data.name}を準備中…`,
+                duration: 2000,
+            });
+        });
     }
 
     public download(filename: string) {
-        const blob = new Blob([this.data.serialize()], { type: 'application/octet-stream' });
+        const blob = new Blob([this.pack.serialize()], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+    }
+}
+
+type ItemPackBuffers = {
+    assets: Uint8Array;
+    items: Uint8Array;
+};
+
+type ItemPackData = {
+    type: 'item';
+    name: string;
+};
+
+const decoder = new TextDecoder();
+
+export class ItemPack {
+    constructor(
+        private readonly pack: AssetPackData<ItemPackBuffers, ItemPackData>,
+    ) {}
+
+    get data() {
+        return this.pack.data;
+    }
+
+    public static async create(state: GameState, keys: string[], data: ItemPackData) {
+        const items = state.items.serialize(keys);
+        const assets = await state.serializeAssets(decoder.decode(items));
+        const pack = new AssetPackData<ItemPackBuffers, ItemPackData>({
+            items,
+            assets,
+        }, data);
+        return new ItemPack(pack);
+    }
+
+    public static load(buffer: Uint8Array): ItemPack {
+        const data = AssetPackData.deserialize<ItemPackBuffers, ItemPackData>(buffer);
+        return new ItemPack(data);
+    }
+
+    public async spawn(game: Game) {
+        const { states, itemRenderer } = game;
+        await states.deserializeAssets(this.pack.buffers.assets);
+        const items = await states.items.deserialize(this.pack.buffers.items);
+
+        itemRenderer.initPass();
+        itemRenderer.addPool({
+            pool: {
+                id: 'export',
+                items: {},
+                soundEffects: {},
+            },
+            name: '工場',
+            align: Vec2.ZERO,
+            bounds: AABB2.ZEROONE,
+            transform: createTransform(),
+            ordering: 'latest',
+        });
+        itemRenderer.addPool({
+            pool: game.states.factory.value,
+            name: '工場',
+            align: Vec2.ZERO,
+            bounds: AABB2.ZEROONE,
+            transform: createTransform(),
+            ordering: 'latest',
+        });
+
+        const entries = [...items.values()];
+        const rootItems = entries.filter((item) => !item.parent);
+        for (let index = 0; index < rootItems.length; index++) {
+            const item = rootItems[index];
+            const clone = game.item.clone(item);
+            const x = lerp(
+                -200,
+                200,
+                invLerp(0, rootItems.length - 1, index),
+            );
+            clone.transform.offset = { x, y: index };
+            game.item.setPool(clone, game.states.factory.value);
+        }
+    }
+
+    public download(filename: string) {
+        const blob = new Blob([this.pack.serialize()], { type: 'application/octet-stream' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

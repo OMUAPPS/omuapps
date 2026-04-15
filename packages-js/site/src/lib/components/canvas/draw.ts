@@ -471,6 +471,65 @@ void main() {
     fragColor.rgb *= color.a;
 }`;
 
+const BLUR_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform vec2 u_dir;
+uniform float[32] u_weight;
+uniform float u_weightCount;
+uniform float u_radius;
+uniform sampler2D u_texture;
+uniform vec2 u_resolution;
+uniform vec4 u_color;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+float getWeight(float offset) {
+    float t = abs(offset) / u_radius;
+    int index = int(floor(t * u_weightCount));
+    return mix(u_weight[index], u_weight[index + 1], fract(t * u_weightCount));
+}
+
+void main() {
+    vec2 texelSize = 1.0 / u_resolution;
+    vec4 color = vec4(0.0);
+    int half_radius = int(u_radius) / 2;
+    float alpha = 0.0;
+    for (int i = 0; i <= int(u_radius); i++) {
+        int index = i - half_radius;
+        vec2 offset = u_dir * float(index) * texelSize;
+        float weight = getWeight(float(index));
+        vec4 sampleCol = texture(u_texture, v_texcoord + offset);
+        color += sampleCol * weight;
+        alpha += weight;
+    }
+    if (alpha > 0.0) {
+        color /= alpha;
+    }
+    fragColor = color * u_color * u_color.a;
+}
+`;
+
+const THRESHOLD_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform sampler2D u_texture;
+uniform float u_threshold;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+void main() {
+    vec4 color = texture(u_texture, v_texcoord);
+    float brightness = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+    float alpha = step(u_threshold, brightness);
+    fragColor = vec4(vec3(alpha), color.a);
+}
+`;
+
 type TextTexture = {
     texture: GlTexture;
     width: number;
@@ -491,6 +550,8 @@ export class Draw {
     private readonly circleTextureProgram: GlProgram;
     private readonly roundedRectProgram: GlProgram;
     private readonly roundedRectTextureProgram: GlProgram;
+    private readonly blurProgram: GlProgram;
+    private readonly thresholdProgram: GlProgram;
     public readonly vertexBuffer: GlBuffer;
     public readonly texcoordBuffer: GlBuffer;
     private readonly frameBuffer: GlFramebuffer;
@@ -520,6 +581,8 @@ export class Draw {
         this.circleTextureProgram = this.createProgram(CIRCLE_TEXTURE_FRAGMENT_SHADER);
         this.roundedRectProgram = this.createProgram(ROUNDED_RECT_FRAGMENT_SHADER);
         this.roundedRectTextureProgram = this.createProgram(ROUNDED_RECT_TEXTURE_FRAGMENT_SHADER);
+        this.blurProgram = this.createProgram(BLUR_FRAGMENT_SHADER);
+        this.thresholdProgram = this.createProgram(THRESHOLD_FRAGMENT_SHADER);
         this.vertexBuffer = glContext.createBuffer();
         this.texcoordBuffer = glContext.createBuffer();
         this.frameBuffer = glContext.createFramebuffer();
@@ -530,11 +593,23 @@ export class Draw {
             throw new Error('Failed to get 2d rendering context from text offscreen canvas');
         }
         this.textContext = textContext;
+        this.ensureFrameBuffer(4, 4);
     }
 
     private ensureFrameBuffer(width: number, height: number): void {
         this.frameBufferTexture.use(() => {
-            this.frameBufferTexture.ensureSize(width, height);
+            this.frameBufferTexture.setImage(null, {
+                width,
+                height,
+                internalFormat: 'rgba',
+                format: 'rgba',
+            });
+            this.frameBufferTexture.setParams({
+                magFilter: 'linear',
+                minFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
         });
 
         this.frameBuffer.use(() => {
@@ -1213,6 +1288,106 @@ export class Draw {
 
             const position = this.roundedRectProgram.getAttribute('a_position');
             position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    private getBlurWeight(): Float32Array {
+        const weightCount = 32;
+        const weights = new Float32Array(weightCount);
+        const sigma = weightCount / 6;
+        let sum = 0;
+        for (let i = 0; i < weightCount; i++) {
+            const x = i / weightCount * 6 - 3;
+            const weight = Math.exp(-0.5 * (x / sigma) ** 2);
+            weights[i] = weight;
+            sum += weight;
+        }
+        for (let i = 0; i < weightCount; i++) {
+            weights[i] /= sum;
+        }
+        return weights;
+    }
+
+    public blurTextureStep(left: number, top: number, right: number, bottom: number, tex: GlTexture, radius: number, dir: Vec2Like, color: Vec4Like = Vec4.ONE): void {
+        const bounds = new AABB2(new Vec2(left, top), new Vec2(right, bottom));
+        const { gl } = this.glContext;
+
+        this.blurProgram.use(() => {
+            this.setMesh(this.blurProgram, new Float32Array([
+                left, top, 0,
+                right, top, 0,
+                right, bottom, 0,
+                left, top, 0,
+                right, bottom, 0,
+                left, bottom, 0,
+            ]), new Float32Array([
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 0,
+                1, 1,
+                0, 1,
+            ]));
+            this.setMatrices(this.blurProgram);
+
+            const weights = this.getBlurWeight();
+            this.blurProgram.getUniform('u_weight[0]').asFloatArray().set(weights);
+            this.blurProgram.getUniform('u_weightCount').asFloat().set(weights.length);
+            this.blurProgram.getUniform('u_radius').asFloat().set(radius);
+            this.blurProgram.getUniform('u_texture').asSampler2D().set(tex);
+            this.blurProgram.getUniform('u_resolution').asVec2().set(bounds.size);
+            this.blurProgram.getUniform('u_dir').asVec2().set(dir);
+            this.blurProgram.getUniform('u_color').asVec4().set(color);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    public blurTexture(left: number, top: number, right: number, bottom: number, tex: GlTexture, radius: number): void {
+        const bounds = new AABB2(new Vec2(left, top), new Vec2(right, bottom));
+        const size = bounds.size;
+        this.frameBufferTexture.use(() => {
+            this.frameBufferTexture.ensureSize(bounds.size.x, bounds.size.y);
+        });
+
+        const { stateManager } = this.glContext;
+        this.frameBuffer.use(() => {
+            stateManager.pushViewport(size);
+            this.matrices.push();
+            this.matrices.identity();
+            this.matrices.projection.orthographic(0, 0, size.x, size.y, -1, 1);
+            this.blurTextureStep(0, 0, size.x, size.y, tex, radius, { x: 1, y: 0 });
+            this.matrices.pop();
+            stateManager.popViewport();
+        });
+
+        this.blurTextureStep(left, top, right, bottom, this.frameBufferTexture, radius, { x: 0, y: 1 });
+    }
+
+    public thresholdTexture(left: number, top: number, right: number, bottom: number, tex: GlTexture, threshold: number) {
+        const { gl } = this.glContext;
+
+        this.thresholdProgram.use(() => {
+            this.setMesh(this.thresholdProgram, new Float32Array([
+                left, top, 0,
+                right, top, 0,
+                right, bottom, 0,
+                left, top, 0,
+                right, bottom, 0,
+                left, bottom, 0,
+            ]), new Float32Array([
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 0,
+                1, 1,
+                0, 1,
+            ]));
+            this.setMatrices(this.thresholdProgram);
+
+            this.thresholdProgram.getUniform('u_texture').asSampler2D().set(tex);
+            this.thresholdProgram.getUniform('u_threshold').asFloat().set(threshold);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
