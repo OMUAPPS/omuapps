@@ -246,11 +246,19 @@
                 });
                 if (scene.receipt) {
                     game.states.orders.delete(scene.receipt.order.id);
+                    const [next] = game.states.orders.values();
+                    if (next) {
+                        next.startTime = Timer.now();
+                    }
                 }
                 game.canvas.clear();
                 game.states.counter.value.items = {};
             }}>
-                次の注文へ
+                {#if game.states.orders.size > 1}
+                    次の注文へ
+                {:else}
+                    注文を終える
+                {/if}
             </button>
             <button onclick={() => {
                 game.states.scene.value = {

@@ -133,7 +133,7 @@ export class Game {
     }
 
     public async startLoop() {
-        for await (const frame of this.pipeline) {
+        for await (const _frame of this.pipeline) {
             this.pipeline.context.stateManager.setViewport({ x: this.pipeline.matrices.width, y: this.pipeline.matrices.height });
             await this.renderer.prepare();
             await this.renderer.render(async () => {

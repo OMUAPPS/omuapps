@@ -29,6 +29,20 @@ export const PALETTE_RGB = {
     NOTIFICATION_TEXT: Vec4.fromColorHex('#fff'),
     DRAGFILE_BG: Vec4.fromColorHex('#f6f2eb80'),
     DRAGFILE_TEXT: ACCENT,
+    BOARD_TIMER_BG: Vec4.fromColorHex('#FDF7EE'),
+    BOARD_TIMER_ACCENT: Vec4.fromColorHex('#E45D5D'),
+    BOARD_ENTRY_BG: Vec4.fromColorHex('#FDF7EE'),
+    BOARD_TEXT: Vec4.fromColorHex('#444'),
+    BOARD_ACCENT: Vec4.fromColorHex('#835F1E'),
+    NAMETAG: {
+        BACKGROUND: Vec4.fromColorHex('#fff'),
+        SHADOW: Vec4.fromColorHex('#8888'),
+        OUTLINE: ACCENT,
+        TEXT: Vec4.fromColorHex('#666'),
+        GRADIENT_1: Vec4.fromColorHex('#D3EAE1'),
+        GRADIENT_2: Vec4.fromColorHex('#FFF'),
+        POINTS_BG: Vec4.fromColorHex('#FFA4A4'),
+    },
 };
 
 // https://gist.github.com/dkaraush/65d19d61396f5f3cd8ba7d1b4b3c9432

@@ -172,10 +172,10 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
         }
 
         ctx.actions.push({
-            title: `${item.name}を持つ (マウスホイールで複製)`,
+            title: `${item.name}を持つ(マウスホイールで複製)`,
             priority: 100,
             invoke: async () => {
-                const shouldClone = event.mouse.buttons[1];
+                const shouldClone = (states.scene.value.type !== 'factory' && pool.id === 'fridge') || event.mouse.buttons[1];
                 if (shouldClone) {
                     item = this.game.item.clone(item);
                 }

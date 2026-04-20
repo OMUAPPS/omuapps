@@ -1,12 +1,13 @@
+import { Timer } from '$lib/timer';
 import { ProxyDictionaryLoader } from '$lib/token-helper';
 import kuromoji from '@2ji-han/kuromoji.js';
 import type { Tokenizer } from '@2ji-han/kuromoji.js/tokenizer.js';
-import { ChatEvents } from '@omujs/chat';
+import { Chat, ChatEvents } from '@omujs/chat';
 import type { Message } from '@omujs/chat/models';
 import { chat as chatStore } from '@omujs/ui';
 import { get } from 'svelte/store';
 import type { Game } from '../core/game';
-import type { Order, Product } from '../core/game-state';
+import type { Customer, Order, Product, User } from '../core/game-state';
 import { generateUid } from '../core/helper';
 import bell from './se/bell.wav';
 
@@ -41,7 +42,7 @@ export class OrderSystem {
     /**
      * 受信したメッセージを処理し、注文の作成・更新を行う
      */
-    private async handleChatMessage(message: Message, chat: any) {
+    private async handleChatMessage(message: Message, chat: Chat) {
         if (!this.tokenizer || !message.content || !message.authorId) return;
 
         const author = await chat.authors.get(message.authorId.key());
@@ -52,6 +53,16 @@ export class OrderSystem {
         if (!match) return;
 
         const authorKey = author.id.key();
+        const fallbackName = author.metadata?.screen_id ?? author.id.path.at(-1) ?? 'Unknown';
+        const customer = this.getCustomer({
+            name: author.name ?? fallbackName,
+            avatar: author.avatarUrl,
+            source: {
+                type: 'chat',
+                id: authorKey,
+            },
+        });
+
         const existingOrder = this.getOrderByAuthorId(authorKey);
 
         let order: Order;
@@ -63,18 +74,12 @@ export class OrderSystem {
             };
         } else {
             // 新規オーダーの作成
-            const fallbackName = author.metadata?.screen_id ?? author.id.path.at(-1) ?? 'Unknown';
+            customer.stats.totalOrders++;
             order = {
                 id: generateUid(),
                 items: match.products,
-                user: {
-                    name: author.name ?? fallbackName,
-                    avatar: author.avatarUrl,
-                    source: {
-                        type: 'chat',
-                        id: authorKey,
-                    },
-                },
+                timestamp: Timer.now(),
+                customer,
             };
         }
 
@@ -91,12 +96,39 @@ export class OrderSystem {
         });
     }
 
+    private getCustomerIdByUser(user: User): string {
+        if (user.source.type === 'chat') {
+            return `chat:${user.source.id}`;
+        } else {
+            return `task:${user.source.id}`;
+        }
+    }
+
+    private getCustomer(user: User): Customer {
+        const id = this.getCustomerIdByUser(user);
+        let customer: Customer | undefined = this.game.states.customers.get(id);
+        if (!customer) {
+            customer = {
+                id,
+                user,
+                stats: {
+                    totalOrders: 0,
+                    stamps: [],
+                },
+            };
+            this.game.states.customers.set(id, customer);
+        } else {
+            customer.user = user;
+        }
+        return customer;
+    }
+
     /**
      * 指定した Author ID を持つ既存の注文を取得する
      */
-    private getOrderByAuthorId(authorId: string): Order | undefined {
+    private getOrderByAuthorId(id: string): Order | undefined {
         for (const order of this.game.states.orders.values()) {
-            if (order.user.source.type === 'chat' && order.user.source.id === authorId) {
+            if (order.customer.id === id) {
                 return order as Order;
             }
         }

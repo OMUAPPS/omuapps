@@ -9,7 +9,7 @@
         game: Game;
     }
 
-    let { game, scene }: Props = $props();
+    let { game }: Props = $props();
 
     function goBack() {
         game.startTransition({
@@ -46,8 +46,15 @@
             <h1>
                 商品輸出
             </h1>
+            <p>この箱に入れたアイテムを共有することができます</p>
+            <br>
             <p>
-                アイテムを書き出して他の人も使えるようにします
+                <span>共有する前に</span>
+                <a href="https://omuapps.com/legal/export" target="_blank" rel="noopener">
+                    こちら
+                    <i class="ti ti-external-link"></i>
+                </a>
+                <span>をお読みください</span>
             </p>
         </div>
         <div class="panel">
@@ -56,7 +63,11 @@
             {#if $options.export}
                 <Textbox bind:value={$options.export.name} placeholder="パッケージ名" />
             {/if}
+            <br>
+            <small>
 
+                <p>ダウンロード後はダウンロードフォルダに出力されます</p>
+            </small>
             <div class="actions">
                 <Button primary onclick={download}>
                     ダウンロード

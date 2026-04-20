@@ -22,7 +22,7 @@
     <br>
     {receipt.date}
     <br>
-    {receipt.order.user.name}
+    {receipt.order.customer.user.name}
     <br>
     <div class="item">
         <span>Owner</span>

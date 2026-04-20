@@ -134,6 +134,14 @@
         }
     }
 
+    if (scene.task.type === 'obs_waiting') {
+        if ($obs && $obs.isConnected()) {
+            scene.task = {
+                type: 'omucafe',
+            };
+        }
+    }
+
     $effect(() => {
         const { task } = scene;
         update(task);
@@ -231,7 +239,7 @@
             </div>
         {/if}
     {:else if scene.task.type === 'avatar'}
-        <div class="task" in:fly={{ y: 4, duration: 250, opacity: 1 }}>
+        <div class="task" in:fly={{ y: 4, duration: game.side === 'client' ? 250 : 0, opacity: 1 }}>
             {#if game.side === 'client'}
                 <h1>あなたを追加しましょう</h1>
                 <small>「背景」の上に、あなたを配置します</small>
@@ -269,7 +277,7 @@
             {/if}
         </div>
     {:else if scene.task.type === 'overlay'}
-        <div class="task" in:fly={{ y: 4, duration: 250, opacity: 1 }}>
+        <div class="task" in:fly={{ y: 4, duration: game.side === 'client' ? 250 : 0, opacity: 1 }}>
             {#if game.app.side === 'client'}
                 <h1>この順番になっていますか？</h1>
                 <small>「背景」の上に「あなた」があり、その上に「オーバーレイ」になっていることを確認してください</small>

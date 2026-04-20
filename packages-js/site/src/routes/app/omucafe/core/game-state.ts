@@ -206,6 +206,10 @@ export class BufferedMap<T extends object> implements State {
         return this.map.keys();
     }
 
+    public get size(): number {
+        return this.map.size;
+    }
+
     public values(): IterableIterator<T> {
         // values() でイテレートする場合も、できればProxy経由が望ましいが
         // パフォーマンス重視なら生データを返すか、必要に応じてProxy生成
@@ -561,15 +565,29 @@ interface Config {
     export?: ExportConfig;
 }
 
-export interface Customer {
+export interface User {
     source: {
         type: 'chat';
         id: string;
     } | {
         type: 'task';
+        id: string;
     };
     name: string;
     avatar?: string;
+}
+
+export interface Stamp {
+    timestamp: number;
+}
+
+export interface Customer {
+    id: string;
+    user: User;
+    stats: {
+        totalOrders: number;
+        stamps: (Stamp | null)[];
+    };
 }
 
 export interface Product {
@@ -577,12 +595,15 @@ export interface Product {
     itemId: string;
     name: string;
     aliases: string[];
+    hidden: boolean;
 }
 
 export interface Order {
     id: string;
-    user: Customer;
+    customer: Customer;
     items: Product[];
+    timestamp: number;
+    startTime: number;
 }
 
 export interface OrderState {
@@ -617,6 +638,7 @@ export class GameState {
     public orders: BufferedMap<Order>;
     public products: BufferedMap<Product>;
     public receipts: BufferedMap<Receipt>;
+    public customers: BufferedMap<Customer>;
 
     private register<T extends State>(state: T): T {
         this.states.push(state);
@@ -728,6 +750,9 @@ export class GameState {
         const receipts = this.register(new BufferedMap(omu.tables.json<Receipt>('receipts', {
             key: (product) => product.id,
         }), listen));
+        const customers = this.register(new BufferedMap(omu.tables.json<Customer>('customers', {
+            key: (customer) => customer.id,
+        }), listen));
 
         this.items = items;
         this.assets = assets;
@@ -748,6 +773,7 @@ export class GameState {
         this.orders = orders;
         this.products = products;
         this.receipts = receipts;
+        this.customers = customers;
     }
 
     public async wait() {
@@ -792,7 +818,7 @@ export class GameState {
         const assets = this.getReferencedAssets(references ?? this.getAllJsonStringified(this.assets));
         const writer = new ByteWriter();
         writer.writeULEB128(assets.size);
-        for (const [id, asset] of assets.entries()) {
+        for (const asset of assets.values()) {
             if (asset.type === 'url') continue;
             const id = this.getAssetId(asset.id);
             const { buffer } = await this.omucafe.omu.assets.download(id);

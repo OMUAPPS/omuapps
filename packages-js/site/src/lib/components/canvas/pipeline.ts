@@ -38,7 +38,7 @@ export class HTMLInput implements Input {
     public mouse: Mouse = { pos: Vec2.ZERO, delta: Vec2.ZERO, entered: false, buttons: {} };
     public keyboard: Keyboard = { keys: {} };
 
-    constructor(element: HTMLElement) {
+    constructor() {
         window.addEventListener('mouseenter', (ev) => this.queue.push({ type: 'mouse', ev }));
         window.addEventListener('mouseleave', (ev) => this.queue.push({ type: 'mouse', ev }));
         window.addEventListener('pointermove', (ev) => this.queue.push({ type: 'mouse', ev }));

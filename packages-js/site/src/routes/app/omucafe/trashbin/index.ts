@@ -33,6 +33,7 @@ export class Trashbin {
             transform: DEFAULT_TRANSFORM,
             pool: this.pool,
             align: Vec2.CENTER,
+            ordering: 'latest',
         };
         await this.game.itemRenderer.renderPool(this.pool, this.options);
         for (const key in this.pool.items) {
@@ -42,6 +43,7 @@ export class Trashbin {
     }
 
     public async handleInput(event: InputEvent) {
+        if (this.game.fridge.hovered) return;
         this.game.item.handleMouse(this.pool, this.options, event);
     }
 }

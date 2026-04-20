@@ -366,6 +366,7 @@ void main() {
     float dist = length(uv);
     float alpha = smoothstep(u_radiusOuter, u_radiusOuter - u_smoothness, dist) * smoothstep(u_radiusInner - u_smoothness, u_radiusInner, dist);
     fragColor = u_color * alpha;
+    fragColor.rgb *= u_color.a;
 }
 `;
 
@@ -770,6 +771,24 @@ export class Draw {
         }
     }
 
+    public setMeshRect(program: GlProgram, left: number, top: number, right: number, bottom: number): void {
+        this.setMesh(program, new Float32Array([
+            left, top, 0,
+            right, top, 0,
+            right, bottom, 0,
+            left, top, 0,
+            right, bottom, 0,
+            left, bottom, 0,
+        ]), new Float32Array([
+            0, 0,
+            1, 0,
+            1, 1,
+            0, 0,
+            1, 1,
+            0, 1,
+        ]));
+    }
+
     public setMatrices(program: GlProgram): void {
         program.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
         program.getUniform('u_view').asMat4().set(this.matrices.view.get());
@@ -798,14 +817,7 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.colorProgram.use(() => {
-            this.setMesh(this.colorProgram, new Float32Array([
-                left, top, 0,
-                right, top, 0,
-                right, bottom, 0,
-                left, top, 0,
-                right, bottom, 0,
-                left, bottom, 0,
-            ]));
+            this.setMeshRect(this.colorProgram, left, top, right, bottom);
             this.setMatrices(this.colorProgram);
             this.colorProgram.getUniform('u_color').asVec4().set(color);
 
@@ -819,14 +831,7 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.gradientRectProgram.use(() => {
-            this.setMesh(this.gradientRectProgram, new Float32Array([
-                left, top, 0,
-                right, top, 0,
-                right, bottom, 0,
-                left, top, 0,
-                right, bottom, 0,
-                left, bottom, 0,
-            ]));
+            this.setMeshRect(this.gradientRectProgram, left, top, right, bottom);
             this.setMatrices(this.gradientRectProgram);
             this.gradientRectProgram.getUniform('u_color1').asVec4().set(color1);
             this.gradientRectProgram.getUniform('u_color2').asVec4().set(color2);
@@ -965,21 +970,7 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.textureMaskProgram.use(() => {
-            this.setMesh(this.textureMaskProgram, new Float32Array([
-                left, top, 0,
-                right, top, 0,
-                right, bottom, 0,
-                left, top, 0,
-                right, bottom, 0,
-                left, bottom, 0,
-            ]), new Float32Array([
-                0, 0,
-                1, 0,
-                1, 1,
-                0, 0,
-                1, 1,
-                0, 1,
-            ]));
+            this.setMeshRect(this.textureMaskProgram, left, top, right, bottom);
             this.setMatrices(this.textureMaskProgram);
 
             this.textureMaskProgram.getUniform('u_texture').asSampler2D().set(texture);
@@ -1194,21 +1185,7 @@ export class Draw {
         radiusOuter /= 2;
 
         this.circleTextureProgram.use(() => {
-            this.setMesh(this.circleTextureProgram, new Float32Array([
-                x - radiusOuter, y - radiusOuter, 0,
-                x + radiusOuter, y - radiusOuter, 0,
-                x + radiusOuter, y + radiusOuter, 0,
-                x - radiusOuter, y - radiusOuter, 0,
-                x + radiusOuter, y + radiusOuter, 0,
-                x - radiusOuter, y + radiusOuter, 0,
-            ]), new Float32Array([
-                0, 0,
-                1.0, 0,
-                1.0, 1.0,
-                0, 0,
-                1.0, 1.0,
-                0, 1.0,
-            ]));
+            this.setMeshRect(this.circleTextureProgram, x - radiusOuter, y - radiusOuter, x + radiusOuter, y + radiusOuter);
             this.setMatrices(this.circleTextureProgram);
 
             this.circleTextureProgram.getUniform('u_resolution').asVec2().set({ x: radiusOuter * 2, y: radiusOuter * 2 });
@@ -1232,14 +1209,7 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.roundedRectTextureProgram.use(() => {
-            this.setMesh(this.roundedRectTextureProgram, new Float32Array([
-                start.x, start.y, 0,
-                end.x, start.y, 0,
-                end.x, end.y, 0,
-                start.x, start.y, 0,
-                end.x, end.y, 0,
-                start.x, end.y, 0,
-            ]));
+            this.setMeshRect(this.roundedRectTextureProgram, start.x, start.y, end.x, end.y);
             this.setMatrices(this.roundedRectTextureProgram);
             this.roundedRectTextureProgram.getUniform('u_color').asVec4().set(color);
             this.roundedRectTextureProgram.getUniform('u_resolution').asVec2().set(Vec2.from(end).sub(start));
@@ -1264,21 +1234,7 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.roundedRectProgram.use(() => {
-            this.setMesh(this.roundedRectProgram, new Float32Array([
-                start.x, start.y, 0,
-                end.x, start.y, 0,
-                end.x, end.y, 0,
-                start.x, start.y, 0,
-                end.x, end.y, 0,
-                start.x, end.y, 0,
-            ]), new Float32Array([
-                0, 0,
-                1, 0,
-                1, 1,
-                0, 0,
-                1, 1,
-                0, 1,
-            ]));
+            this.setMeshRect(this.roundedRectProgram, start.x, start.y, end.x, end.y);
             this.setMatrices(this.roundedRectProgram);
             this.roundedRectProgram.getUniform('u_color').asVec4().set(color);
             this.roundedRectProgram.getUniform('u_resolution').asVec2().set(end.sub(start));
@@ -1314,21 +1270,7 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.blurProgram.use(() => {
-            this.setMesh(this.blurProgram, new Float32Array([
-                left, top, 0,
-                right, top, 0,
-                right, bottom, 0,
-                left, top, 0,
-                right, bottom, 0,
-                left, bottom, 0,
-            ]), new Float32Array([
-                0, 0,
-                1, 0,
-                1, 1,
-                0, 0,
-                1, 1,
-                0, 1,
-            ]));
+            this.setMeshRect(this.blurProgram, left, top, right, bottom);
             this.setMatrices(this.blurProgram);
 
             const weights = this.getBlurWeight();
@@ -1369,21 +1311,7 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.thresholdProgram.use(() => {
-            this.setMesh(this.thresholdProgram, new Float32Array([
-                left, top, 0,
-                right, top, 0,
-                right, bottom, 0,
-                left, top, 0,
-                right, bottom, 0,
-                left, bottom, 0,
-            ]), new Float32Array([
-                0, 0,
-                1, 0,
-                1, 1,
-                0, 0,
-                1, 1,
-                0, 1,
-            ]));
+            this.setMeshRect(this.thresholdProgram, left, top, right, bottom);
             this.setMatrices(this.thresholdProgram);
 
             this.thresholdProgram.getUniform('u_texture').asSampler2D().set(tex);

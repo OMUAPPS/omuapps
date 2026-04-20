@@ -23,6 +23,7 @@ import background from './img/background.png';
 import dummy from './img/dummy.png';
 import flash from './img/flash.png';
 import photo_frame from './img/photo_frame.png';
+import ui_overlay from './img/ui_overlay.png';
 import ScreenPhoto from './ScreenPhoto.svelte';
 
 // ==========================================
@@ -255,6 +256,11 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         const canvasOptions: CanvasOptions = { pos: localPos, mouse, size: ASSET_RESOLUTION };
 
         await this.renderCanvas(overlayBounds, canvasOptions, localPos, photoTex, scene.photo == null);
+
+        const uiOverlayTex = this.game.asset.getTextureByUrl(ui_overlay);
+        if (uiOverlayTex.type === 'ready') {
+            draw.texture(...overlayBounds.toArray(), uiOverlayTex.data.texture, PALETTE_RGB.ACCENT.with({ w: 0.4 }));
+        }
 
         return poolOptions;
     }

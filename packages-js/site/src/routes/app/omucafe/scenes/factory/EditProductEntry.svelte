@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button } from '@omujs/ui';
+    import { Button, Checkbox, Tooltip } from '@omujs/ui';
     import EditText from '../../common/EditText.svelte';
     import { Game } from '../../core/game';
     import { preview } from './factory';
@@ -28,9 +28,20 @@
         <small>商品名</small>
         <EditText bind:value={$product.name} size="1.8rem" />
     </div>
+
+    <label>
+        <Tooltip>
+            メニューから隠します
+        </Tooltip>
+        裏メニュー
+        <Checkbox bind:value={$product.hidden} />
+    </label>
 </div>
 <h2>反応する文字</h2>
 <div class="aliases">
+    <Tooltip>
+        チャットで「#」の後にこの文字が打たれたら注文とみなします
+    </Tooltip>
     <Button onclick={() => {
         $product.aliases = [...$product.aliases, ''];
     }} primary>
@@ -49,11 +60,15 @@
             <button title="削除" onclick={() => {
                 $product.aliases = $product.aliases.filter((_, i) => i !== index);
             }}>
+                <Tooltip>
+                    この反応する文字を削除します
+                </Tooltip>
                 <i class="ti ti-x"></i>
             </button>
         </div>
     {/each}
 </div>
+<h2>操作</h2>
 <div class="actions">
     <Button onclick={() => {
         game.states.scene.value = {
@@ -121,11 +136,15 @@
         }
     }
 
+    label {
+        display: flex;
+        justify-content: space-between;
+    }
+
     .actions {
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        margin-top: 2rem;
     }
 
     h2 {
@@ -133,7 +152,7 @@
         margin: 0.5rem 0;
         margin-top: 1rem;
         text-align: left;
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         color: var(--color-1);
         corner-shape: squircle;
         padding: 0.5rem 0;
@@ -154,9 +173,14 @@
                 flex: 1;
                 padding: 0.5rem;
                 background: var(--color-bg-2);
-                color: var(--color-text);
-                border-radius: 2px;
+                color: #000;
                 border: none;
+                border-bottom: 1px solid var(--color-1);
+                border-radius: 2px;
+
+                &:disabled {
+                    color: var(--color-text);
+                }
             }
 
             button {

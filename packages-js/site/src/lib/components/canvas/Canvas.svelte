@@ -33,7 +33,7 @@
     function createPipeline(context: GlContext, canvas: HTMLCanvasElement): RenderPipeline {
         const matrices = new Matrices();
         const draw = new Draw(matrices, context);
-        const input = new HTMLInput(canvas);
+        const input = new HTMLInput();
 
         const pipeline: RenderPipeline = {
             context,
@@ -111,7 +111,7 @@
                 resize(context);
             }
 
-            for await (const frame of pipeline) {
+            for await (const _frame of pipeline) {
                 handleResize();
                 await render(context);
                 target.clearRect(0, 0, width, height);

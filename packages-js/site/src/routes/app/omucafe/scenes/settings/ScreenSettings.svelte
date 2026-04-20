@@ -99,6 +99,18 @@
                         <i class="ti ti-chevron-right"></i>
                     </Button>
                 </label>
+                <label>
+                    <p>OBSの設定をやり直す</p>
+                    <Button onclick={() => {
+                        game.startTransition({
+                            type: 'main_menu',
+                            task: { type: 'obs_waiting' },
+                        });
+                    }} primary>
+                        設定
+                        <i class="ti ti-chevron-right"></i>
+                    </Button>
+                </label>
             </div>
         </div>
     </main>

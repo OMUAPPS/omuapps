@@ -3,7 +3,7 @@
     import EditText from '../../common/EditText.svelte';
     import type { Game } from '../../core/game';
     import EditItem from './EditItem.svelte';
-    import EditProduct from './EditProduct.svelte';
+    import EditProductEntry from './EditProductEntry.svelte';
     import { preview, type SceneFactoryData } from './factory';
 
     interface Props {
@@ -95,7 +95,7 @@
                         閉じる
                         <i class="ti ti-x"></i>
                     </button>
-                    <EditProduct id={scene.selecting.productId} />
+                    <EditProductEntry id={scene.selecting.productId} />
                 </div>
             {:else if scene.selecting.type === 'edit_item'}
                 <div class="panel omu-scroll">

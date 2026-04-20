@@ -6,10 +6,11 @@ import { get, writable } from 'svelte/store';
 import type { Game } from '../../core/game';
 import type { Product } from '../../core/game-state';
 import { generateUid } from '../../core/helper';
-import { createTransform, DEFAULT_TRANSFORM } from '../../core/transform';
+import { createTransform } from '../../core/transform';
 import type { AttributeKey, Attributes } from '../../item/attribute';
 import { type Item, type ItemPool, type PoolOptions } from '../../item/item';
 import client_background from '../../resources/client_background.png';
+import asset_background from '../../scenes/kitchen/img/asset_vertical_background.png';
 import type { SceneHandler } from '../scene';
 import factory_bg from './img/factory.png';
 import ScreenCreator from './ScreenFactory.svelte';
@@ -55,6 +56,10 @@ const OFFSETS = {
     TRASHBIN_X: 400,
 } as const;
 
+interface FactoryLayout {
+    offset: Vec2;
+}
+
 export class SceneFactory implements SceneHandler<SceneFactoryData> {
     public readonly component = ScreenCreator;
     private readonly readBuffer: GlFramebuffer;
@@ -77,7 +82,7 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         }
 
         const [bg, factory] = await Promise.all([
-            this.game.asset.getTextureByUrl(client_background).promise,
+            this.game.asset.getTextureByUrl(this.game.side === 'client' ? client_background : asset_background).promise,
             this.game.asset.getTextureByUrl(factory_bg).promise,
         ]);
 
@@ -113,6 +118,7 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
                 itemId: clone.id,
                 name: clone.name,
                 aliases: [],
+                hidden: false,
             };
             products.set(product.id, product);
             scene.value = {
@@ -128,18 +134,29 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
     /**
      * プールオプションの共通生成ロジック
      */
-    private getPoolOptions(): PoolOptions {
+    private getPoolOptions(layout: FactoryLayout): PoolOptions {
         const { resolution } = this.game.renderer;
         return {
             pool: this.pool,
             name: '作業台',
             ordering: 'lower',
-            transform: DEFAULT_TRANSFORM,
+            transform: {
+                right: Vec2.RIGHT,
+                up: Vec2.UP,
+                offset: layout.offset,
+            },
             bounds: new AABB2(
                 new Vec2(-resolution.x / 2, 0),
                 new Vec2(resolution.x / 2, resolution.y),
             ),
             align: Vec2.UP,
+        };
+    }
+
+    private getLayout(): FactoryLayout {
+        const isClient = this.game.side === 'client';
+        return {
+            offset: isClient ? Vec2.ZERO : new Vec2(0, 300),
         };
     }
 
@@ -149,12 +166,13 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
     async handle(scene: SceneFactoryData) {
         const isClient = this.game.side === 'client';
         const assets = await this.loadAssets();
-        const options = this.getPoolOptions();
+        const layout = this.getLayout();
+        const options = this.getPoolOptions(layout);
 
         if (this.game.side === 'client') {
             await this.renderSceneClientSide(scene, assets, options);
         } else if (this.game.side === 'overlay') {
-            await this.renderSceneOverlaySide(scene, assets, options);
+            await this.renderSceneOverlaySide(scene, assets, options, layout);
         } else if (this.game.side === 'background') {
             await this.renderSceneBackgroundSide(scene, assets);
         }
@@ -189,12 +207,12 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         }
     }
 
-    private async renderSceneOverlaySide(scene: SceneFactoryData, assets: SceneAssets, options: PoolOptions) {
+    private async renderSceneOverlaySide(scene: SceneFactoryData, assets: SceneAssets, options: PoolOptions, layout: FactoryLayout) {
         const { draw } = this.game.pipeline;
         const { renderer, itemRenderer } = this.game;
 
         // 1. 背景の描画
-        draw.texture(...renderer.bounds.fit(assets.texFactory.size).toArray(), assets.texFactory);
+        draw.texture(...renderer.bounds.fit(assets.texFactory.size).offset(layout.offset).toArray(), assets.texFactory);
 
         // 2. アイテムプールの描画
         itemRenderer.initPass();
