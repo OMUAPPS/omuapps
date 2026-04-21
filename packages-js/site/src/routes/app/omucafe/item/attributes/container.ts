@@ -20,6 +20,7 @@ export interface AttrContainer {
     mask?: AssetTransform;
     maskInverted?: boolean;
     layerOrder: 'upper' | 'lower';
+    orderingAnchor: 'top' | 'center' | 'bottom';
     constraints?: {
         maxItems?: number;
         tags?: string[];
@@ -92,6 +93,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         return {
             active: true,
             layerOrder: 'lower',
+            orderingAnchor: 'center',
         };
     }
 
@@ -141,8 +143,9 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             }
         }
 
-        if (value.layerOrder !== 'upper' && value.layerOrder !== 'lower') {
-            return { type: 'invalid', message: `無効なレイヤー順序: ${value.layerOrder}` };
+        const layerOrderResult = validateEnum(value.layerOrder, ['upper-top', 'upper-center', 'upper-bottom', 'lower-top', 'lower-center', 'lower-bottom']);
+        if (layerOrderResult.type === 'invalid') {
+            return { type: 'invalid', message: `layerOrderが無効: ${value.layerOrder}` };
         }
         return { type: 'valid', value: value };
     }
@@ -229,8 +232,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         }
     }
 
-    async renderPost({ attr, item }: AttributeInvoke<AttrContainer>, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
-        const { draw, matrices } = this.game.pipeline;
+    async renderPost({ attr }: AttributeInvoke<AttrContainer>): Promise<void> {
         const { cover } = attr;
         if (cover) {
             await this.game.renderer.drawAssetTransform(cover);
@@ -449,14 +451,16 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             }
         }
 
+        const anchorYLevel = attr.orderingAnchor === 'top' ? 0 : attr.orderingAnchor === 'bottom' ? 1 : 0.5;
+
         children.sort((a, b) => {
             const aBounds = renderData[a.id]?.bounds;
             const bBounds = renderData[b.id]?.bounds;
 
             if (!aBounds || !bBounds) return 0; // 描画データがない場合は順序を変えない
 
-            const aCenterY = a.transform.offset.y + (aBounds.min.y + aBounds.max.y) / 2;
-            const bCenterY = b.transform.offset.y + (bBounds.min.y + bBounds.max.y) / 2;
+            const aCenterY = a.transform.offset.y + lerp(aBounds.min.y, aBounds.max.y, anchorYLevel);
+            const bCenterY = b.transform.offset.y + lerp(bBounds.min.y, bBounds.max.y, anchorYLevel);
 
             const delta = (bCenterY - aCenterY);
             return attr.layerOrder === 'upper' ? delta : -delta;

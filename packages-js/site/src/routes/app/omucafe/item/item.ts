@@ -217,6 +217,7 @@ export class ItemSystem {
             this.remove(child);
         }
         delete pool.pool.items[item.id];
+        this.game.itemRenderer.deleteItemRender(item.id);
     }
 
     public get(id: string) {

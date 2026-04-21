@@ -43,6 +43,9 @@ export const PALETTE_RGB = {
         GRADIENT_2: Vec4.fromColorHex('#FFF'),
         POINTS_BG: Vec4.fromColorHex('#FFA4A4'),
     },
+    CUSTOMER: {
+        BUBBLE_BG: Vec4.fromColorHex('#f6f2eb'),
+    },
 };
 
 // https://gist.github.com/dkaraush/65d19d61396f5f3cd8ba7d1b4b3c9432

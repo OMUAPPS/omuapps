@@ -3,11 +3,11 @@ import { AABB2 } from '$lib/math/aabb2';
 import { clamp, lerp } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
 import { Timer } from '$lib/timer';
-import { PALETTE_RGB } from '../../colors';
-import type { Game } from '../../core/game';
-import type { BufferedMap, Order } from '../../core/game-state';
-import type { Action } from '../../core/input-system';
-import { SCENE_CONFIG, type SceneKitchenData } from './config';
+import { PALETTE_RGB } from '../../../colors';
+import type { Game } from '../../../core/game';
+import type { BufferedMap, Order } from '../../../core/game-state';
+import type { Action } from '../../../core/input-system';
+import { SCENE_CONFIG, type SceneKitchenData } from '../config';
 
 /**
  * キッチン内のディスプレイ（注文リスト、操作パネル等）を管理・描画するクラス
@@ -144,7 +144,7 @@ export class Display {
             offsetY += 30;
 
             // 注文アイテム
-            for (const item of order.items) {
+            for (const item of order.products) {
                 draw.fontWeight = '500';
                 draw.fontSize = 24;
                 await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY), `・ ${item.name}`, Vec2.ZERO, PALETTE_RGB.ACCENT);

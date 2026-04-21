@@ -212,6 +212,21 @@
             value: 'upper',
         },
     }} />
+    <small>前後関係の基準点</small>
+    <Combobox bind:value={attr.orderingAnchor} options={{
+        top: {
+            label: '上を基準',
+            value: 'top',
+        },
+        center: {
+            label: '中央を基準',
+            value: 'center',
+        },
+        bottom: {
+            label: '下を基準',
+            value: 'bottom',
+        },
+    }} />
 {/if}
 
 <style lang="scss">

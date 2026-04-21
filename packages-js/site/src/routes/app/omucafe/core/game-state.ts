@@ -3,6 +3,7 @@ import { AABB2 } from '$lib/math/aabb2';
 import { invLerp, lerp } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
 import type { Vec4Like } from '$lib/math/vec4';
+import type { Models } from '@omujs/chat';
 import type { Identifier } from '@omujs/omu';
 import type { Registry } from '@omujs/omu/api/registry';
 import type { Signal } from '@omujs/omu/api/signal';
@@ -601,9 +602,10 @@ export interface Product {
 export interface Order {
     id: string;
     customer: Customer;
-    items: Product[];
+    products: Product[];
     timestamp: number;
     startTime: number;
+    lastMessage?: Models.MessageJson;
 }
 
 export interface OrderState {

@@ -66,15 +66,17 @@ export class InputSystem {
         // パネル全体のサイズ
         const menuWidth = maxTextWidth + padding * 3 + 12; // テキスト幅 + 余白 + アクセントライン用のスペース
         const menuHeight = this.actions.length * itemHeight + padding * 2;
-
-        // マウスカーソルから少し右下にずらして表示
-        const startX = 16;
-        const startY = 24;
-
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
+
+        const scale = 1 / this.game.renderer.scale;
+        const isOverflowX = mouse.x * scale > this.game.renderer.bounds.max.x;
+        const isOverflowY = mouse.y + menuHeight * scale > this.game.renderer.bounds.max.y;
+        const startX = isOverflowX ? -menuWidth / 2 - 16 : 16;
+        const startY = isOverflowY ? -menuHeight - 16 : 24;
+
         matrices.model.push();
         matrices.model.translate(mouse.x - menuWidth / 2, mouse.y, 1);
-        matrices.model.scale(1 / this.game.renderer.scale, 1 / this.game.renderer.scale, 1);
+        matrices.model.scale(scale, scale, 1);
 
         draw.texture(
             startX, startY,

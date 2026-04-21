@@ -30,7 +30,7 @@
     </div>
     <p class="center">------------------------------------</p>
     <br>
-    {#each receipt.order.items as item, index (index)}
+    {#each receipt.order.products as item, index (index)}
         <div class="item">
             <span>{item.name} #{item.id}</span>
             <small>1</small>

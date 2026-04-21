@@ -186,7 +186,6 @@ export class ItemRenderer {
     }
 
     public async getItemRender(item: Item): Promise<ItemRenderState> {
-        // 1. ロードチェック（ここはWebGL無関係なので並列化可能だが、現状維持で安全策）
         const tasks = await this.game.item.loadItem(item);
         if (tasks.length > 0) return { type: 'loading', tasks, update: item.update };
 
@@ -228,6 +227,15 @@ export class ItemRenderer {
         const renderedState: ItemRenderState = { type: 'rendered', render, update: item.update };
         this.itemRender.set(item.id, renderedState);
         return renderedState;
+    }
+
+    public async deleteItemRender(id: string) {
+        const renderState = this.itemRender.get(id);
+        if (renderState?.type === 'rendered') {
+            renderState.render.texture.delete();
+            renderState.render.target.delete();
+        }
+        this.itemRender.delete(id);
     }
 
     private async gatherChildrenItemRender(item: Item): Promise<Record<string, ItemRender> | undefined> {

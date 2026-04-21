@@ -706,6 +706,10 @@ export class GlFramebuffer {
         ctx.putImageData(imageData, 0, 0);
         return canvas.convertToBlob({ type });
     }
+
+    public delete() {
+        this.gl.deleteFramebuffer(this.framebuffer);
+    }
 }
 
 type TaskCallback<T> = () => T;

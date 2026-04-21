@@ -3,7 +3,7 @@ import { ProxyDictionaryLoader } from '$lib/token-helper';
 import kuromoji from '@2ji-han/kuromoji.js';
 import type { Tokenizer } from '@2ji-han/kuromoji.js/tokenizer.js';
 import { Chat, ChatEvents } from '@omujs/chat';
-import type { Message } from '@omujs/chat/models';
+import { Message } from '@omujs/chat/models';
 import { chat as chatStore } from '@omujs/ui';
 import { get } from 'svelte/store';
 import type { Game } from '../core/game';
@@ -49,8 +49,6 @@ export class OrderSystem {
         if (!author) return;
 
         // メッセージから商品を抽出
-        const match = this.matchOrderText(message.text);
-        if (!match) return;
 
         const authorKey = author.id.key();
         const fallbackName = author.metadata?.screen_id ?? author.id.path.at(-1) ?? 'Unknown';
@@ -63,28 +61,35 @@ export class OrderSystem {
             },
         });
 
-        const existingOrder = this.getOrderByAuthorId(authorKey);
+        const existingOrder = this.getOrderByCustomerId(customer.id);
+
+        if (existingOrder) {
+            existingOrder.lastMessage = Message.serialize(message);
+        }
 
         let order: Order;
+
+        const match = this.matchOrderText(message.text);
+        if (!match) return;
 
         if (existingOrder) {
             order = {
                 ...existingOrder,
-                items: [...existingOrder.items, ...match.products],
+                products: [...existingOrder.products, ...match.products],
             };
         } else {
             // 新規オーダーの作成
             customer.stats.totalOrders++;
             order = {
                 id: generateUid(),
-                items: match.products,
+                products: match.products,
                 timestamp: Timer.now(),
+                startTime: Timer.now(),
+                lastMessage: Message.serialize(message),
                 customer,
             };
+            this.game.states.orders.set(order.id, order);
         }
-
-        // 状態を更新
-        this.game.states.orders.set(order.id, order);
 
         this.game.audio.start({
             asset: {
@@ -126,9 +131,10 @@ export class OrderSystem {
     /**
      * 指定した Author ID を持つ既存の注文を取得する
      */
-    private getOrderByAuthorId(id: string): Order | undefined {
-        for (const order of this.game.states.orders.values()) {
+    private getOrderByCustomerId(id: string): Order | undefined {
+        for (const [key, order] of this.game.states.orders.entries()) {
             if (order.customer.id === id) {
+                const order = this.game.states.orders.get(key);
                 return order as Order;
             }
         }

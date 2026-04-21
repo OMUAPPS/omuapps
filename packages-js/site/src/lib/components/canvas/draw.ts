@@ -3,6 +3,7 @@ import { Bezier } from '$lib/math/bezier.js';
 import { lerp, TAU } from '$lib/math/math.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
+import { Timer } from '$lib/timer.js';
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlShader, GlTexture } from './glcontext.js';
 import type { Matrices } from './matrices.js';
 
@@ -531,12 +532,51 @@ void main() {
 }
 `;
 
-type TextTexture = {
+interface CachedTexture {
     texture: GlTexture;
-    width: number;
-    height: number;
-    font: string;
-};
+    lastUsed: number;
+}
+
+class CachedTexturePool {
+    private cache = new Map<string, CachedTexture>();
+
+    constructor(
+        private timeout: number = 60000,
+    ) {}
+
+    private clean() {
+        const oldestTexture = this.cache.size > 0 ? Array.from(this.cache.entries()).reduce((oldest, entry) => entry[1].lastUsed < oldest[1].lastUsed ? entry : oldest) : null;
+        if (!oldestTexture) return;
+        const elapsed = Timer.now() - oldestTexture[1].lastUsed;
+        if (elapsed > this.timeout) {
+            oldestTexture[1].texture.delete();
+            this.cache.delete(oldestTexture[0]);
+        }
+    }
+
+    get(key: string): GlTexture | null {
+        this.clean();
+        const cached = this.cache.get(key);
+        if (cached) {
+            cached.lastUsed = Timer.now();
+            return cached.texture;
+        }
+        return null;
+    }
+
+    render(key: string, render: () => GlTexture): GlTexture {
+        this.clean();
+        const now = Timer.now();
+        const cached = this.cache.get(key);
+        if (cached) {
+            cached.lastUsed = now;
+            return cached.texture;
+        }
+        const texture = render();
+        this.cache.set(key, { texture, lastUsed: now });
+        return texture;
+    }
+}
 
 export class Draw {
     public readonly vertexShader: GlShader;
@@ -559,8 +599,7 @@ export class Draw {
     private readonly frameBufferTexture: GlTexture;
     private readonly textCanvas: OffscreenCanvas;
     private readonly textContext: OffscreenCanvasRenderingContext2D;
-    private readonly textRenderPool: Map<string, TextTexture> = new Map();
-    private readonly loadedCharacters: Set<string> = new Set();
+    private readonly textRenderPool: CachedTexturePool;
     public fontFamily: string = 'sans-serif';
     public fontSize: number = 10;
     public fontWeight: string = '600';
@@ -570,6 +609,7 @@ export class Draw {
         private readonly matrices: Matrices,
         private readonly glContext: GlContext,
     ) {
+        this.textRenderPool = new CachedTexturePool();
         this.vertexShader = glContext.createShader({ type: 'vertex', source: VERTEX_SHADER });
         this.colorProgram = this.createProgram(COLOR_FRAGMENT_SHADER);
         this.textureProgram = this.createProgram(TEXTURE_FRAGMENT_SHADER);
@@ -671,7 +711,7 @@ export class Draw {
         return data;
     }
 
-    private async generateTextTexture(text: string): Promise<TextTexture | null> {
+    private generateTextTexture(text: string): GlTexture | null {
         const key = JSON.stringify({ font: this.font, text });
         const existing = this.textRenderPool.get(key);
         if (existing) {
@@ -692,50 +732,43 @@ export class Draw {
         if (dimensions.x === 0 || dimensions.y === 0) {
             return null;
         }
-        const texture = this.glContext.createTexture();
-        texture.use(() => {
-            texture.setImage(this.unpackMultipliedAlpha(), {
-                width: dimensions.x,
-                height: dimensions.y,
-                internalFormat: 'rgba',
-                format: 'rgba',
+        return this.textRenderPool.render(key, () => {
+            const texture = this.glContext.createTexture();
+            texture.use(() => {
+                texture.setImage(this.unpackMultipliedAlpha(), {
+                    width: dimensions.x,
+                    height: dimensions.y,
+                    internalFormat: 'rgba',
+                    format: 'rgba',
+                });
+                texture.setParams({
+                    minFilter: 'linear',
+                    magFilter: 'linear',
+                    wrapS: 'clamp-to-edge',
+                    wrapT: 'clamp-to-edge',
+                });
             });
-            texture.setParams({
-                minFilter: 'linear',
-                magFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
-            });
+            return texture;
         });
-        const textTexture: TextTexture = {
-            texture,
-            width: dimensions.x,
-            height: dimensions.y,
-            font: this.fontFamily,
-        };
-        this.textRenderPool.set(key, textTexture);
-        return textTexture;
     }
 
     public async text(left: number, top: number, text: string, color: Vec4Like): Promise<boolean> {
         this.textContext.font = this.font;
-        const textTexture = await this.generateTextTexture(text);
-        if (!textTexture) {
+        const texture = this.generateTextTexture(text);
+        if (!texture) {
             return false;
         }
-        const { width, height, texture } = textTexture;
-        this.textureColor(left, top, left + width, top + height, texture, color);
+        this.textureColor(left, top, left + texture.width, top + texture.height, texture, color);
         return true;
     }
 
     public async textAlign(anchor: Vec2Like, text: string, align: Vec2Like, color?: Vec4Like, stroke?: { width: number; color: Vec4 }): Promise<boolean> {
         this.textContext.font = this.font;
-        const textTexture = await this.generateTextTexture(text);
-        if (!textTexture) {
+        const texture = this.generateTextTexture(text);
+        if (!texture) {
             return false;
         }
-        const { width, height, texture } = textTexture;
-        const pos = Vec2.from(anchor).sub({ x: width * align.x, y: height * align.y });
+        const pos = Vec2.from(anchor).sub({ x: texture.width * align.x, y: texture.height * align.y });
         if (stroke) {
             for (let index = 0; index < 8; index++) {
                 const dx = Math.cos(index / 8 * TAU) * stroke.width;
@@ -743,15 +776,15 @@ export class Draw {
                 this.texture(
                     pos.x + dx,
                     pos.y + dy,
-                    pos.x + dx + width,
-                    pos.y + dy + height,
+                    pos.x + dx + texture.width,
+                    pos.y + dy + texture.height,
                     texture,
                     stroke.color,
                 );
             }
         }
         if (color) {
-            this.texture(pos.x, pos.y, pos.x + width, pos.y + height, texture, color);
+            this.texture(pos.x, pos.y, pos.x + texture.width, pos.y + texture.height, texture, color);
         }
         return true;
     }
