@@ -11,6 +11,7 @@ export type MetadataJson = {
     ended_at?: string;
     first_message_id?: string;
     last_message_id?: string;
+    likes?: number;
 };
 
 export type Status = 'online' | 'reserved' | 'offline';

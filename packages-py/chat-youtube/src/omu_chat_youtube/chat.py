@@ -201,7 +201,13 @@ class YoutubeChatAPI:
                 title = parse_runs(action["updateTitleAction"]["title"])
             if "updateDescriptionAction" in action:
                 description = parse_runs(action["updateDescriptionAction"].get("description"))
+        mutations = data.get("frameworkUpdates", {}).get("entityBatchUpdate", {}).get("mutations", [])
         metadata = RoomMetadata()
+        for mutation in mutations:
+            payload = mutation["payload"]
+            if "likeCountEntity" in payload:
+                likeCountEntity = payload["likeCountEntity"]
+                metadata["likes"] = int(likeCountEntity["likeCountIfIndifferentNumber"])
         if viewer_count:
             metadata["viewers"] = viewer_count
         if title:
@@ -364,9 +370,9 @@ class YoutubeChat(ChatService):
                     continue
                 for author in self.author_fetch_queue:
                     try:
-                        await asyncio.sleep(3)
                         await self.fetch_and_merge_author_metadata(author)
                         await self.chat.authors.update(author)
+                        await asyncio.sleep(3)
                     except Exception as e:
                         logger.error(f"Error fetching metadata for author {author.id}: {e}")
                 self.author_fetch_queue.clear()
