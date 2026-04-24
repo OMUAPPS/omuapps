@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Models } from '@omujs/chat';
     import { chat, ComponentRenderer, Tooltip } from '@omujs/ui';
+    import { onMount } from 'svelte';
     import HeightTransition from './HeightTransition.svelte';
 
     interface Props {
@@ -16,6 +17,13 @@
             author = await $chat.authors.get(entry.authorId.key());
         }
     }
+
+    onMount(() => {
+        return $chat.authors.listen((authors) => {
+            if (!entry.authorId) return;
+            author = authors.get(entry.authorId.key());
+        });
+    });
 
     load();
 
@@ -39,7 +47,7 @@
         <div class="body">
             {#if author}
                 <span class="name">
-                    {author.name}
+                    {author.name ?? author.metadata.screen_id ?? author.id.path.at(-1)}
                 </span>
             {/if}
             {#if entry.content}
