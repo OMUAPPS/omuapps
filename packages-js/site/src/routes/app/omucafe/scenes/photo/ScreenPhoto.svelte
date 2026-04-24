@@ -203,6 +203,10 @@
                     アイテムの大きさ
                     <Slider bind:value={$config.canvas.sacle} min={0.5} max={2.0} step={0.01} />
                 </label>
+                <label>
+                    アイテムの回転
+                    <Slider bind:value={$config.canvas.rotation} min={-15} max={15} step={1} />
+                </label>
             {/if}
         </div>
         <div class="toggles">

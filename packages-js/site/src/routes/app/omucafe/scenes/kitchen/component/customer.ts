@@ -273,6 +273,7 @@ export class CustomerRenderer {
             if (isHovered) {
                 onActionHovered({
                     title: existing ? `${new Date(existing.timestamp).toLocaleString()}に記録 (スタンプを外す)` : 'スタンプを押す',
+                    id: `toggle-stamp-${index}`,
                     priority: 0,
                     invoke: async () => {
                         customer.stats.stamps[index] = existing ? null : { timestamp: Timer.now() };

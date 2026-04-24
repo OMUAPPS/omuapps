@@ -300,7 +300,6 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
             const bgAsset = await this.game.asset.getTextureByUrl(asset_vertical_overlay).promise;
             matrices.model.scope(() => {
                 matrices.model.scale(LAYOUT.PHOTO_SCALE, LAYOUT.PHOTO_SCALE, 1);
-                matrices.model.rotate(Axis.Z_POS.rotateDeg(LAYOUT.OVERLAY_ROTATION_DEG));
                 draw.texture(...bounds.offset({ x: 0, y: 200 }).toArray(), bgAsset.unwrap.texture);
             });
 
@@ -401,7 +400,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
 
         const transform = Transform2D.IDENTITY
             .translate(frameBounds.center)
-            .rotate(BetterMath.toRadians(-LAYOUT.PHOTO_ROTATION_DEG / 2))
+            .rotate(BetterMath.toRadians(this.game.states.config.value.canvas.rotation))
             .scale(scale);
 
         const poolOptions: PoolOptions = {

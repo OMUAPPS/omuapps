@@ -251,7 +251,7 @@ export class GameRenderer {
         draw.fontSize = 48;
         draw.fontFamily = 'Zen Maru Gothic';
         await draw.textAlign(
-            Vec2.ZERO,
+            { x: 0, y: offset / 32 },
             current.options.title,
             Vec2.CENTER,
             PALETTE_RGB.ACCENT.with({ w: Math.sin((time / 3) * Math.PI) }),

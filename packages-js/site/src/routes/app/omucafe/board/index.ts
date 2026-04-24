@@ -32,7 +32,7 @@ export class BoardRenderer {
 
         const time = Timer.now();
         const t = time / CONFIG.DURATION_MS % 1;
-        const opacity = Math.pow(Math.min(1, Math.min(Math.abs(t), Math.abs(1 - t)) * 20), 2);
+        const opacity = pageCount > 1 ? Math.pow(Math.min(1, Math.min(Math.abs(t), Math.abs(1 - t)) * 20), 2) : 1;
         const pageIndex = Math.floor(time / CONFIG.DURATION_MS) % pageCount;
 
         if (pageCount > 1) {

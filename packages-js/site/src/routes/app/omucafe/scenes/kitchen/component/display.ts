@@ -46,6 +46,7 @@ export class Display {
 
         await this.renderButton('管理画面', controlPanelButton, {
             title: 'データの管理など',
+            id: 'control-panel',
             priority: 0,
             invoke: async () => {
                 this.game.startTransition({ type: 'settings', prev: { type: 'kitchen' } });
@@ -54,6 +55,7 @@ export class Display {
 
         await this.renderButton('戻る', backButton, {
             title: '編集を終える',
+            id: 'exit-edit-mode',
             priority: 0,
             invoke: async () => { scene.editMode = undefined; },
         });
@@ -77,6 +79,7 @@ export class Display {
 
         await this.renderButton('店の設定', setupButton, {
             title: '店の設定をする',
+            id: 'setup-kitchen',
             priority: 1,
             invoke: async () => {
                 scene.editMode = { type: 'kitchen', timestamp: Timer.now() };
@@ -85,9 +88,13 @@ export class Display {
 
         await this.renderButton('商品開発', factoryButton, {
             title: '商品開発へ移動',
+            id: 'go-to-factory',
             priority: 1,
             invoke: async () => {
-                this.game.startTransition({ type: 'factory' });
+                this.game.startTransition({ type: 'factory' }, {
+                    title: '研究所へ移動中…',
+                    duration: 750,
+                });
             },
         });
     }
@@ -184,6 +191,7 @@ export class Display {
             const orderBounds = new AABB2(new Vec2(bounds.min.x, minY), new Vec2(bounds.max.x, offsetY));
             if (orderBounds.contains(mouse)) {
                 this.action = {
+                    id: `view-order-${order.id}`,
                     title: 'クリックで納品',
                     priority: 0,
                     invoke: async () => await this.game.scene.photo.openPhotoMode(order),

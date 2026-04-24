@@ -548,6 +548,7 @@ interface Config {
     };
     canvas: {
         sacle: number;
+        rotation: number;
         brush: {
             color: Vec4Like;
             width: number;
@@ -713,6 +714,7 @@ export class GameState {
             default: {
                 canvas: {
                     sacle: 1,
+                    rotation: 0,
                     brush: {
                         color: PALETTE_RGB.ACCENT,
                         width: 10,
@@ -733,6 +735,7 @@ export class GameState {
                 if (!config.canvas) {
                     config.canvas = {
                         sacle: 1,
+                        rotation: 0,
                         brush: {
                             color: PALETTE_RGB.ACCENT,
                             width: 10,

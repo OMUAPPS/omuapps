@@ -12,77 +12,86 @@
     }: Props = $props();
 
     const game = Game.getInstance();
-    let audio = $derived(clip ? game.asset.getUrl(clip.asset) : undefined);
 </script>
 
-<div class="edit">
-    {#if clip}
-        <span>
-            <Button onclick={() => {
-                clip = undefined;
-            }} primary>
-                削除
-            </Button>
-        </span>
-        {#await audio?.promise then audio}
-            {#if audio?.type === 'ready'}
-                <audio controls src={audio.data}></audio>
-            {/if}
-        {/await}
-    {:else}
-        <FileDrop accept="audio/*" handle={async (files) => {
-            const file = files[0];
+{#if !clip}
+    <FileDrop accept="audio/*" handle={async (files) => {
+        if (files.length > 1) {
+            const clips: AudioClip[] = [];
+            for (const file of files) {
+                clips.push({
+                    type: 'single',
+                    asset: await game.asset.uploadFile(file),
+                    start: 0,
+                    duration: 10,
+                });
+            }
             clip = {
-                asset: await game.asset.uploadFile(file),
+                type: 'random',
+                clips,
+            };
+        } else {
+            clip = {
+                type: 'single',
+                asset: await game.asset.uploadFile(files[0]),
                 start: 0,
                 duration: 10,
             };
-        }} primary>
-            変更する
+        }
+    }} primary multiple>
+        変更する
+    </FileDrop>
+{:else}
+    {@render drawClip(clip, () => {
+        clip = undefined;
+    })}
+{/if}
+{#snippet drawClip(segment: AudioClip, remove: () => void)}
+    {#if segment.type === 'single'}
+        {@const audio = game.asset.getUrl(segment.asset)}
+        <div class="edit">
+            <span>
+                <Button onclick={remove} primary>
+                    削除
+                </Button>
+            </span>
+            {#await audio?.promise then audio}
+                {#if audio?.type === 'ready'}
+                    <audio controls src={audio.data}></audio>
+                {/if}
+            {/await}
+        </div>
+    {:else if segment.type === 'random'}
+        {#each segment.clips as single, index (index)}
+            {@render drawClip(single, () => {
+                segment.clips.splice(index, 1);
+                segment.clips = [...segment.clips];
+                if (segment.clips.length === 0) {
+                    clip = undefined;
+                }
+            })}
+        {/each}
+        <FileDrop accept="audio/*" handle={async (files) => {
+            if (files.length > 0) {
+                const file = files[0];
+                segment.clips.push({
+                    type: 'single',
+                    asset: await game.asset.uploadFile(file),
+                    start: 0,
+                    duration: 10,
+                });
+                segment.clips = [...segment.clips];
+            }
+        }} primary multiple>
+            追加する
         </FileDrop>
     {/if}
-</div>
+{/snippet}
 
 <style lang="scss">
     .edit {
         display: flex;
         justify-content: space-between;
         align-items: center;
-    }
-
-    .image {
-        position: relative;
-        background-image:
-        conic-gradient(
-            rgba(238, 238, 238, 1) 0deg 90deg,
-            rgba(255, 255, 255, 1) 90deg 180deg,
-            rgba(238, 238, 238, 1) 180deg 270deg,
-            rgba(255, 255, 255, 1) 270deg 360deg
-        );
-        background-size: 32px 32px;
-        background-position: 0 0;
-        outline: 1px solid var(--color-outline);
-        height: 8rem;
-        width: 8rem;
-
-        > img {
-            height: 8rem;
-            width: 8rem;
-            object-fit: contain;
-        }
-    }
-
-    button {
-        visibility: hidden;
-        background: rgba($color: #fff, $alpha: 0.5);
-        border: none;
-        font-weight: 600;
-        font-size: 1rem;
-        color: var(--color-1);
-    }
-
-    .image:hover > button {
-        visibility: visible;
-        cursor: pointer;
     }
 </style>

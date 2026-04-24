@@ -56,7 +56,7 @@
         </div>
     </div>
 {:else}
-    <button class="chat" onclick={() => {
+    <button class="chat" data-input onclick={() => {
         isOpen = true;
     }} title="" style="position: fixed; right: 20px; bottom: 20px;">
         <Tooltip>

@@ -14,7 +14,10 @@
     let { game, scene }: Props = $props();
 
     function goBack() {
-        game.startTransition({ type: 'kitchen' });
+        game.startTransition({ type: 'kitchen' }, {
+            title: 'キッチンへ移動中…',
+            duration: 750,
+        });
     }
 
 </script>
