@@ -8,7 +8,7 @@ import type { Identifier } from '@omujs/omu';
 import type { Registry } from '@omujs/omu/api/registry';
 import type { Signal } from '@omujs/omu/api/signal';
 import type { Table } from '@omujs/omu/api/table';
-import { ByteReader, ByteWriter, type JsonType } from '@omujs/omu/serialize';
+import { ByteReader, ByteWriter, Serializer, type JsonType } from '@omujs/omu/serialize';
 import { writable, type Writable } from 'svelte/store';
 import { PALETTE_RGB } from '../colors';
 import type { Item } from '../item';
@@ -547,6 +547,7 @@ interface Config {
         overlay_uuid?: string;
     };
     canvas: {
+        sacle: number;
         brush: {
             color: Vec4Like;
             width: number;
@@ -711,6 +712,7 @@ export class GameState {
         const config = this.register(new BufferedRegistry(omu.registries.json<Config>('config', {
             default: {
                 canvas: {
+                    sacle: 1,
                     brush: {
                         color: PALETTE_RGB.ACCENT,
                         width: 10,
@@ -727,6 +729,30 @@ export class GameState {
                     },
                 },
             },
+            serializer: Serializer.transform<Config>((config) => {
+                if (!config.canvas) {
+                    config.canvas = {
+                        sacle: 1,
+                        brush: {
+                            color: PALETTE_RGB.ACCENT,
+                            width: 10,
+                        },
+                        eraser: {
+                            width: 20,
+                        },
+                    };
+                }
+                if (!config.photo) {
+                    config.photo = {
+                        frame: true,
+                        effects: {
+                            bloom: true,
+                            flash: true,
+                        },
+                    };
+                }
+                return config;
+            }),
         }), listen));
         const skin = this.register(new BufferedRegistry(omu.registries.json<KitchenSkin>('skin', {
             default: {

@@ -71,6 +71,15 @@
             <div class="actions">
                 <Button primary onclick={download}>
                     ダウンロード
+                    <i class="ti ti-download"></i>
+                </Button>
+                <Button primary onclick={() => {
+                    game.addTask(async () => {
+                        game.states.exportPool.value.items = {};
+                    });
+                }}>
+                    新しい箱を用意する
+                    <i class="ti ti-plus"></i>
                 </Button>
             </div>
         </div>
@@ -136,5 +145,8 @@
 
     .actions {
         margin-top: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
     }
 </style>

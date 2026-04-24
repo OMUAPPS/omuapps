@@ -28,7 +28,6 @@ export class FridgeSystem {
 
     public async render() {
         const { matrices, draw, input } = this.game.pipeline;
-        const { renderer } = this.game;
         const transform = new Transform2D([
             { x: 1, y: 0 },
             { x: 0, y: 1 },
@@ -36,7 +35,9 @@ export class FridgeSystem {
         ]);
         const scale = 1.75;
         const renderBounds = transform.getMat4().transformAABB2(this.bounds);
-        this.hovered = renderBounds.contains(matrices.getViewToWorld().transform2(input.mouse.pos));
+        if (input.mouse.entered) {
+            this.hovered = renderBounds.contains(matrices.getViewToWorld().transform2(input.mouse.pos));
+        }
         const { texture: fridgeTop } = (await this.game.asset.getTextureByUrl(fridge_top).promise).unwrap;
         const { texture: fridgeStep } = (await this.game.asset.getTextureByUrl(fridge_step).promise).unwrap;
         const { texture: fridgeBottom } = (await this.game.asset.getTextureByUrl(fridge_bottom).promise).unwrap;
@@ -75,7 +76,9 @@ export class FridgeSystem {
             ordering: 'latest',
         };
         if (event.kind === 'mouse-wheel' && this.hovered) {
-            this.scroll = clamp(this.scroll + event.delta, 0, this.bounds.height - CLIENT_WORLD_BOUNDS.max.y * 2);
+            if (event.mouse.entered) {
+                this.scroll = clamp(this.scroll + event.delta, 0, this.bounds.height - CLIENT_WORLD_BOUNDS.max.y * 2);
+            }
         }
         await this.game.item.handleMouse(this.pool, options, event);
     }

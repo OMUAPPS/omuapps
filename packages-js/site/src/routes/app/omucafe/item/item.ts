@@ -397,6 +397,7 @@ export class ItemSystem {
             event.kind === 'mouse-wheel';
 
         if (!isMouse) return;
+        if (!event.mouse.entered) return;
 
         const { matrices } = this.game.pipeline;
         const view = getTransform(options.transform).getMat4().inverse().multiply(matrices.getViewToWorld());
@@ -463,6 +464,7 @@ export class ItemSystem {
     private processHeldItemBounds(pool: ItemPool, options: PoolOptions, localPos: Vec2Like) {
         const isInBound = AABB2.from(options.bounds).contains(localPos);
         if (!isInBound || !this.states.held || !this.game.itemRenderer.renderPass) return;
+        if (pool.id !== 'fridge' && this.game.fridge.hovered) return;
 
         const scene = this.game.states.scene.value;
         const held = this.items.get(this.states.held);
@@ -471,6 +473,7 @@ export class ItemSystem {
         if (scene.type !== 'factory' && pool.id === 'fridge') {
             this.inputPass!.actions.push({
                 title: '戻す',
+                id: `return-${held.id}-to-fridge`,
                 priority: 0,
                 invoke: async () => {
                     await this.dropItem();
@@ -479,10 +482,15 @@ export class ItemSystem {
             });
             return;
         }
-
+        if (pool.id === 'fridge' && this.states.hovered) {
+            return;
+        }
         this.inputPass!.actions.push({
             title: `${options.name}に置く`,
-            priority: pool.id === 'export' ? 1000 : 0,
+            id: `drop-${held.id}-into-${pool.id}`,
+            priority: pool.id === 'export'
+                ? 1000
+                : pool.id === 'fridge' ? 300 : 0,
             invoke: async () => {
                 await this.dropItem();
                 this.setPool(held, pool);

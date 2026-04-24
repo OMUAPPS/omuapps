@@ -11,7 +11,6 @@ import type { Action } from '../../core/input-system';
 import type { ItemPool, PoolOptions } from '../../item/item';
 import client_background from '../../resources/client_background.png';
 import type { SceneHandler } from '../scene';
-import { BoardRenderer } from './component/board';
 import { CustomerRenderer } from './component/customer';
 import { Display } from './component/display';
 import { ParticleRenderer } from './component/particle';
@@ -22,6 +21,8 @@ import asset_vertical_kitchen from './img/asset_vertical_kitchen.png';
 import client_counter from './img/client_counter.png';
 import client_kitchen from './img/client_kitchen.png';
 import ScreenKitchen from './ScreenKitchen.svelte';
+
+export type { SceneKitchenData };
 
 export interface SceneLayout {
     center: Vec2;
@@ -89,13 +90,11 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
     // 抽出したレンダラーのインスタンス
     private particleRenderer: ParticleRenderer;
     private customerRenderer: CustomerRenderer;
-    private boardRenderer: BoardRenderer;
 
     constructor(private readonly game: Game) {
         this.display = new Display(this.game);
         this.particleRenderer = new ParticleRenderer(this.game);
         this.customerRenderer = new CustomerRenderer(this.game);
-        this.boardRenderer = new BoardRenderer(this.game);
     }
 
     private async loadAssets(): Promise<SceneAssetsCommon> {
@@ -207,7 +206,7 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         await fridge.render();
         await itemRenderer.renderHeld();
 
-        await this.boardRenderer.render();
+        await this.game.boardRenderer.render();
         this.particleRenderer.render();
     }
 

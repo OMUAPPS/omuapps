@@ -204,7 +204,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         const isHovered = hoveringId === item.id ||
                          (hoveringItem && this.game.item.getParents(hoveringItem).includes(item));
 
-        if (isHovered && heldItem && await this.isItemWithinLimits(item, render, attr, heldItem)) {
+        if (isHovered && heldItem && await this.isItemWithinLimits(item, render, attr, heldItem) && this.game.input.current?.id.includes(item.id)) {
             const { min, max } = render.renderBounds;
             const { texture } = render;
 
@@ -212,7 +212,22 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         }
 
         if (isHovered && this.game.side === 'client') {
-            this.renderChildrenToTarget(children, Vec4.ONE.with({ w: 0.1 }));
+            const { draw, matrices } = this.game.pipeline;
+
+            for (const [id, renderData] of Object.entries(children)) {
+                const child = this.game.item.items.get(id);
+                if (!child) continue;
+
+                matrices.model.scope(() => {
+                    matrices.model.multiply(getTransform(child.transform).getMat4());
+                    draw.texture(
+                        renderData.renderBounds.min.x, renderData.renderBounds.min.y,
+                        renderData.renderBounds.max.x, renderData.renderBounds.max.y,
+                        renderData.texture,
+                        Vec4.ONE.with({ w: child.id === states.hovered ? 0.5 : 0.1 }),
+                    );
+                });
+            }
         }
         const { mask } = attr;
         if (mask && scene.type === 'factory' && scene.selecting?.type === 'edit_item' && scene.selecting.itemId === item.id) {
@@ -335,7 +350,8 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         if (isHovered && await this.isItemWithinLimits(item, renderResult.render, attr, heldItem)) {
             ctx.actions.push({
                 title: `${item.name}に乗せる`,
-                priority: 200,
+                id: `container-${item.id}`,
+                priority: item.pool === 'fridge' ? 400 : 200,
                 invoke: async () => {
                     this.game.item.dropItem();
                     this.game.item.attachItem(item, heldItem);

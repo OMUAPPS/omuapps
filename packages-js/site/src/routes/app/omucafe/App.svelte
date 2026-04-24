@@ -2,6 +2,7 @@
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import type { RenderPipeline } from '$lib/components/canvas/pipeline';
     import { fade } from 'svelte/transition';
+    import Chat from './Chat.svelte';
     import { Game } from './core/game';
     import { GameState } from './core/game-state';
     import { OmucafeApp } from './omucafe-app';
@@ -32,15 +33,12 @@
             {/if}
         {/key}
     {/if}
+    {#if $scene?.type !== 'main_menu'}
+        <Chat />
+    {/if}
 </main>
 
 <style lang="scss">
-    .debug {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-    }
-
     main {
         position: absolute;
         inset: 0;

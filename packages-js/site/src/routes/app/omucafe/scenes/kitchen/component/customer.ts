@@ -8,6 +8,7 @@ import { Vec4 } from '$lib/math/vec4';
 import { ARC4 } from '$lib/random';
 import { Timer } from '$lib/timer';
 import { Content, Message } from '@omujs/chat/models';
+import { elasticOut } from 'svelte/easing';
 import { PALETTE_RGB } from '../../../colors';
 import type { Game } from '../../../core/game';
 import type { Customer, Order } from '../../../core/game-state';
@@ -50,6 +51,7 @@ export class CustomerRenderer {
         const [firstOrder] = orders;
         const customer = this.game.states.customers.get(firstOrder.customer.id);
         if (!customer) return;
+        this.game.pipeline.draw.fontFamily = 'Zen Maru Gothic';
 
         await this.drawCard(customer, firstOrder, onActionHovered);
         await this.drawAvatar(customer, firstOrder);
@@ -63,8 +65,7 @@ export class CustomerRenderer {
     }
 
     private async drawCard(customer: Customer, order: Order, onActionHovered: (action: Action) => void) {
-        const { asset } = this.game;
-        const { draw, matrices, input } = this.game.pipeline;
+        const { matrices, input } = this.game.pipeline;
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
 
         const elapsed = Timer.now() - order.timestamp;
@@ -76,11 +77,11 @@ export class CustomerRenderer {
         const bounds = AABB2.fromSize({ width: CustomerRenderer.NAMETAG_WIDTH, height: CustomerRenderer.NAMETAG_HEIGHT })
             .scale(1.5).setAt(Vec2.CENTER, { x: -1100, y: -500 });
 
-        this.drawBackground(bounds, draw);
+        this.drawBackground(bounds);
         const [infoBounds, pointsBounds] = bounds.split({ direction: 'y', ratio: 0.6 });
 
-        await this.drawCustomerInfo(infoBounds, customer, asset, draw);
-        this.drawPointsSystem(pointsBounds, customer, mouse, draw, onActionHovered);
+        await this.drawCustomerInfo(infoBounds, customer);
+        await this.drawPointsSystem(pointsBounds, customer, mouse, onActionHovered);
 
         matrices.model.pop();
     }
@@ -103,7 +104,7 @@ export class CustomerRenderer {
         const { draw } = this.game.pipeline;
         const texture = await this.getCustomerAvatar(customer);
         const movementY = Math.sin(elapsed / 1000 * Math.PI) * 10;
-        const bounds = AABB2.fromSize(texture).setAt({ x: 0.5, y: 0.5 }, { x: -500, y: -400 + movementY });
+        const bounds = AABB2.fromSize(texture).setAt({ x: 0.5, y: 0.5 }, { x: -450, y: -400 + movementY });
         draw.texture(...bounds.toArray(), texture, Vec4.ONE.with({ w: opacity }));
     }
 
@@ -115,7 +116,7 @@ export class CustomerRenderer {
         const radius = 150;
         const angle = BetterMath.toRadians(180 - 15);
         const dir = 0.4;
-        const center = new Vec2(-50, -500 + Math.sin(elapsed / 1000 * Math.PI - 0.5) * 10);
+        const center = new Vec2(0, -500 + Math.sin(elapsed / 1000 * Math.PI - 0.5) * 10);
         draw.circle(center.x, center.y, 0, 200, PALETTE_RGB.CUSTOMER.BUBBLE_BG.with({ w: opacity }));
         draw.triangle(
             center.add(Vec2.RIGHT.scale(radius).rotate(angle - dir)),
@@ -136,6 +137,8 @@ export class CustomerRenderer {
         }
     }
 
+    private messageBounds: AABB2 = AABB2.ZEROONE;
+
     private async drawMessage(message: Message) {
         const { draw } = this.game.pipeline;
         const { content } = message;
@@ -143,11 +146,11 @@ export class CustomerRenderer {
         const elapsed = Timer.now() - message.createdAt.getTime();
         if (elapsed < 0) return;
         const animationY = 60 / (elapsed / 1000 + 1);
-        const lineHeight = 28;
+        const lineHeight = 32;
         draw.fontSize = lineHeight;
         let offsetX = 0;
-        let offsetY = -100;
-        const anchor = new Vec2(-250, -500 + animationY);
+        let offsetY = 0;
+        const anchor = new Vec2(-200, -500 + animationY);
         const maxWidth = 300;
         const processLineBreak = (width: number) => {
             if (offsetX + width > maxWidth) {
@@ -179,8 +182,10 @@ export class CustomerRenderer {
                 for (const line of lines) {
                     const metrics = draw.measureTextActual(line);
                     processLineBreak(metrics.width);
-                    await draw.textAlign(anchor.add({ x: offsetX + 2, y: offsetY + 2 }), line, { x: 0, y: 0.5 }, PALETTE_RGB.ACCENT);
-                    await draw.textAlign(anchor.add({ x: offsetX, y: offsetY }), line, { x: 0, y: 0.5 }, Vec4.ONE);
+                    await draw.textAlign(anchor.add({ x: offsetX, y: offsetY }), line, { x: 0, y: 0.5 }, Vec4.ONE, {
+                        color: PALETTE_RGB.ACCENT,
+                        width: 4,
+                    });
                     offsetX += metrics.width;
                 }
             } else if (component.type === 'image') {
@@ -202,18 +207,22 @@ export class CustomerRenderer {
                 }
             }
         }
+        this.messageBounds = new AABB2(anchor, anchor.add({ x: maxWidth, y: offsetY + lineHeight }));
     }
 
-    private drawBackground(bounds: AABB2, draw: any) {
+    private drawBackground(bounds: AABB2) {
+        const { draw } = this.game.pipeline;
         draw.rectangle(...bounds.offset({ x: 4, y: 32 }).toArray(), PALETTE_RGB.NAMETAG.SHADOW);
         draw.rectangle(...bounds.expand({ x: 2, y: 2 }).toArray(), PALETTE_RGB.NAMETAG.OUTLINE);
         draw.rectangle(...bounds.toArray(), PALETTE_RGB.NAMETAG.BACKGROUND);
     }
 
-    private async drawCustomerInfo(bounds: AABB2, customer: any, asset: any, draw: any) {
+    private async drawCustomerInfo(bounds: AABB2, customer: Customer) {
+        const { asset } = this.game;
+        const { draw } = this.game.pipeline;
         draw.rectangleGradient2(...bounds.toArray(), PALETTE_RGB.NAMETAG.GRADIENT_1, PALETTE_RGB.NAMETAG.GRADIENT_2, Vec2.DOWN);
-        draw.fontFamily = 'Zen Maru Gothic';
         draw.fontSize = 18;
+        draw.fontFamily = 'Zen Maru Gothic';
 
         const nameAnchor = bounds.at({ x: 0.1, y: 0.8 });
         await draw.textAlign(bounds.at({ x: 0.1, y: 0.5 }), '名前', { x: 0, y: 0.5 }, PALETTE_RGB.ACCENT);
@@ -239,8 +248,9 @@ export class CustomerRenderer {
         await draw.textAlign(titleAnchor, 'ポイントカード', { x: 0.5, y: -0.2 }, PALETTE_RGB.ACCENT);
     }
 
-    private drawPointsSystem(bounds: AABB2, customer: any, mouse: Vec2, draw: any, onActionHovered: (action: Action) => void) {
-        draw.rectangle(bounds.min.x, bounds.min.y, bounds.max.x, bounds.min.y + 1, PALETTE_RGB.NAMETAG.OUTLINE);
+    private async drawPointsSystem(bounds: AABB2, customer: Customer, mouse: Vec2, onActionHovered: (action: Action) => void) {
+        const { draw } = this.game.pipeline;
+        draw.rectangle(bounds.min.x, bounds.min.y, bounds.max.x, bounds.min.y + 1, PALETTE_RGB.NAMETAG.BACKGROUND);
         const count = 5;
 
         for (let index = 0; index < count; index++) {
@@ -248,8 +258,17 @@ export class CustomerRenderer {
             const pos = bounds.at({ x: lerp(0.15, 0.85, index / Math.max(1, count - 1)), y: 0.5 });
             const isHovered = pos.distance(mouse) < CustomerRenderer.POINT_RADIUS;
 
-            if (existing) draw.circle(pos.x, pos.y, 0, CustomerRenderer.POINT_RADIUS - 2, PALETTE_RGB.NAMETAG.POINTS_BG);
-            draw.circle(pos.x, pos.y, CustomerRenderer.POINT_RADIUS, CustomerRenderer.POINT_RADIUS + 2, isHovered ? Vec4.ONE : PALETTE_RGB.NAMETAG.POINTS_BG);
+            if (existing) {
+                const elapsed = Timer.now() - existing.timestamp;
+                const t = elasticOut(Math.min(1, elapsed / 500));
+                const radius = lerp(0, CustomerRenderer.POINT_RADIUS, t);
+                draw.circle(pos.x, pos.y, 0, radius, PALETTE_RGB.NAMETAG.POINTS_BG);
+                const textTime = Math.sqrt(Math.min(1, (elapsed - 100) / 50));
+                draw.fontSize = Math.ceil(lerp(64, 32, clamp(textTime, 0, 1)));
+                await draw.textAlign(pos, '✓', { x: 0.5, y: 0.5 }, PALETTE_RGB.NAMETAG.BACKGROUND.with({ w: textTime }));
+            } else {
+                draw.circle(pos.x, pos.y, CustomerRenderer.POINT_RADIUS, CustomerRenderer.POINT_RADIUS + 2, PALETTE_RGB.NAMETAG.POINTS_BG.with({ w: isHovered ? 1 : 0.5 }));
+            }
 
             if (isHovered) {
                 onActionHovered({

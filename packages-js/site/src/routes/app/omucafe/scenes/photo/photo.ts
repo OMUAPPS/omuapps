@@ -233,6 +233,9 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         const overlayBounds = container.fit(ASSET_RESOLUTION);
         const { photoTex, frameBounds, poolOptions } = await this.setupPhotoFrame(scene.pool, overlayBounds);
 
+        const bgAsset2 = await this.game.asset.getTextureByUrl(asset_vertical_background).promise;
+        draw.texture(...overlayBounds.expand({ x: 1, y: 1 }).toArray(), bgAsset2.unwrap.texture);
+
         // ダミー配置とアイテム群の描画
         await this.renderDummyBackground(frameBounds);
 
@@ -259,7 +262,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
 
         const uiOverlayTex = this.game.asset.getTextureByUrl(ui_overlay);
         if (uiOverlayTex.type === 'ready') {
-            draw.texture(...overlayBounds.toArray(), uiOverlayTex.data.texture, PALETTE_RGB.ACCENT.with({ w: 0.4 }));
+            draw.texture(...overlayBounds.toArray(), uiOverlayTex.data.texture, Vec4.ONE.with({ w: 0.8 }));
         }
 
         return poolOptions;
@@ -394,7 +397,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         const photoTex = photoAsset.unwrap.texture;
 
         const frameBounds = container.fit(photoTex.size);
-        const scale = frameBounds.width / photoTex.width;
+        const scale = frameBounds.width / photoTex.width * this.game.states.config.value.canvas.sacle;
 
         const transform = Transform2D.IDENTITY
             .translate(frameBounds.center)
@@ -405,7 +408,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
             pool,
             name: '写真の下',
             transform: transform.toJSON(),
-            bounds: AABB2.fromSize(photoTex).setAt(Vec2.CENTER, Vec2.ZERO).scale(scale * 1.5),
+            bounds: AABB2.fromSize(photoTex).setAt(Vec2.CENTER, Vec2.ZERO).scale(1.5 / scale),
             align: Vec2.CENTER,
             ordering: 'latest',
         };

@@ -2,6 +2,7 @@ import type { InputEvent } from '$lib/components/canvas/pipeline';
 import { AABB2 } from '$lib/math/aabb2';
 import { clamp, lerp } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
+import { Vec4 } from '$lib/math/vec4';
 import { Timer } from '$lib/timer';
 import { PALETTE_RGB } from '../../../colors';
 import type { Game } from '../../../core/game';
@@ -25,6 +26,7 @@ export class Display {
         const { draw, matrices, input } = this.game.pipeline;
         this.action = undefined;
         draw.fontFamily = SCENE_CONFIG.UI.FONT_FAMILY;
+        draw.fontWeight = '600';
 
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
 
@@ -59,13 +61,13 @@ export class Display {
 
     private async renderNormalModeUI(mouse: Vec2, scene: SceneKitchenData) {
         const { orders } = this.game.states;
-        const [listBounds, actionsBounds] = this.bounds.shrink({ x: 50, y: 50 }).split({
+        const [listBounds, actionsBounds] = this.bounds.shrink({ x: 10, y: 50 }).split({
             direction: 'x',
             ratio: 0.5,
             gap: 10,
         });
 
-        await this.renderOrderList(orders, listBounds, mouse);
+        await this.renderOrderList(orders, listBounds.shrink({ x: 30, y: 20 }), mouse);
 
         const [setupButton, factoryButton] = actionsBounds.shrink({ x: 50, y: 50 }).split({
             direction: 'y',
@@ -104,7 +106,7 @@ export class Display {
     }
 
     private async renderOrderList(orders: BufferedMap<Order>, bounds: AABB2, mouse: Vec2) {
-        const { draw } = this.game.pipeline;
+        const { draw, matrices } = this.game.pipeline;
         const entries = Array.from(orders.values());
         const cfg = SCENE_CONFIG.UI.ORDER_LIST;
 
@@ -112,6 +114,7 @@ export class Display {
             draw.fontSize = 16;
             draw.fontWeight = '500';
             await draw.textAlign(bounds.center, '注文はまだありません', Vec2.CENTER, PALETTE_RGB.ACCENT);
+            return;
         }
 
         draw.fontSize = 32;
@@ -119,7 +122,27 @@ export class Display {
         let offsetY = bounds.min.y + this.scroll;
         draw.scissor(this.bounds);
 
+        // 「注文リスト」のタイトルを描画
+        await draw.textAlign(new Vec2(bounds.center.x, offsetY), '注文リスト', Vec2.CENTER, PALETTE_RGB.ACCENT);
+        offsetY += 50;
+
         for (const order of entries) {
+            const elapsed = Timer.now() - order.timestamp - 500;
+            if (elapsed < 0) {
+                continue;
+            }
+            const animationT = Math.pow(Math.min(1, elapsed / 200), 2);
+            const padding = { x: 20, y: 30 };
+            const calculatedHeight = cfg.ITEM_SPACING + 64 + order.products.length * 30 - 20;
+            matrices.model.push();
+            matrices.model.translate((1 - animationT) * 20, 0, 0);
+            // 背景を描画
+            draw.roundedRect(
+                new Vec2(bounds.min.x, offsetY).sub(padding),
+                new Vec2(bounds.max.x, offsetY + calculatedHeight).add(padding),
+                10,
+                PALETTE_RGB.DISPLAY_BG.with({ w: animationT }),
+            );
             const minY = offsetY;
             offsetY += cfg.ITEM_SPACING;
 
@@ -128,31 +151,34 @@ export class Display {
                 const avatarStatus = (await this.game.asset.getTextureByUrl(order.customer.user.avatar).promise);
                 if (avatarStatus.type === 'ready') {
                     const avatarMax = new Vec2(bounds.min.x + cfg.AVATAR_SIZE, offsetY - cfg.ITEM_SPACING + cfg.AVATAR_SIZE);
-                    draw.roundedRectTexture({ x: bounds.min.x, y: offsetY - cfg.ITEM_SPACING }, avatarMax, cfg.AVATAR_SIZE / 2, avatarStatus.data.texture);
+                    draw.roundedRectTexture({ x: bounds.min.x, y: offsetY - cfg.ITEM_SPACING }, avatarMax, cfg.AVATAR_SIZE / 2, avatarStatus.data.texture, Vec4.ONE.with({ w: animationT }));
                 }
             }
 
             // ユーザー名
             draw.fontWeight = '600';
-            await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY - cfg.ITEM_SPACING + 12), order.customer.user.name, Vec2.ZERO, PALETTE_RGB.ACCENT);
+            // await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY - cfg.ITEM_SPACING + 12), order.customer.user.name, Vec2.ZERO, PALETTE_RGB.DISPLAY_TEXT);
+            const usernameBounds = new AABB2(
+                new Vec2(bounds.min.x + 64, offsetY - cfg.ITEM_SPACING),
+                new Vec2(bounds.max.x, offsetY - cfg.ITEM_SPACING + 32),
+            );
+            await draw.textFit(usernameBounds, order.customer.user.name, { x: 0, y: 0.5 }, PALETTE_RGB.DISPLAY_TEXT.with({ w: animationT }));
             offsetY += 64 - cfg.ITEM_SPACING;
 
             // 注文ヘッダー
             draw.fontWeight = '500';
             draw.fontSize = 18;
-            await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY), '注文内容', Vec2.ZERO, PALETTE_RGB.ACCENT);
+            await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY), '注文内容', Vec2.ZERO, PALETTE_RGB.DISPLAY_TEXT.with({ w: animationT }));
             offsetY += 30;
 
             // 注文アイテム
             for (const item of order.products) {
                 draw.fontWeight = '500';
                 draw.fontSize = 24;
-                await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY), `・ ${item.name}`, Vec2.ZERO, PALETTE_RGB.ACCENT);
+                await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY), `・ ${item.name}`, Vec2.ZERO, PALETTE_RGB.DISPLAY_TEXT.with({ w: animationT }));
                 offsetY += 30;
             }
-            offsetY += 24;
-            draw.rectangle(bounds.min.x, offsetY, bounds.max.x, offsetY + 3, PALETTE_RGB.ACCENT);
-            offsetY += 24;
+            offsetY += 48;
 
             // インタラクション判定
             const orderBounds = new AABB2(new Vec2(bounds.min.x, minY), new Vec2(bounds.max.x, offsetY));
@@ -163,6 +189,7 @@ export class Display {
                     invoke: async () => await this.game.scene.photo.openPhotoMode(order),
                 };
             }
+            matrices.model.pop();
         }
 
         draw.endScissor();

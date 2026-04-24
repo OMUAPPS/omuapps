@@ -21,7 +21,7 @@
 
 <main>
     {#if game.side === 'client'}
-        <div class="menu">
+        <div class="menu" data-input>
             <div class="panel">
                 <Button onclick={goBack} primary>
                     <i class="ti ti-chevron-left"></i>
@@ -121,11 +121,12 @@
     }
 
     .menu {
-        width: 28rem;
+        width: 26rem;
         display: flex;
         flex-direction: column;
         gap: 2rem;
         padding: 2rem;
+        padding-right: 0;
         background: linear-gradient(
             to right,
             color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%),

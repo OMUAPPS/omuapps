@@ -83,13 +83,15 @@
         アイテムを選択し直す
     </Button>
     <Button onclick={() => {
-        const factory = game.states.factory.value;
-        const item = game.item.get($product.itemId);
-        if (!item) return;
-        const clone = game.item.clone(item);
-        game.item.dettachItem(clone);
-        game.item.setPool(clone, factory);
-        clone.transform.offset = { x: 0, y: 100 };
+        game.addTask(async () => {
+            const factory = game.states.factory.value;
+            const item = game.item.get($product.itemId);
+            if (!item) return;
+            const clone = game.item.clone(item);
+            game.item.dettachItem(clone);
+            game.item.setPool(clone, factory);
+            clone.transform.offset = { x: 0, y: 100 };
+        });
     }} primary>
         アイテムを召喚する
     </Button>

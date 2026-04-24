@@ -2,6 +2,7 @@ import type { RenderPipeline } from '$lib/components/canvas/pipeline';
 import { Timer } from '$lib/timer';
 import type { DragDropFile } from '@omujs/omu/api/dashboard';
 import { AudioSystem } from '../audio';
+import { BoardRenderer } from '../board';
 import { Canvas } from '../canvas/canvas';
 import { FridgeSystem } from '../fridge';
 import { ItemSystem } from '../item';
@@ -36,6 +37,7 @@ export class Game {
     public trashbin: Trashbin;
     public canvas: Canvas;
     public notification: NotificationSystem;
+    public boardRenderer: BoardRenderer;
     public order: OrderSystem;
     public audio: AudioSystem;
     public readonly side: GameSide;
@@ -66,6 +68,7 @@ export class Game {
         this.order = new OrderSystem(this);
         this.canvas = new Canvas(this);
         this.notification = new NotificationSystem(this);
+        this.boardRenderer = new BoardRenderer(this);
 
         if (app.side === 'client') {
             app.omu.dashboard.requestDragDrop().then((handler) => {

@@ -3,7 +3,7 @@
     import { Vec4 } from '$lib/math/vec4';
     import { Timer } from '$lib/timer';
     import { Checkbox, obs, Slider, Tooltip } from '@omujs/ui';
-    import { oklch2rgb, rgb2oklch } from '../../colors';
+    import { oklch2rgb } from '../../colors';
     import type { Game } from '../../core/game';
     import type { ScenePhotoData } from './photo';
     import Receipt from './Receipt.svelte';
@@ -98,6 +98,17 @@
     $effect(() => {
         updatePhoto(scene.photo);
     });
+
+    let obsConnected = $state($obs && $obs.isConnected());
+
+    if ($obs) {
+        $obs.on('connected', () => {
+            obsConnected = true;
+        });
+        $obs.on('disconnected', () => {
+            obsConnected = false;
+        });
+    }
 </script>
 
 <svelte:window
@@ -116,33 +127,31 @@
 
 {#snippet clientUI()}
     {#if !scene.photo}
-        <div class="tool-switch">
-            {#snippet tool({ name, icon, shortcut, tool }: ToolEntry)}
-                {@const selected = tool?.type === $config.canvas.tool?.type}
-                <button onclick={() => {
-                    $config.canvas.tool = tool;
-                }} class:selected>
-                    <Tooltip>
-                        {shortcut}キー
-                    </Tooltip>
-                    {name}
-                    <i class="ti {icon}"></i>
-                </button>
-            {/snippet}
-            {#each TOOLS as item, index (index)}
-                {@render tool(item)}
-            {/each}
-        </div>
         <div class="tool">
+            <div class="tool-switch">
+                {#snippet tool({ name, icon, shortcut, tool }: ToolEntry)}
+                    {@const selected = tool?.type === $config.canvas.tool?.type}
+                    <button onclick={() => {
+                        $config.canvas.tool = tool;
+                    }} class:selected>
+                        <Tooltip>
+                            {shortcut}キー
+                        </Tooltip>
+                        {name}
+                        <i class="ti {icon}"></i>
+                    </button>
+                {/snippet}
+                {#each TOOLS as item, index (index)}
+                    {@render tool(item)}
+                {/each}
+            </div>
             {#if $config.canvas.tool?.type === 'brush'}
                 {#snippet color(color: Vec4)}
-                    {@const lch = rgb2oklch(color)}
-                    {@const darker = oklch2rgb(lch.with({ x: lch.x / 2, y: lch.y / 2 }))}
                     {@const color1 = color.mul({ x: 1 / 255, y: 1 / 255, z: 1 / 255, w: 1 })}
                     <!-- svelte-ignore a11y_consider_explicit_label -->
                     <button
                         class="color"
-                        style="background: rgba({color.x}, {color.y}, {color.z}, {color.w}); outline: 1px solid rgba({darker.x}, {darker.y}, {darker.z}, 1);"
+                        style="background: rgba({color.x}, {color.y}, {color.z}, {color.w});"
                         class:selected={color1.distance($config.canvas.brush.color) < 1 / 255}
                         onclick={() => {
                             $config.canvas.brush.color = color1;
@@ -189,21 +198,12 @@
                     太さ
                     <Slider bind:value={$config.canvas.eraser.width} min={1} max={100} step={1} />
                 </label>
+            {:else if $config.canvas.tool?.type === 'move'}
+                <label>
+                    アイテムの大きさ
+                    <Slider bind:value={$config.canvas.sacle} min={0.5} max={2.0} step={0.01} />
+                </label>
             {/if}
-        </div>
-        <div class="actions">
-            <button class="primary" onclick={takePhoto}>
-                写真を取る
-                <i class="ti ti-camera"></i>
-            </button>
-            <button onclick={() => {
-                game.startTransition({
-                    type: 'kitchen',
-                });
-            }}>
-                キッチンに戻る
-                <i class="ti ti-chevron-left"></i>
-            </button>
         </div>
         <div class="toggles">
             <label>
@@ -218,6 +218,26 @@
                 フラッシュ
                 <Checkbox bind:value={$config.photo.effects.flash} />
             </label>
+        </div>
+        <div class="actions">
+            {#if obsConnected}
+                <button class="primary" onclick={takePhoto}>
+                    写真を取る
+                    <i class="ti ti-camera"></i>
+                </button>
+            {:else}
+                <h3>
+                    OBSに接続してください
+                </h3>
+            {/if}
+            <button onclick={() => {
+                game.startTransition({
+                    type: 'kitchen',
+                });
+            }}>
+                キッチンに戻る
+                <i class="ti ti-chevron-left"></i>
+            </button>
         </div>
         {#if scene.receipt}
             <div class="receipt-client">
@@ -342,7 +362,7 @@
         left: 50%;
         bottom: 0;
         top: 0;
-        padding: 10% 0;
+        padding: 5% 0;
         right: 0;
         display: flex;
         flex-direction: column;
@@ -407,64 +427,72 @@
         filter: drop-shadow(1px 1px 2px black);
     }
 
-    .tool-switch {
-        background: var(--color-1);
-        outline: 1px solid var(--color-1);
-        border-radius: 8px;
-        padding: 4px;
+    .tool {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4rem;
+        padding: 2rem;
+        border-radius: 1rem;
+        flex: 1;
+        margin-bottom: 2rem;
+        background: var(--color-bg-2);
         filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.4));
 
-        > button {
-            position: relative;
-            width: 12rem;
-            height: 3rem;
-            border: none;
-            background: var(--color-1);
-            color: var(--color-bg-2);
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            border-radius: 4px;
-
-            &:hover {
-                background: color-mix(in srgb, var(--color-1) 90%, var(--color-bg-2) 20%);
-            }
-
-            &.selected {
-                background: var(--color-bg-2);
-                color: var(--color-1);
-                outline: 2px solid var(--color-outline);
-                font-weight: 700;
-            }
-        }
-    }
-
-    .tool {
         .palette {
             display: flex;
-            gap: 2px;
-            background: var(--color-bg-1);
-            padding: 1rem;
-            border-radius: 0.5rem;
+            outline: 1px solid var(--color-outline);
+            padding: 0.25rem;
+            border-radius: 0.25rem;
 
             > .col {
                 display: flex;
                 flex-direction: column;
-                gap: 2px;
             }
         }
 
         .color {
             width: 2rem;
             height: 2rem;
-            border-radius: 4px;
             outline: none;
             border: none;
 
             &.selected {
                 animation: forwards color-select 0.0621s;
                 outline-offset: 2px;
+                border: 3px solid #000;
                 z-index: 1;
+            }
+        }
+
+        .tool-switch {
+            background: var(--color-1);
+            outline: 1px solid var(--color-1);
+            border-radius: 6px;
+            padding: 2px;
+
+            > button {
+                position: relative;
+                width: 10rem;
+                height: 2.5rem;
+                border: none;
+                background: var(--color-1);
+                color: var(--color-bg-2);
+                font-size: 0.9rem;
+                font-weight: 500;
+                cursor: pointer;
+                border-radius: 4px;
+
+                &:hover {
+                    background: color-mix(in srgb, var(--color-1) 90%, var(--color-bg-2) 20%);
+                }
+
+                &.selected {
+                    background: var(--color-bg-2);
+                    color: var(--color-1);
+                    outline: 2px solid var(--color-outline);
+                    font-weight: 700;
+                }
             }
         }
     }
@@ -472,11 +500,29 @@
     @keyframes color-select {
         0% {
             outline: 2px solid transparent;
-            outline-offset: 1px;
+            outline-offset: 0px;
         }
         100% {
-            outline: 2px solid var(--color-1);
-            outline-offset: 2px;
+            outline: 2px solid var(--color-bg-2);
+            outline-offset: -1px;
+            border-radius: 2px;
+        }
+    }
+
+    .toggles {
+        display: flex;
+        gap: 4rem;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        padding: 1rem 2rem;
+        border-radius: 2rem;
+        filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.4));
+        margin-bottom: 2rem;
+
+        > label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
     }
 
@@ -503,22 +549,6 @@
                 background: var(--color-1);
                 color: var(--color-bg-2);
             }
-        }
-    }
-
-    .toggles {
-        display: flex;
-        gap: 4rem;
-        background: var(--color-bg-2);
-        color: var(--color-1);
-        padding: 1rem 2rem;
-        border-radius: 2rem;
-        filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.4));
-
-        > label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
     }
 </style>

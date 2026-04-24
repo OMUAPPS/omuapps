@@ -8,6 +8,7 @@ import type { Game } from './game';
 
 export interface Action {
     title: string;
+    id: string;
     priority: number;
     invoke(): Promise<void>;
 }
@@ -19,6 +20,10 @@ export class InputSystem {
     constructor(
         private readonly game: Game,
     ) { }
+
+    get current(): Action | undefined {
+        return this.actions[this.currentIndex];
+    }
 
     public add(...action: Action[]) {
         this.actions.push(...action);
@@ -82,7 +87,7 @@ export class InputSystem {
             startX, startY,
             startX + menuWidth, startY + menuHeight,
             shadow,
-            { x: 0, y: 0, z: 0, w: 2 },
+            { x: 0, y: 0, z: 0, w: 3 },
         );
 
         // 4. 各アクションの項目を描画

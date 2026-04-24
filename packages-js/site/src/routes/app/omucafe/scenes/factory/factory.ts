@@ -101,6 +101,7 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         if (!selecting) return;
         if (selecting.type !== 'pick_product') return;
         const clone = this.game.item.clone(item);
+        delete this.pool.items[clone.id];
         if (selecting.productId) {
             const product = products.get(selecting.productId);
             if (!product) return;
@@ -209,7 +210,7 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
 
     private async renderSceneOverlaySide(scene: SceneFactoryData, assets: SceneAssets, options: PoolOptions, layout: FactoryLayout) {
         const { draw } = this.game.pipeline;
-        const { renderer, itemRenderer } = this.game;
+        const { renderer, itemRenderer, boardRenderer } = this.game;
 
         // 1. 背景の描画
         draw.texture(...renderer.bounds.fit(assets.texFactory.size).offset(layout.offset).toArray(), assets.texFactory);
@@ -220,6 +221,8 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
 
         // 4. 手に持っているアイテムの描画 (共通)
         await itemRenderer.renderHeld();
+
+        await boardRenderer.render();
     }
 
     private async renderSceneBackgroundSide(scene: SceneFactoryData, assets: SceneAssets) {

@@ -149,8 +149,7 @@ export class OrderSystem {
 
         const fetchProxy = (...params: Parameters<typeof window.fetch>) => {
             const request = new Request(...params);
-            const proxiedUrl = this.game.app.omu.assets.proxy(request.url);
-            return this.game.app.omu.http.fetch(proxiedUrl, request) as Promise<Response>;
+            return this.game.app.omu.http.fetch(request.url, request) as Promise<Response>;
         };
 
         const dictionary = await ProxyDictionaryLoader.fromURL(url, fetchProxy as typeof window.fetch);

@@ -160,6 +160,7 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
             if (scene.selecting?.type === 'pick_product') {
                 ctx.actions.push({
                     title: `${item.name}を商品化する`,
+                    id: `factory-pick-${item.id}`,
                     priority: 100,
                     invoke: async () => {
                         this.game.scene.factory.createProductFromItem(item);
@@ -173,6 +174,7 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
 
         ctx.actions.push({
             title: `${item.name}を持つ(マウスホイールで複製)`,
+            id: `pick-${item.id}`,
             priority: 100,
             invoke: async () => {
                 const shouldClone = (states.scene.value.type !== 'factory' && pool.id === 'fridge') || event.mouse.buttons[1];
