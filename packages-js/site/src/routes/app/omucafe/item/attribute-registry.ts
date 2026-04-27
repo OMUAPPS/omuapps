@@ -56,15 +56,6 @@ export class AttributeRegistry {
         Handler extends AsFunction<AttributeHandler<unknown>[K]> = AsFunction<AttributeHandler<unknown>[K]>,
         Params extends Parameters<Handler> = Parameters<Handler>,
     >(key: K, item: Item, ...args: ExcludeFirst<Params>) {
-        for (const attrKey in item.attrs) {
-            const attr = attrKey as keyof AttributeHandlerMap;
-            const handler = this.attributes[attr];
-            if (handler && typeof handler[key] === 'function') {
-                const func = handler[key].bind(handler) as AttributeHandler<unknown>[K];
-                // @ts-expect-error ts(2556)
-                await func({ attr: item.attrs[attr], item }, ...args);
-            }
-        }
         for (const attrKey in this.attributes) {
             const handler = this.attributes[attrKey as keyof AttributeHandlerMap];
             if (handler && item.attrs[attrKey as keyof AttributeHandlerMap] && typeof handler[key] === 'function') {

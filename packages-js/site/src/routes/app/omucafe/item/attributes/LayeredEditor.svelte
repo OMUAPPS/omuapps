@@ -18,6 +18,8 @@
         <Slider bind:value={attr.capacity} min={0} max={800} step={1} />
         <small>始まる高さ</small>
         <Slider bind:value={attr.positionY} min={0} max={800} step={1} unit="px" />
+        <small>横の位置</small>
+        <Slider bind:value={attr.positionX} min={-400} max={400} step={1} unit="px" />
         <small>高さ</small>
         <Slider bind:value={attr.height} min={0} max={800} step={1} unit="px" />
         <small>幅</small>

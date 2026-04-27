@@ -36,6 +36,7 @@ export interface LayerLiquid {
 export type Layer = LayerSolid | LayerLiquid;
 
 export interface AttrLayered {
+    positionX: number;
     positionY: number;
     height: number;
     width: number;
@@ -56,6 +57,7 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
 
     create(): AttrLayered {
         return {
+            positionX: 0,
             positionY: 0,
             curvature: {
                 top: 1,
@@ -75,8 +77,8 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
     async renderPost({ attr }: AttributeInvoke<AttrLayered>): Promise<void> {
         const { draw } = this.game.pipeline;
         const { capacity, width } = attr;
-        const left = width / -2;
-        const right = width / 2;
+        const left = width / -2 + attr.positionX;
+        const right = width / 2 + attr.positionX;
         const getT = (volume: number) => {
             return clamp(volume / capacity, 0, 1);
         };
