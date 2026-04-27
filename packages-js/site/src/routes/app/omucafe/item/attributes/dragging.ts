@@ -187,7 +187,7 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
                 await this.game.item.holdItem(item);
                 this.game.item.dettachItem(item);
 
-                attr.lastDrag = {
+                item.attrs.dragging!.lastDrag = {
                     timestamp: Date.now(),
                     offset: event.poolPos.sub(item.transform.offset),
                 };
