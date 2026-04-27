@@ -474,7 +474,7 @@ export class ItemSystem {
             this.inputPass!.actions.push({
                 title: '戻す',
                 id: `return-${held.id}-to-fridge`,
-                priority: 0,
+                priority: 2000,
                 invoke: async () => {
                     await this.dropItem();
                     this.remove(held);

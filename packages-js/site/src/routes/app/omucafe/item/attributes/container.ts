@@ -347,7 +347,11 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         if (!heldItem) return;
         const renderResult = await this.game.itemRenderer.getItemRender(item);
         if (renderResult.type !== 'rendered') return;
+
         if (isHovered && await this.isItemWithinLimits(item, renderResult.render, attr, heldItem)) {
+            if (pool.id === 'fridge' && heldItem.pool !== 'fridge' && scene.type !== 'factory') {
+                return;
+            }
             ctx.actions.push({
                 title: `${item.name}に乗せる`,
                 id: `container-${item.id}`,
