@@ -57,11 +57,39 @@ export class HTMLInput implements Input {
             if (event.type === 'mouse') {
                 const pos = new Vec2(event.ev.clientX, event.ev.clientY);
                 const delta = pos.sub(this.prev);
+                let entered = true;
+                if (event.ev.target && event.ev.target instanceof HTMLElement) {
+                    let element: HTMLElement | null = event.ev.target;
+                    while (element) {
+                        // [data-input]
+                        if (element.hasAttribute('data-input')) {
+                            entered = false;
+                            break;
+                        }
+                        element = element.parentElement;
+                    }
+                }
                 this.prev = pos;
+                if (this.mouse.entered !== entered) {
+                    this.mouse.entered = entered;
+                    if (entered) {
+                        yield {
+                            timestamp: event.ev.timeStamp,
+                            kind: 'mouse-enter',
+                            mouse: this.mouse,
+                        };
+                    } else {
+                        yield {
+                            timestamp: event.ev.timeStamp,
+                            kind: 'mouse-leave',
+                            mouse: this.mouse,
+                        };
+                    }
+                }
                 this.mouse = {
                     pos,
                     delta,
-                    entered: true,
+                    entered,
                     buttons,
                 };
 
@@ -95,19 +123,6 @@ export class HTMLInput implements Input {
                         kind: 'mouse-up',
                         mouse: this.mouse,
                         button: event.ev.button,
-                    };
-                } else if (event.ev.type === 'mouseenter') {
-                    yield {
-                        timestamp: event.ev.timeStamp,
-                        kind: 'mouse-enter',
-                        mouse: this.mouse,
-                    };
-                } else if (event.ev.type === 'mouseleave') {
-                    this.mouse.entered = false;
-                    yield {
-                        timestamp: event.ev.timeStamp,
-                        kind: 'mouse-leave',
-                        mouse: this.mouse,
                     };
                 }
             } else if (event.type == 'wheel') {

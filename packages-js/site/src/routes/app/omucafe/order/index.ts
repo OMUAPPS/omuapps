@@ -1,3 +1,4 @@
+import { dev } from '$app/environment';
 import { Timer } from '$lib/timer';
 import { ProxyDictionaryLoader } from '$lib/token-helper';
 import kuromoji from '@2ji-han/kuromoji.js';
@@ -23,6 +24,9 @@ export class OrderSystem {
     private tokenizer: Tokenizer | undefined;
 
     constructor(private readonly game: Game) {
+        if (dev) {
+            return;
+        }
         if (game.side === 'client') {
             this.initTokenizer();
             this.setupChatListener();
@@ -92,6 +96,7 @@ export class OrderSystem {
         }
 
         this.game.audio.start({
+            type: 'single',
             asset: {
                 type: 'url',
                 url: bell,
@@ -185,7 +190,7 @@ export class OrderSystem {
 
             while ((index = normalizedText.indexOf(normalizedAlias, index)) !== -1) {
                 // 見つかった文字列の1つ前の文字がプレフィックス（#）であればマッチ
-                if (normalizedText[index - 1] === CONFIG.ORDER_PREFIX) {
+                if (normalizedText[index - 1].replace('＃', '#') === CONFIG.ORDER_PREFIX) {
                     return true;
                 }
                 index += normalizedAlias.length;

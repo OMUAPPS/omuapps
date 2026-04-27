@@ -19,6 +19,8 @@ import ch_kuro_1 from '../img/characters/kuro_1.png';
 import ch_kuro_2 from '../img/characters/kuro_2.png';
 import ch_lighter_1 from '../img/characters/lighter_1.png';
 import ch_lighter_2 from '../img/characters/lighter_2.png';
+import stamp_off from './stamp_off.mp3';
+import stamp_on from './stamp_on.wav';
 
 interface Character {
     mute: string;
@@ -277,6 +279,15 @@ export class CustomerRenderer {
                     priority: 0,
                     invoke: async () => {
                         customer.stats.stamps[index] = existing ? null : { timestamp: Timer.now() };
+                        this.game.audio.start({
+                            type: 'single',
+                            asset: {
+                                type: 'url',
+                                url: existing ? stamp_off : stamp_on,
+                            },
+                            duration: 1000,
+                            start: 0,
+                        });
                     },
                 });
             }

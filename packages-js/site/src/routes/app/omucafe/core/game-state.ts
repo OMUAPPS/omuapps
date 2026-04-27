@@ -1,7 +1,7 @@
 
 import { AABB2 } from '$lib/math/aabb2';
 import { invLerp, lerp } from '$lib/math/math';
-import { Vec2 } from '$lib/math/vec2';
+import { Vec2, type Vec2Like } from '$lib/math/vec2';
 import type { Vec4Like } from '$lib/math/vec4';
 import type { Models } from '@omujs/chat';
 import type { Identifier } from '@omujs/omu';
@@ -534,6 +534,18 @@ export const DEFAULT_PHOTO_CONFIG = {
     },
 };
 
+export interface CanvasState {
+    tool: {
+        type: 'brush';
+        color: Vec4Like;
+    } | {
+        type: 'eraser';
+    } | {
+        type: 'move';
+    };
+    pos: Vec2Like;
+}
+
 export type PhotoConfig = typeof DEFAULT_PHOTO_CONFIG;
 
 export interface ExportConfig {
@@ -563,6 +575,11 @@ interface Config {
         } | {
             type: 'move';
         };
+    };
+    audio: {
+        masterVolume: number;
+        musicVolume: number;
+        sfxVolume: number;
     };
     photo: PhotoConfig;
     export?: ExportConfig;
@@ -639,6 +656,7 @@ export class GameState {
     public canvasEditHeap: BufferedMap<CanvasEditChunk>;
     public canvasEditStack: BufferedRegistry<CanvasEditChunk>;
     public canvasEditSignal: Signal<CanvasEditChunk>;
+    public canvasStates: BufferedRegistry<CanvasState>;
     public orders: BufferedMap<Order>;
     public products: BufferedMap<Product>;
     public receipts: BufferedMap<Receipt>;
@@ -723,6 +741,11 @@ export class GameState {
                         width: 20,
                     },
                 },
+                audio: {
+                    masterVolume: 1,
+                    musicVolume: 1,
+                    sfxVolume: 1,
+                },
                 photo: {
                     frame: true,
                     effects: {
@@ -754,6 +777,13 @@ export class GameState {
                         },
                     };
                 }
+                if (!config.audio) {
+                    config.audio = {
+                        masterVolume: 1,
+                        musicVolume: 1,
+                        sfxVolume: 1,
+                    };
+                }
                 return config;
             }),
         }), listen));
@@ -772,6 +802,14 @@ export class GameState {
             },
         }), listen));
         const canvasEditSignal = omu.signals.json<CanvasEditChunk>('canvas_edit_signal');
+        const canvasStates = this.register(new BufferedRegistry(omu.registries.json<CanvasState>('canvas_states', {
+            default: {
+                tool: {
+                    type: 'move',
+                },
+                pos: Vec2.ZERO,
+            },
+        }), listen));
         const orders = this.register(new BufferedMap(omu.tables.json<Order>('orders', {
             key: (order) => order.id,
         }), listen));
@@ -801,6 +839,7 @@ export class GameState {
         this.canvasEditHeap = canvasEditHeap;
         this.canvasEditStack = canvasEditStack;
         this.canvasEditSignal = canvasEditSignal;
+        this.canvasStates = canvasStates;
         this.orders = orders;
         this.products = products;
         this.receipts = receipts;
@@ -1095,7 +1134,7 @@ export class ItemPack {
         }
     }
 
-    public download(filename: string) {
+    public async download(filename: string) {
         const blob = new Blob([this.pack.serialize()], { type: 'application/octet-stream' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1106,3 +1145,4 @@ export class ItemPack {
         a.remove();
     }
 }
+

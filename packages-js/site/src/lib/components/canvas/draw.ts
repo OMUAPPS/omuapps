@@ -1,4 +1,4 @@
-import { AABB2 } from '$lib/math/aabb2.js';
+import { AABB2, type AABB2Like } from '$lib/math/aabb2.js';
 import { Bezier } from '$lib/math/bezier.js';
 import { lerp, TAU } from '$lib/math/math.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
@@ -7,7 +7,7 @@ import { Timer } from '$lib/timer.js';
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlShader, GlTexture } from './glcontext.js';
 import type { Matrices } from './matrices.js';
 
-const VERTEX_SHADER = `#version 300 es
+export const VERTEX_SHADER = `#version 300 es
 
 precision highp float;
 
@@ -54,6 +54,47 @@ out vec4 fragColor;
 
 void main() {
     fragColor = texture(u_texture, v_texcoord) * u_color;
+    fragColor.rgb *= u_color.a;
+}
+`;
+
+const TEXTURE_CURVED_FRAGMENT_SHADER = `#version 300 es
+
+precision highp float;
+
+uniform sampler2D u_texture;
+uniform vec4 u_color;
+uniform vec2 u_resolution;
+uniform float u_curvatureTop;
+uniform float u_curvatureBottom;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+void main() {
+    vec2 uv = v_texcoord;
+    vec2 coord = uv * u_resolution;
+    float curve = sqrt(4.0 * (uv.x - uv.x * uv.x));
+    if (u_curvatureBottom > 0.0) {
+        if (u_resolution.y + curve * u_curvatureBottom - u_curvatureBottom < coord.y) {
+            discard;
+        }
+    } else {
+        if (curve * u_curvatureBottom < coord.y - u_resolution.y) {
+            discard;
+        }
+    }
+    if (u_curvatureTop > 0.0) {
+        if (u_curvatureTop - curve * u_curvatureTop > coord.y) {
+            discard;
+        }
+    } else {
+        if ((1.0 - curve) * u_curvatureTop - u_curvatureTop > coord.y) {
+            discard;
+        }
+    }
+    fragColor = texture(u_texture, uv) * u_color;
     fragColor.rgb *= u_color.a;
 }
 `;
@@ -581,6 +622,7 @@ class CachedTexturePool {
 export class Draw {
     public readonly vertexShader: GlShader;
     private readonly colorProgram: GlProgram;
+    private readonly textureCurvedProgram: GlProgram;
     private readonly textureProgram: GlProgram;
     private readonly textureMaskProgram: GlProgram;
     private readonly textureColorProgram: GlProgram;
@@ -612,6 +654,7 @@ export class Draw {
         this.textRenderPool = new CachedTexturePool();
         this.vertexShader = glContext.createShader({ type: 'vertex', source: VERTEX_SHADER });
         this.colorProgram = this.createProgram(COLOR_FRAGMENT_SHADER);
+        this.textureCurvedProgram = this.createProgram(TEXTURE_CURVED_FRAGMENT_SHADER);
         this.textureProgram = this.createProgram(TEXTURE_FRAGMENT_SHADER);
         this.textureMaskProgram = this.createProgram(TEXTURE_MASK_FRAGMENT_SHADER);
         this.textureColorProgram = this.createProgram(TEXTURE_COLOR_FRAGMENT_SHADER);
@@ -697,17 +740,6 @@ export class Draw {
 
     private unpackMultipliedAlpha(): ImageData {
         const data = this.textContext.getImageData(0, 0, this.textCanvas.width, this.textCanvas.height);
-        // const pixels = data.data;
-        // for (let i = 0; i < pixels.length; i += 4) {
-        //     const r = pixels[i + 0];
-        //     const g = pixels[i + 1];
-        //     const b = pixels[i + 2];
-        //     const a = pixels[i + 3];
-        //     pixels[i + 0] = r / a;
-        //     pixels[i + 1] = g / a;
-        //     pixels[i + 2] = b / a;
-        //     pixels[i + 3] = a;
-        // }
         return data;
     }
 
@@ -789,6 +821,16 @@ export class Draw {
         return true;
     }
 
+    public async textFit(bounds: AABB2, text: string, align: Vec2Like, color?: Vec4Like, stroke?: { width: number; color: Vec4 }) {
+        const prevSize = this.fontSize;
+        const metrics = this.measureTextActual(text);
+        const scale = Math.min(bounds.width / metrics.width, bounds.height / metrics.height);
+        this.fontSize *= scale;
+        const success = await this.textAlign(bounds.at(align), text, align, color, stroke);
+        this.fontSize = prevSize;
+        return success;
+    }
+
     public setMesh(program: GlProgram, vertices?: Float32Array, texcoords?: Float32Array): void {
         if (vertices) {
             this.vertexBuffer.bind(() => {
@@ -864,7 +906,21 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.gradientRectProgram.use(() => {
-            this.setMeshRect(this.gradientRectProgram, left, top, right, bottom);
+            this.setMesh(this.gradientRectProgram, new Float32Array([
+                left, top, 0,
+                right, top, 0,
+                right, bottom, 0,
+                left, top, 0,
+                right, bottom, 0,
+                left, bottom, 0,
+            ]), new Float32Array([
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 0,
+                1, 1,
+                0, 1,
+            ]));
             this.setMatrices(this.gradientRectProgram);
             this.gradientRectProgram.getUniform('u_color1').asVec4().set(color1);
             this.gradientRectProgram.getUniform('u_color2').asVec4().set(color2);
@@ -925,6 +981,39 @@ export class Draw {
 
             this.colorProgram.getUniform('u_color').asVec4().set(color);
             gl.drawArrays(gl.TRIANGLES, 0, 24);
+        });
+    }
+
+    public textureCurved({ min, max }: AABB2Like, texture: GlTexture, color: Vec4Like = Vec4.ONE, curvatureTop: number, curvatureBottom: number): void {
+        const { gl } = this.glContext;
+
+        this.textureCurvedProgram.use(() => {
+            this.setMesh(
+                this.textureCurvedProgram, new Float32Array([
+                    min.x, min.y, 0,
+                    max.x, min.y, 0,
+                    max.x, max.y, 0,
+                    min.x, min.y, 0,
+                    max.x, max.y, 0,
+                    min.x, max.y, 0,
+                ]),
+                new Float32Array([
+                    0, 0,
+                    1, 0,
+                    1, 1,
+                    0, 0,
+                    1, 1,
+                    0, 1,
+                ]),
+            );
+            this.setMatrices(this.textureCurvedProgram);
+
+            this.textureCurvedProgram.getUniform('u_texture').asSampler2D().set(texture);
+            this.textureCurvedProgram.getUniform('u_color').asVec4().set(color);
+            this.textureCurvedProgram.getUniform('u_resolution').asVec2().set({ x: Math.abs(max.x - min.x), y: Math.abs(max.y - min.y) });
+            this.textureCurvedProgram.getUniform('u_curvatureTop').asFloat().set(curvatureTop);
+            this.textureCurvedProgram.getUniform('u_curvatureBottom').asFloat().set(curvatureBottom);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
 

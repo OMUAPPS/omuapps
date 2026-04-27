@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Tooltip } from '@omujs/ui';
     import { Game } from '../../core/game';
     import type { Receipt } from '../../core/game-state';
 
@@ -14,6 +15,18 @@
 </script>
 
 <div class="receipt" class:animation>
+    <div class="user">
+        {receipt.order.customer.user.name}
+        {#if receipt.order.customer.user.name}
+            <div class="avatar">
+                <Tooltip>
+                    <img src={receipt.order.customer.user.avatar} alt="" class="avatar-preview">
+                </Tooltip>
+                <img src={receipt.order.customer.user.avatar} alt="" class="avatar">
+            </div>
+        {/if}
+    </div>
+    <br>
     <h1 class="center">{$shop.shop.name}</h1>
     <div class="item">
         <span>Address</span>
@@ -21,8 +34,6 @@
     </div>
     <br>
     {receipt.date}
-    <br>
-    {receipt.order.customer.user.name}
     <br>
     <div class="item">
         <span>Owner</span>
@@ -87,6 +98,25 @@
             bottom: -13px;
             transform: scaleY(-1);
         }
+    }
+
+    .user {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 1.5rem;
+    }
+
+    .avatar-preview {
+        width: 12rem;
+        height: 12rem;
+    }
+
+    .avatar {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        object-fit: cover;
     }
 
     .animation {

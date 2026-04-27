@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, FileDrop, Textbox, Tooltip } from '@omujs/ui';
+    import { Button, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
     import type { Game } from '../../core/game';
     import { CafePack } from '../../core/game-state';
     import type { SceneSettingsData } from './settings';
@@ -12,6 +12,7 @@
     let { game, scene }: Props = $props();
 
     const shop = game.states.shop.store;
+    const config = game.states.config.store;
 
     let confirmScreen: {
         type: 'reset';
@@ -25,6 +26,22 @@
             <h1>設定</h1>
         </div>
         <div class="settings">
+            <div class="panel data">
+                <h1>音</h1>
+
+                <label>
+                    主音量
+                    <Slider bind:value={$config.audio.masterVolume} min={0} max={1} step={0.01} type="percent" />
+                </label>
+                <label>
+                    音楽
+                    <Slider bind:value={$config.audio.musicVolume} min={0} max={1} step={0.01} type="percent" />
+                </label>
+                <label>
+                    効果音
+                    <Slider bind:value={$config.audio.sfxVolume} min={0} max={1} step={0.01} type="percent" />
+                </label>
+            </div>
             <div class="panel data">
                 <h1>データ</h1>
 
@@ -50,8 +67,8 @@
                         const pack = CafePack.load(buffer);
                         await pack.apply(game);
                     }} accept=".omucafe">
-                        開く
                         <i class="ti ti-upload"></i>
+                        開く
                     </FileDrop>
                 </label>
                 <label>
@@ -154,6 +171,7 @@
     .settings {
         display: flex;
         justify-content: center;
+        flex-wrap: wrap;
         gap: 4rem;
     }
 

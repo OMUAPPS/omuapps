@@ -14,6 +14,7 @@
     }
 
     let { game, scene }: Props = $props();
+
     let config = $derived(game?.states.config.store);
 
     const TOOLS: ToolEntry[] = [

@@ -142,7 +142,9 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         draw.texture(...renderer.containBounds.toArray(), assets.texBackground);
 
         this.particleRenderer.render();
-        await this.customerRenderer.render((action) => { this.pendingAction = action; });
+        if (!isInEditMode) {
+            await this.customerRenderer.render((action) => { this.pendingAction = action; });
+        }
 
         draw.texture(...renderer.bounds.toArray(), assets.texKitchen);
 
@@ -155,9 +157,7 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         await itemRenderer.renderPool(states.counter.value, layout.counterOptions);
         await itemRenderer.renderPool(states.kitchen.value, layout.kitchenOptions);
 
-        if (!isInEditMode) {
-            await trashbin.render(new Vec2(renderer.bounds.max.x - SCENE_CONFIG.OFFSETS.OVERLAY.TRASHBIN_X, renderer.bounds.max.y));
-        }
+        await trashbin.render(new Vec2(renderer.bounds.max.x - SCENE_CONFIG.OFFSETS.OVERLAY.TRASHBIN_X, renderer.bounds.max.y));
         await fridge.render();
         await itemRenderer.renderHeld();
 

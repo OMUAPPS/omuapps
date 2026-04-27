@@ -94,7 +94,7 @@ export class Canvas {
         }
     }
 
-    public async render(options: CanvasOptions): Promise<GlTexture> {
+    public async render(): Promise<GlTexture> {
         const { matrices, context } = this.game.pipeline;
 
         matrices.push();
@@ -173,12 +173,12 @@ export class Canvas {
 
         const stack = this.game.states.canvasEditStack.value;
         const signal = this.game.states.canvasEditSignal;
-        signal.notify({
-            i: stack.i,
-            c: commandStack,
-        });
 
         if (commandStack.length > 0) {
+            signal.notify({
+                i: stack.i,
+                c: commandStack,
+            });
             this.toPaintCommands.push(...commandStack);
             this.saveCommandsToHistory(commandStack, isMouseDown);
         }

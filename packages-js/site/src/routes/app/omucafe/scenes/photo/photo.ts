@@ -21,7 +21,9 @@ import asset_vertical_background from './img/asset_vertical_background.png';
 import asset_vertical_overlay from './img/asset_vertical_overlay.png';
 import background from './img/background.png';
 import dummy from './img/dummy.png';
+import eraser from './img/eraser.png';
 import flash from './img/flash.png';
+import pen from './img/pen.png';
 import photo_frame from './img/photo_frame.png';
 import ui_overlay from './img/ui_overlay.png';
 import ScreenPhoto from './ScreenPhoto.svelte';
@@ -54,7 +56,7 @@ const LAYOUT = {
 
 // --- Visual Effects ---
 const FX = {
-    CANVAS_GLOW_WIDTH: 6,
+    CANVAS_GLOW_WIDTH: 4,
     BLOOM_RADIUS: 32,
     FLASH_COUNT: 2,
     FLASH_DURATION_MS: 3000,
@@ -265,6 +267,17 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
             draw.texture(...overlayBounds.toArray(), uiOverlayTex.data.texture, Vec4.ONE.with({ w: 0.8 }));
         }
 
+        const state = this.game.states.canvasStates;
+        const canvas = this.game.states.config.value.canvas;
+        if (canvas.tool?.type === 'brush') {
+            state.value.tool = { type: 'brush', color: canvas.brush.color };
+        } else if (canvas.tool?.type === 'eraser') {
+            state.value.tool = { type: 'eraser' };
+        } else if (canvas.tool?.type === 'move') {
+            state.value.tool = { type: 'move' };
+        }
+        state.value.pos = overlayBounds.unmap(mouse).sub({ x: 0.5, y: 0.5 }).mul(ASSET_RESOLUTION);
+
         return poolOptions;
     }
 
@@ -346,6 +359,31 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
 
         // 共通のアイテム＆フレーム描画
         await this.drawPhotoFrame(scene, bounds, photoTex, FONT.OVERLAY_DATE_SIZE);
+
+        // render cursor
+        const state = this.game.states.canvasStates;
+        if (state.value.tool?.type === 'brush') {
+            const penAsset = await this.game.asset.getTextureByUrl(pen).promise;
+            const penTex = penAsset.unwrap.texture;
+            draw.texture(
+                state.value.pos.x,
+                state.value.pos.y,
+                state.value.pos.x + penTex.width,
+                state.value.pos.y + penTex.height,
+                penTex,
+                state.value.tool.color,
+            );
+        } else if (state.value.tool?.type === 'eraser') {
+            const eraserAsset = await this.game.asset.getTextureByUrl(eraser).promise;
+            const eraserTex = eraserAsset.unwrap.texture;
+            draw.texture(
+                state.value.pos.x - 26,
+                state.value.pos.y - 26,
+                state.value.pos.x + eraserTex.width - 26,
+                state.value.pos.y + eraserTex.height - 26,
+                eraserTex,
+            );
+        }
 
         // キャンバスの描画 (非インタラクティブ)
         const canvasOptions: CanvasOptions = { pos: Vec2.ZERO, mouse: Vec2.ZERO, size: ASSET_RESOLUTION };
@@ -470,7 +508,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
             canvas.updateInput(options);
         }
 
-        const canvasRender = await canvas.render(options);
+        const canvasRender = await canvas.render();
         draw.textureOutline(...frameBounds.toArray(), canvasRender, PALETTE_RGB.CANVAS_GLOW, FX.CANVAS_GLOW_WIDTH);
         draw.texture(...frameBounds.toArray(), canvasRender);
 
@@ -490,7 +528,8 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         const { input: eventPipeline } = this.game.pipeline;
         const { input, item, states } = this.game;
 
-        const isMoveTool = states.config.value.canvas.tool?.type === 'move' && !scene?.photo;
+        const { canvas } = states.config.value;
+        const isMoveTool = canvas.tool?.type === 'move' && !scene?.photo;
 
         for (const event of eventPipeline) {
             input.clear();

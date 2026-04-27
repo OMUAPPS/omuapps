@@ -333,7 +333,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
         const scene = this.game.states.scene.value;
 
-        if (pool.id === 'fridge' && scene.type !== 'factory') {
+        if (pool.id !== 'fridge' && scene.type === 'factory' && this.game.fridge.hovered) {
             return;
         }
 

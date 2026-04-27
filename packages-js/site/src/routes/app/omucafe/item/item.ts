@@ -482,7 +482,8 @@ export class ItemSystem {
             });
             return;
         }
-        if (pool.id === 'fridge' && this.states.hovered) {
+        const hoveredItem = this.states.hovered ? this.get(this.states.hovered) : undefined;
+        if (hoveredItem?.pool === 'fridge') {
             return;
         }
         this.inputPass!.actions.push({
