@@ -1,11 +1,14 @@
+import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext';
 import { AABB2 } from '$lib/math/aabb2';
-import { clamp, lerp } from '$lib/math/math';
+import { clamp, lerp, lerp01 } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
+import { Vec4 } from '$lib/math/vec4';
 import type { Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
 import type { AssetTransform } from '../../core/game-renderer';
 import { type ValidateResult } from '../../core/helper';
-import type { AttributeHandler, AttributeInvoke } from '../attribute-handler';
+import { getTransform } from '../../core/transform';
+import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemRender } from '../attribute-handler';
 import LayeredEditor from './LayeredEditor.svelte';
 
 export interface LayerSolid {
@@ -53,7 +56,53 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
     readonly name = '層構造';
     readonly editor = LayeredEditor;
 
-    constructor(private readonly game: Game) {}
+    private readonly maskBuffer: GlFramebuffer;
+    private readonly maskTexture: GlTexture;
+    private readonly layerBuffer: GlFramebuffer;
+    private readonly layerTexture: GlTexture;
+
+    constructor(private readonly game: Game) {
+        const { context } = game.pipeline;
+        this.maskBuffer = context.createFramebuffer();
+        this.maskTexture = context.createTexture();
+        this.maskTexture.use(() => {
+            this.maskTexture.setImage(null, {
+                width: 4,
+                height: 4,
+                internalFormat: 'rgba',
+                format: 'rgba',
+            });
+            this.maskTexture.setParams({
+                magFilter: 'linear',
+                minFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+        });
+        this.maskBuffer.use(() => {
+            this.maskBuffer.attachTexture(this.maskTexture);
+        });
+
+        this.layerBuffer = context.createFramebuffer();
+        this.layerTexture = context.createTexture();
+        this.layerTexture.use(() => {
+            this.layerTexture.setImage(null, {
+                width: 4,
+                height: 4,
+                internalFormat: 'rgba',
+                format: 'rgba',
+            });
+            this.layerTexture.setParams({
+                magFilter: 'linear',
+                minFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+        });
+        this.layerBuffer.use(() => {
+            this.layerBuffer.attachTexture(this.layerTexture);
+        });
+    }
 
     create(): AttrLayered {
         return {
@@ -74,7 +123,61 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         return { type: 'valid', value };
     }
 
-    async renderPost({ attr }: AttributeInvoke<AttrLayered>): Promise<void> {
+    /** * コンテナ自体のカバーやデバッグ情報の描画
+         */
+    async renderOverlayPost({ item, attr }: AttributeInvoke<AttrLayered>): Promise<void> {
+        const { matrices, draw } = this.game.pipeline;
+        const scene = this.game.states.scene.value;
+
+        const { mask } = attr;
+        if (mask && scene.type === 'factory' && scene.selecting?.type === 'edit_item' && scene.selecting.itemId === item.id) {
+            const textureState = this.game.asset.getTexture(mask.asset);
+            if (textureState.type !== 'ready') return;
+            const tex = textureState.data.texture;
+            const halfSize = new Vec2(tex.width / 2, tex.height / 2);
+
+            // 中心基準の描画範囲
+            const bounds = new AABB2(halfSize.scale(-1), halfSize);
+            const mat = getTransform(mask.transform).getMat4();
+
+            matrices.model.scope(() => {
+                matrices.model.multiply(mat);
+                draw.texture(...bounds.toArray(), tex, Vec4.ONE.with({ w: 0.2 }));
+            });
+        }
+    }
+
+    async renderPost({ attr }: AttributeInvoke<AttrLayered>, render: ItemRender): Promise<void> {
+        const { mask } = attr;
+        if (!mask) {
+            await this.renderLayers(attr);
+            return;
+        }
+        const { draw, context } = this.game.pipeline;
+        const { gl } = context;
+
+        this.maskTexture.use(() => {
+            this.maskTexture.ensureSize(render.renderBounds.width, render.renderBounds.height);
+        });
+        await this.maskBuffer.useAsync(async () => {
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            await this.game.renderer.drawAssetTransform(mask);
+        });
+
+        this.layerTexture.use(() => {
+            this.layerTexture.ensureSize(render.renderBounds.width, render.renderBounds.height);
+        });
+        await this.layerBuffer.useAsync(async () => {
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            await this.renderLayers(attr);
+        });
+
+        draw.textureMask(...render.renderBounds.toArray(), this.layerTexture, this.maskTexture);
+    }
+
+    private async renderLayers(attr: AttrLayered) {
         const { draw } = this.game.pipeline;
         const { capacity, width } = attr;
         const left = width / -2 + attr.positionX;
@@ -123,5 +226,17 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
                 draw.textureCurved(topBounds, topTex, undefined, topC, topC);
             }
         }
+    }
+
+    async bounds({ attr }: AttributeInvoke<AttrLayered>, ctx: CalculateBoundsContext): Promise<void> {
+        const totalVolume = attr.layers.reduce((sum, layer) => sum += layer.volume, 0);
+        const t = totalVolume / attr.capacity;
+        const topC = lerp01(attr.curvature.bottom, attr.curvature.top, t);
+        const halfWidth = attr.width;
+        const bounds = new AABB2(
+            new Vec2(-halfWidth, lerp01(attr.positionY, attr.positionY - attr.height, t) - topC * 2),
+            new Vec2(halfWidth, attr.positionY),
+        );
+        ctx.render = ctx.render.union(bounds);
     }
 }

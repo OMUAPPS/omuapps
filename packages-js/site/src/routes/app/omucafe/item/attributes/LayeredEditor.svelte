@@ -2,7 +2,9 @@
     import { Button, Combobox, FileDrop, Slider } from '@omujs/ui';
     import Collapse from '../../common/Collapse.svelte';
     import EditAsset from '../../common/EditAsset.svelte';
+    import EditTransform from '../../common/EditTransform.svelte';
     import { Game } from '../../core/game';
+    import { createTransform } from '../../core/transform';
     import type { AttrLayered, Layer } from './layered';
 
     interface Props {
@@ -21,13 +23,26 @@
         <small>横の位置</small>
         <Slider bind:value={attr.positionX} min={-400} max={400} step={1} unit="px" />
         <small>高さ</small>
-        <Slider bind:value={attr.height} min={0} max={800} step={1} unit="px" />
+        <Slider bind:value={attr.height} min={0} max={800} clamp={false} step={1} unit="px" />
         <small>幅</small>
         <Slider bind:value={attr.width} min={0} max={800} step={1} unit="px" />
         <small>上の曲率</small>
         <Slider bind:value={attr.curvature.top} min={0} max={400} step={1} />
         <small>下の曲率</small>
         <Slider bind:value={attr.curvature.bottom} min={0} max={400} step={1} />
+        <small>マスキング</small>
+        <EditAsset bind:asset={() => attr.mask?.asset, (asset) => {
+            if (!asset) return;
+            attr.mask = {
+                asset,
+                transform: createTransform(),
+            };
+        }} remove={() => {
+            attr.mask = undefined;
+        }} />
+        {#if attr.mask}
+            <EditTransform bind:transform={attr.mask.transform} />
+        {/if}
     </Collapse>
     <h2>内容物</h2>
     {#each attr.layers as layer, index (index)}
