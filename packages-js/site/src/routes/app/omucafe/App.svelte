@@ -22,13 +22,13 @@
 
 <main>
     <Canvas {setPipeline} />
-    {#if $scene && game}
+    {#if scene && $scene && game}
         {@const Component = $scene && game?.scene.getComponent($scene)}
         {#key [Component, $scene]}
             {#if Component && $transition && (!$transition.current || $transition.current.to.type === $scene.type)}
                 <div class="screen" transition:fade={{ duration: 250 }}>
                     <!-- Union vs Intersection -->
-                    <Component scene={$scene as never} {game} />
+                    <Component bind:scene={$scene as never} {game} />
                 </div>
             {/if}
         {/key}

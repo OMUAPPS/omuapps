@@ -9,7 +9,7 @@
         scene: SceneSettingsData;
     }
 
-    let { game, scene }: Props = $props();
+    let { game, scene = $bindable() }: Props = $props();
 
     const shop = game.states.shop.store;
     const config = game.states.config.store;

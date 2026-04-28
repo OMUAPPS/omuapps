@@ -17,7 +17,7 @@
         game: Game;
     }
 
-    let { scene, game }: Props = $props();
+    let { scene = $bindable(), game }: Props = $props();
 
     if (!scene.task) {
         scene.task = { type: 'setup' };

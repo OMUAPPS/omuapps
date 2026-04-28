@@ -11,7 +11,7 @@
         game: Game;
     }
 
-    let { game, scene }: Props = $props();
+    let { game, scene = $bindable() }: Props = $props();
 
     function goBack() {
         game.startTransition({ type: 'kitchen' }, {

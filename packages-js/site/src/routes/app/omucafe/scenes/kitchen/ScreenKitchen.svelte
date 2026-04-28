@@ -7,9 +7,7 @@
         game: Game;
     }
 
-    let { game }: Props = $props();
-
-    const scene = game.states.scene.store;
+    let { scene = $bindable(), game }: Props = $props();
 </script>
 
 {#if game.side === 'client'}

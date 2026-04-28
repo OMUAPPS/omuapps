@@ -185,7 +185,9 @@ export class AssetManager {
             throw new Error('Failed to create canvas context');
         }
         this.dataContext = ctx;
-        this.garbageAssetCollection();
+        if (game.side === 'client') {
+            this.garbageAssetCollection();
+        }
     }
 
     private garbageAssetCollection() {

@@ -76,7 +76,7 @@
         if (value === 0) {
             return '0';
         }
-        const str = value.toString();
+        const str = value?.toString() ?? 0;
         const decimalIndex = str.indexOf('.');
         if (decimalIndex === -1) {
             return str;

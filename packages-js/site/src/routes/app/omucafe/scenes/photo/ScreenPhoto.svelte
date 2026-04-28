@@ -13,7 +13,7 @@
         scene: ScenePhotoData;
     }
 
-    let { game, scene }: Props = $props();
+    let { game, scene = $bindable() }: Props = $props();
 
     let config = $derived(game?.states.config.store);
 

@@ -113,7 +113,9 @@ export class ItemSystem {
 
     constructor(private readonly game: Game) {
         this.items = game.states.items;
-        this.garbageCollection();
+        if (game.side === 'client') {
+            this.garbageCollection();
+        }
     }
 
     private get renderPass() {

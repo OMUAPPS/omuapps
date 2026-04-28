@@ -9,7 +9,7 @@
         game: Game;
     }
 
-    let { game }: Props = $props();
+    let { game, scene = $bindable() }: Props = $props();
 
     function goBack() {
         game.startTransition({

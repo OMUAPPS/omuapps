@@ -1,4 +1,3 @@
-import { dev } from '$app/environment';
 import { Timer } from '$lib/timer';
 import { ProxyDictionaryLoader } from '$lib/token-helper';
 import kuromoji from '@2ji-han/kuromoji.js';
@@ -24,9 +23,6 @@ export class OrderSystem {
     private tokenizer: Tokenizer | undefined;
 
     constructor(private readonly game: Game) {
-        if (dev) {
-            return;
-        }
         if (game.side === 'client') {
             this.initTokenizer();
             this.setupChatListener();

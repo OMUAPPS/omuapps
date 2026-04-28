@@ -1,5 +1,5 @@
 import type { FileData } from '@omujs/omu/api/dashboard';
-import type { TypedComponent } from '@omujs/ui';
+import type { Component } from 'svelte';
 import type { Game } from '../core/game';
 import { SceneExport, type SceneExportData } from './export/export';
 import { SceneFactory, type SceneFactoryData } from './factory/factory';
@@ -9,12 +9,11 @@ import { ScenePhoto, type ScenePhotoData } from './photo/photo';
 import { SceneSettings, type SceneSettingsData } from './settings/settings';
 
 export type SceneData = SceneMainMenuData | SceneKitchenData | SceneFactoryData | ScenePhotoData | SceneSettingsData | SceneExportData;
-
 export interface SceneHandler<T> {
-    component?: TypedComponent<{
+    component?: Component<{
         scene: T;
         game: Game;
-    }>;
+    }, object, 'scene'>;
     handle(scene: T): Promise<void>;
     handleFile?(scene: T, data: FileData): Promise<void>;
 }

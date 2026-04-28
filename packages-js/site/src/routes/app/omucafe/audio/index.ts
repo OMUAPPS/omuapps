@@ -68,7 +68,6 @@ class ClipNodeSingle implements ClipNode {
             return undefined;
         }
         dest.buffer = result.data;
-        dest.connect(system.ctx.destination);
         dest.start(0, clip.start, clip.duration);
         return new ClipNodeSingle(dest);
     }
@@ -108,12 +107,12 @@ async function createClipNode(clip: AudioClip, system: AudioSystem, playback: Au
 class PlaybackInstance {
     private constructor() { }
 
-    public static async create(system: AudioSystem, playback: AudioPlayback): Promise<PlaybackInstance | undefined> {
+    public static async create(system: AudioSystem, playback: AudioPlayback, dest: AudioNode): Promise<PlaybackInstance | undefined> {
         const node = await createClipNode(playback.clip, system, playback);
         if (!node) {
             return undefined;
         }
-        node.dest = system.ctx.destination;
+        node.dest.connect(dest);
         const instance = new PlaybackInstance();
         return instance;
     }
@@ -121,12 +120,25 @@ class PlaybackInstance {
 
 export class AudioSystem {
     public ctx: AudioContext;
+    public sfx: GainNode;
+    public master: GainNode;
     private instances: Map<string, PlaybackInstance> = new Map();
 
     constructor(
         private readonly game: Game,
     ) {
         this.ctx = new AudioContext();
+        this.master = this.ctx.createGain();
+        this.master.connect(this.ctx.destination);
+        this.sfx = this.ctx.createGain();
+        this.sfx.connect(this.master);
+        this.updateVolumes();
+    }
+
+    private updateVolumes() {
+        const { audio } = this.game.states.config.value;
+        this.master.gain.value = audio.masterVolume;
+        this.sfx.gain.value = audio.sfxVolume;
     }
 
     public async getBuffer(asset: Asset) {
@@ -146,9 +158,10 @@ export class AudioSystem {
         if (existing) {
             return;
         }
-        const instance = await PlaybackInstance.create(this, playback);
+        const instance = await PlaybackInstance.create(this, playback, this.sfx);
         if (instance) {
             this.instances.set(playback.id, instance);
         }
+        this.updateVolumes();
     }
 }

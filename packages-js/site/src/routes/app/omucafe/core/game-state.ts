@@ -483,6 +483,10 @@ interface KitchenSkin {
     }>;
 }
 
+interface CanvasEditClear {
+    t: 'c';
+}
+
 interface CanvasEditBrushStart {
     t: 'bs';
     p: [x:number, y: number];
@@ -519,7 +523,7 @@ interface CanvasEditSetTool {
 }
 
 export type BrushCommand = CanvasEditBrushStart | CanvasEditBrushMove | CanvasEditBrushEnd;
-export type CanvasCommand = BrushCommand | CanvasEditSetColor | CanvasEditSetWidth | CanvasEditSetTool;
+export type CanvasCommand = CanvasEditClear | BrushCommand | CanvasEditSetColor | CanvasEditSetWidth | CanvasEditSetTool;
 
 export interface CanvasEditChunk {
     i: number;
