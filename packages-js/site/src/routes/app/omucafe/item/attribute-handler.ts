@@ -70,6 +70,17 @@ export interface CalculateBoundsContext {
     render: AABB2;
 }
 
+export interface RenderPass {
+    order: number;
+    render(): Promise<void>;
+}
+
+export interface RenderContext {
+    render: ItemRender;
+    children: Record<string, ItemRender>;
+    passes: RenderPass[];
+}
+
 export interface AttributeHandler<T> {
     name: string;
     editor: Component<{ attr: T }>;
@@ -77,9 +88,7 @@ export interface AttributeHandler<T> {
     validate(value: T): ValidateResult<T>;
     load?(invoke: AttributeInvoke<T>, ctx: LoadContext): Promise<void>;
     bounds?(invoke: AttributeInvoke<T>, ctx: CalculateBoundsContext, children: Record<string, ItemRender>): Promise<void>;
-    renderPre?(invoke: AttributeInvoke<T>, render: ItemRender): Promise<void>;
-    renderChildren?(invoke: AttributeInvoke<T>, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
-    renderPost?(invoke: AttributeInvoke<T>, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
+    getRenderPass?(invoke: AttributeInvoke<T>, ctx: RenderContext): Promise<void>;
     renderOverlayPre?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
     renderOverlayPost?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
     overlay?(invoke: AttributeInvoke<T>, render: ItemRender): Promise<void>;

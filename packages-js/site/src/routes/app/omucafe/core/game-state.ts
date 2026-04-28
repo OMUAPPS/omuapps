@@ -1114,8 +1114,9 @@ export class ItemPack {
             transform: createTransform(),
             ordering: 'latest',
         });
+        const pool = game.states.factory.value;
         itemRenderer.addPool({
-            pool: game.states.factory.value,
+            pool,
             name: '工場',
             align: Vec2.ZERO,
             bounds: AABB2.ZEROONE,
@@ -1128,14 +1129,15 @@ export class ItemPack {
         for (let index = 0; index < rootItems.length; index++) {
             const item = rootItems[index];
             const clone = game.item.clone(item);
-            const x = lerp(
+            const x = rootItems.length === 1 ? 0 : lerp(
                 -200,
                 200,
                 invLerp(0, rootItems.length - 1, index),
             );
             clone.transform.offset = { x, y: index };
-            game.item.setPool(clone, game.states.factory.value);
+            game.item.setPool(clone, pool);
         }
+        game.states.factory.value = pool;
     }
 
     public async download(filename: string) {

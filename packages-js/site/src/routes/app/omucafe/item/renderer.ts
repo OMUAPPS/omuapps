@@ -3,7 +3,7 @@ import type { Transform2D } from '$lib/math/transform2d';
 import { PALETTE_RGB } from '../colors';
 import type { Game } from '../core/game';
 import { getTransform } from '../core/transform';
-import type { ItemRender, ItemRenderState } from './attribute-handler';
+import type { ItemRender, ItemRenderState, RenderContext } from './attribute-handler';
 import type { Item, ItemPool, PoolOptions } from './item';
 
 export interface PoolRenderPass {
@@ -258,7 +258,7 @@ export class ItemRenderer {
         return childrenRender;
     }
 
-    private async renderItemToTarget(render: ItemRender, item: Item, childrenRender: Record<string, ItemRender>): Promise<void> {
+    private async renderItemToTarget(render: ItemRender, item: Item, children: Record<string, ItemRender>): Promise<void> {
         const { renderBounds, target } = render;
         const { context, matrices } = this.game.pipeline;
         const dims = renderBounds.dimensions();
@@ -276,12 +276,16 @@ export class ItemRenderer {
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
 
-                await this.game.attribute.emit('renderPre', item, render);
-
-                // Pass 2 & 3: Composite (同じ行列コンテキストで実行)
-                matrices.view.identity(); // viewのリセットが必要なら
-                await this.game.attribute.emit('renderChildren', item, render, childrenRender);
-                await this.game.attribute.emit('renderPost', item, render, childrenRender);
+                const ctx: RenderContext = {
+                    render,
+                    children,
+                    passes: [],
+                };
+                await this.game.attribute.emit('getRenderPass', item, ctx);
+                const sortedPasses = ctx.passes.sort((a, b) => a.order - b.order);
+                for (const pass of sortedPasses) {
+                    await pass.render();
+                }
             });
 
             stateManager.popViewport();

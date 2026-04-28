@@ -144,11 +144,15 @@ export class Canvas {
         if (isMouseDown) {
             if (!isShiftDown && this.brush.stroke.kind === 'idle') {
                 commandStack.push({ t: 'bs', p: options.pos.toArray() });
+                this.brush.stroke = { kind: 'start', pos: options.pos };
+                this.brush.currentWidth = 0;
             } else if (this.brush.stroke.kind !== 'idle') {
                 commandStack.push({ t: 'bm', p: options.pos.toArray() });
             }
         } else if (this.brush.stroke.kind !== 'idle') {
             commandStack.push({ t: 'be', p: options.pos.toArray() });
+            this.brush.stroke = { kind: 'idle' };
+            this.brush.currentWidth = 0;
         }
 
         if (toolType === 'brush') {
@@ -295,17 +299,22 @@ export class Canvas {
         this.toPaintCommands = [];
         const { canvas } = this.game.states.config.value;
         canvas.tool = { type: 'move' };
-        this.game.states.canvasEditStack.value.c = [
+
+        const resetCommands: CanvasCommand[] = [
+            { t: 'c' },
             { t: 'sc', c: [canvas.brush.color.x, canvas.brush.color.y, canvas.brush.color.z, canvas.brush.color.w] },
             { t: 'sw', w: canvas.brush.width },
             { t: 'st', k: 'brush' },
         ];
+
+        this.game.states.canvasEditStack.value.c = resetCommands.slice(1);
         this.game.states.canvasEditHeap.clear();
+
         const signal = this.game.states.canvasEditSignal;
         const stack = this.game.states.canvasEditStack.value;
         signal.notify({
             i: stack.i,
-            c: [{ t: 'c' }],
+            c: resetCommands,
         });
     }
 }

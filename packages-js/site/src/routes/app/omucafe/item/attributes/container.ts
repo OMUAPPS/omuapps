@@ -10,7 +10,7 @@ import { validateAssetTransform, type AssetTransform } from '../../core/game-ren
 import { validateEnum, type ValidateResult } from '../../core/helper';
 import type { Action } from '../../core/input-system';
 import { getTransform } from '../../core/transform';
-import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, ItemRender, LoadContext } from '../attribute-handler';
+import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, ItemRender, LoadContext, RenderContext } from '../attribute-handler';
 import type { Item, ItemPool } from '../item';
 import ContainerEditor from './ContainerEditor.svelte';
 
@@ -250,7 +250,27 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         }
     }
 
-    async renderPost({ attr }: AttributeInvoke<AttrContainer>): Promise<void> {
+    async getRenderPass(invoke: AttributeInvoke<AttrContainer>, ctx: RenderContext): Promise<void> {
+        const { attr, item } = invoke;
+        if (attr.cover) {
+            ctx.passes.push({
+                order: 2000,
+                render: async () => {
+                    await this.renderPost(attr);
+                },
+            });
+        }
+        if (item.children.length) {
+            ctx.passes.push({
+                order: 1000,
+                render: async () => {
+                    this.renderChildren(attr, ctx.render, ctx.children);
+                },
+            });
+        }
+    }
+
+    async renderPost(attr: AttrContainer): Promise<void> {
         const { cover } = attr;
         if (cover) {
             await this.game.renderer.drawAssetTransform(cover);
@@ -259,7 +279,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
     /** * 子要素の描画（各子のトランスフォームを適用）
      */
-    async renderChildren({ attr }: AttributeInvoke<AttrContainer>, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
+    async renderChildren(attr: AttrContainer, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
         const { mask } = attr;
         if (!mask) {
             this.renderChildrenToTarget(children, Vec4.ONE);

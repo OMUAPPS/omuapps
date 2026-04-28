@@ -99,7 +99,7 @@ export class Game {
                                 });
                                 setTimeout(() => {
                                     this.addTask(async () => {
-                                        pack.spawn(this);
+                                        await pack.spawn(this);
                                     });
                                 }, 250);
                                 return;

@@ -103,7 +103,7 @@
             </Button>
             <label>
                 <small>名前</small>
-                <Textbox bind:value={layer.name} />
+                <Textbox bind:value={attr.layers[index].name} />
             </label>
             <label>
                 <small>種類</small>
@@ -116,10 +116,10 @@
                         label: '液体',
                         value: 'liquid',
                     },
-                }} bind:value={() => layer.type, (newType) => {
-                    layer.type = newType;
-                    if (layer.type === 'liquid') {
-                        layer.blending = 0;
+                }} bind:value={() => attr.layers[index].type, (newType) => {
+                    attr.layers[index].type = newType;
+                    if (attr.layers[index].type === 'liquid') {
+                        attr.layers[index].blending = 0;
                     }
                 }} />
             </label>

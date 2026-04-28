@@ -4,7 +4,7 @@ import { validateAsset, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
 import type { ValidateResult } from '../../core/helper';
 import placeholder from '../../resources/img/placeholder.png';
-import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, LoadContext } from '../attribute-handler';
+import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, LoadContext, RenderContext } from '../attribute-handler';
 import type { ItemPool } from '../item';
 import ImageEditor from './ImageEditor.svelte';
 
@@ -107,17 +107,19 @@ export class AttributeImage implements AttributeHandler<AttrImage> {
         ctx.render = ctx.render.union(bounds);
     }
 
-    /**
-     * 描画処理。ロード未完了時はエラーをスロー。
-     */
-    async renderPre({ attr }: AttributeInvoke<AttrImage>): Promise<void> {
+    async getRenderPass({ attr }: AttributeInvoke<AttrImage>, ctx: RenderContext): Promise<void> {
         const textureResult = this.game.asset.getTexture(attr.asset);
 
         if (textureResult.type !== 'ready') return;
 
-        const { draw } = this.game.pipeline;
-        const tex = textureResult.data.texture;
+        ctx.passes.push({
+            order: 0,
+            render: async () => {
+                const { draw } = this.game.pipeline;
+                const tex = textureResult.data.texture;
 
-        draw.texture(-tex.width / 2, -tex.height / 2, tex.width / 2, tex.height / 2, tex);
+                draw.texture(-tex.width / 2, -tex.height / 2, tex.width / 2, tex.height / 2, tex);
+            },
+        });
     }
 }

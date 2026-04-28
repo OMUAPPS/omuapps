@@ -10,7 +10,7 @@ import type { Game } from '../../core/game';
 import type { AssetTransform } from '../../core/game-renderer';
 import { type ValidateResult } from '../../core/helper';
 import { getTransform } from '../../core/transform';
-import type { ActionContext, AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, ItemRender } from '../attribute-handler';
+import type { ActionContext, AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, ItemRender, RenderContext } from '../attribute-handler';
 import type { ItemPool } from '../item';
 import LayeredEditor from './LayeredEditor.svelte';
 
@@ -157,6 +157,7 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         if (!hitItem.attrs.layered) return;
         console.log(hitItem);
         const targetLayered = hitItem.attrs.layered;
+        if (targetLayered.pour?.infinite) return;
         const sourceLayers = attr.layers;
         const pourVolume = pour.volume;
         pour.target = hitId;
@@ -252,7 +253,18 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         }
     }
 
-    async renderPost({ attr }: AttributeInvoke<AttrLayered>, render: ItemRender): Promise<void> {
+    async getRenderPass({ attr }: AttributeInvoke<AttrLayered>, ctx: RenderContext): Promise<void> {
+        if (attr.layers.length) {
+            ctx.passes.push({
+                order: 500,
+                render: async () => {
+                    await this.render(attr, ctx.render);
+                },
+            });
+        }
+    }
+
+    async render(attr: AttrLayered, render: ItemRender): Promise<void> {
         const { mask } = attr;
         if (!mask) {
             await this.renderLayers(attr);
