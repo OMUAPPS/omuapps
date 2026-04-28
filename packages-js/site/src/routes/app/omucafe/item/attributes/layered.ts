@@ -138,7 +138,7 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
             ctx.actions.push({
                 title: `${last.name}を捨てる`,
                 id: `layered-drop-${item.id}`,
-                priority: item.pool === 'fridge' ? 300 - 10 : 200 - 10,
+                priority: item.pool === 'fridge' ? 200 - 10 : 200 - 10,
                 invoke: async () => {
                     attr.layers.pop();
                     this.game.item.updateItem(item);
