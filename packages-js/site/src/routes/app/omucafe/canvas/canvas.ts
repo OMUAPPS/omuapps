@@ -214,6 +214,12 @@ export class Canvas {
                 case 'st':
                     this.brush.type = command.k as 'brush' | 'eraser';
                     break;
+                case 'c': {
+                    const { gl } = this.game.pipeline.context;
+                    gl.clearColor(0, 0, 0, 0);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                    break;
+                }
                 default:
                     this.processBrushCommand(command);
                     break;
@@ -295,5 +301,11 @@ export class Canvas {
             { t: 'st', k: 'brush' },
         ];
         this.game.states.canvasEditHeap.clear();
+        const signal = this.game.states.canvasEditSignal;
+        const stack = this.game.states.canvasEditStack.value;
+        signal.notify({
+            i: stack.i,
+            c: [{ t: 'c' }],
+        });
     }
 }

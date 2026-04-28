@@ -360,6 +360,10 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         // 共通のアイテム＆フレーム描画
         await this.drawPhotoFrame(scene, bounds, photoTex, FONT.OVERLAY_DATE_SIZE);
 
+        // キャンバスの描画 (非インタラクティブ)
+        const canvasOptions: CanvasOptions = { pos: Vec2.ZERO, mouse: Vec2.ZERO, size: ASSET_RESOLUTION };
+        await this.renderCanvas(ASSET_WORLD_BOUNDS, canvasOptions, Vec2.ZERO, photoTex, false);
+
         // render cursor
         const state = this.game.states.canvasStates;
         if (state.value.tool?.type === 'brush') {
@@ -384,10 +388,6 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
                 eraserTex,
             );
         }
-
-        // キャンバスの描画 (非インタラクティブ)
-        const canvasOptions: CanvasOptions = { pos: Vec2.ZERO, mouse: Vec2.ZERO, size: ASSET_RESOLUTION };
-        await this.renderCanvas(ASSET_WORLD_BOUNDS, canvasOptions, Vec2.ZERO, photoTex, false);
     }
 
     private async renderFlashes(bounds: AABB2, scaleMultiplier: number) {
