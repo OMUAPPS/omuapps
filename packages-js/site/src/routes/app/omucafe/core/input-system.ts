@@ -37,6 +37,10 @@ export class InputSystem {
 
     public async handle(event: InputEvent) {
         // 4. Trigger Action (Mouse Down)
+        if (this.game.fridge.hovered) {
+            this.currentIndex = 0;
+            this.actions.splice(1);
+        }
         if (event.kind === 'mouse-down') {
             const action = this.actions.at(this.currentIndex);
             await action?.invoke();
@@ -53,6 +57,10 @@ export class InputSystem {
     public async render() {
         const { draw, input, matrices } = this.game.pipeline;
         if (!this.actions.length) return;
+        if (this.game.fridge.hovered) {
+            this.currentIndex = 0;
+            this.actions.splice(1);
+        }
 
         const padding = 32 + this.actions.length * 4; // メニュー外枠の余白
         const itemHeight = 36; // 1項目あたりの高さ

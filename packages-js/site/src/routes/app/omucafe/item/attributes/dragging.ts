@@ -84,9 +84,7 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
     /** * ホバー時やドラッグ直後のエフェクト描画
      */
     async renderOverlayPre(
-        { item, attr }: AttributeInvoke<AttrDragging>,
-        pool: ItemPool,
-        render: ItemRender,
+        { attr }: AttributeInvoke<AttrDragging>,
     ): Promise<void> {
         const behind = attr.hand?.behind;
         if (behind) {

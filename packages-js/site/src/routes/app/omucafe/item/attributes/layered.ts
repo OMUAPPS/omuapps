@@ -3,6 +3,8 @@ import { AABB2 } from '$lib/math/aabb2';
 import { clamp, lerp, lerp01 } from '$lib/math/math';
 import { Vec2, type Vec2Like } from '$lib/math/vec2';
 import { Vec4 } from '$lib/math/vec4';
+import type { AudioClip } from '../../audio';
+import { PALETTE_RGB } from '../../colors';
 import { getAssetKey, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
 import type { AssetTransform } from '../../core/game-renderer';
@@ -12,8 +14,7 @@ import type { ActionContext, AttributeHandler, AttributeInvoke, CalculateBoundsC
 import type { ItemPool } from '../item';
 import LayeredEditor from './LayeredEditor.svelte';
 
-export interface LayerSolid {
-    type: 'solid';
+export interface LayerBase {
     name: string;
     side: {
         asset: Asset;
@@ -22,18 +23,15 @@ export interface LayerSolid {
         asset: Asset;
     };
     volume: number;
+    pourSound?: AudioClip;
 }
 
-export interface LayerLiquid {
+export interface LayerSolid extends LayerBase {
+    type: 'solid';
+}
+
+export interface LayerLiquid extends LayerBase {
     type: 'liquid';
-    name: string;
-    side: {
-        asset: Asset;
-    };
-    top: {
-        asset: Asset;
-    };
-    volume: number;
     blending: number;
 }
 
@@ -55,7 +53,9 @@ export interface AttrLayered {
         point: Vec2Like;
         infinite: boolean;
         volume: number;
+        target?: string;
     };
+    pourSource?: string;
 }
 
 export class AttributeLayered implements AttributeHandler<AttrLayered> {
@@ -132,8 +132,22 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
     async actions({ item, attr }: AttributeInvoke<AttrLayered>, pool: ItemPool, event: ItemMouseEvent, ctx: ActionContext): Promise<void> {
         const { states } = this.game.item;
         if (states.held !== item.id) return;
+        const last = attr.layers.at(-1);
+        const isInEdit = this.game.states.scene.value.type === 'factory' || this.game.states.scene.value.type === 'kitchen' && !!this.game.states.scene.value.editMode;
+        if (last && (!attr.pour?.infinite || isInEdit)) {
+            ctx.actions.push({
+                title: `${last.name}を捨てる`,
+                id: `layered-drop-${item.id}`,
+                priority: item.pool === 'fridge' ? 300 - 10 : 200 - 10,
+                invoke: async () => {
+                    attr.layers.pop();
+                    this.game.item.updateItem(item);
+                },
+            });
+        }
         if (!attr.pour) return;
         const { pour } = attr;
+        pour.target = undefined;
         const transform = this.game.item.getWorldTransform(item);
         const worldPoint = transform.xform(pour.point);
         const hitId = await this.game.item.raycast(pool, worldPoint, [item.id]);
@@ -145,14 +159,22 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         const targetLayered = hitItem.attrs.layered;
         const sourceLayers = attr.layers;
         const pourVolume = pour.volume;
+        pour.target = hitId;
+        targetLayered.pourSource = item.id;
+        const targetCapacityLeft = targetLayered.capacity - targetLayered.layers.reduce((sum, layer) => sum += layer.volume, 0);
+        const isFull = targetCapacityLeft <= 0;
         ctx.actions.push({
-            title: `${hitItem.name}に注ぐ`,
-            id: `container-${item.id}`,
+            title: isFull ? `${hitItem.name}はいっぱいです` : `${hitItem.name}に注ぐ`,
+            id: `layered-pour-${item.id}`,
             priority: item.pool === 'fridge' ? 500 : 300,
             invoke: async () => {
                 this.pour(targetLayered, sourceLayers, pourVolume, pour.infinite);
                 this.game.item.updateItem(item);
                 this.game.item.updateItem(hitItem);
+                const lastLayer = sourceLayers.at(-1);
+                if (!isFull && lastLayer?.pourSound) {
+                    this.game.audio.start(lastLayer.pourSound);
+                }
             },
         });
     }
@@ -193,8 +215,18 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         };
     }
 
-    async renderOverlayPost({ item, attr }: AttributeInvoke<AttrLayered>): Promise<void> {
+    async renderOverlayPost({ item, attr }: AttributeInvoke<AttrLayered>, _pool: ItemPool, render: ItemRender): Promise<void> {
         const { matrices, draw } = this.game.pipeline;
+        const { states } = this.game.item;
+
+        const sourceItem = attr.pourSource && states.held === attr.pourSource ? this.game.item.get(attr.pourSource) : undefined;
+        if (sourceItem && sourceItem.attrs.layered?.pour?.target === item.id) {
+            const width = 6;
+            const { min, max } = render.renderBounds;
+            const { texture } = render;
+            draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.TOOLTIP_TEXT, width);
+        }
+
         const scene = this.game.states.scene.value;
         if (scene.type !== 'factory' || scene.selecting?.type !== 'edit_item' || scene.selecting.itemId !== item.id) return;
 

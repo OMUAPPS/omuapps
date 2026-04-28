@@ -382,7 +382,7 @@ export class ItemSystem {
             ignoreList,
         };
 
-        for (const key in renderPass.pools) {
+        for (const key of Object.keys(renderPass.pools).reverse()) {
             const { pool, transform } = renderPass.pools[key];
 
             const viewTransform = getTransform(transform);
@@ -541,7 +541,7 @@ export class ItemSystem {
             id: `drop-${held.id}-into-${pool.id}`,
             priority: pool.id === 'export'
                 ? 1000
-                : pool.id === 'fridge' ? 300 : 0,
+                : pool.id === 'fridge' ? 300 : 200,
             invoke: async () => {
                 await this.dropItem();
                 this.setPool(held, pool);

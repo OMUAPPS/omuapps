@@ -21,6 +21,9 @@ export interface AttrContainer {
     maskInverted?: boolean;
     layerOrder: 'upper' | 'lower';
     orderingAnchor: 'top' | 'center' | 'bottom';
+    dropShadow?: {
+        distance: number;
+    };
     constraints?: {
         maxItems?: number;
         tags?: string[];

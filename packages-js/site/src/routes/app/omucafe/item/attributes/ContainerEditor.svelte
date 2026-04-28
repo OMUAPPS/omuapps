@@ -123,6 +123,10 @@
                 </Button>
             {/if}
             <label>
+                大きさ制限
+                <Checkbox bind:value={attr.constraints.noOverflow} />
+            </label>
+            <label>
                 はみ出し防止
                 <Checkbox bind:value={() => attr.constraints?.bounds !== undefined, (value) => {
                     if (!attr.constraints) return;

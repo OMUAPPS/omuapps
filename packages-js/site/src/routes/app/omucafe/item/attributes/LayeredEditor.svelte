@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { Button, Checkbox, Combobox, FileDrop, Slider } from '@omujs/ui';
+    import { Button, Checkbox, Combobox, FileDrop, Slider, Textbox } from '@omujs/ui';
     import Collapse from '../../common/Collapse.svelte';
     import EditAsset from '../../common/EditAsset.svelte';
+    import EditAudioClip from '../../common/EditAudioClip.svelte';
     import EditTransform from '../../common/EditTransform.svelte';
     import { Game } from '../../core/game';
     import { createTransform } from '../../core/transform';
@@ -101,6 +102,10 @@
                 削除
             </Button>
             <label>
+                <small>名前</small>
+                <Textbox bind:value={layer.name} />
+            </label>
+            <label>
                 <small>種類</small>
                 <Combobox options={{
                     solid: {
@@ -136,6 +141,10 @@
                 上面
                 <EditAsset bind:asset={attr.layers[index].top.asset} />
             </label>
+            <label>
+                注いだときの音
+                <EditAudioClip bind:clip={attr.layers[index].pourSound} />
+            </label>
         </Collapse>
     {/each}
     <FileDrop handle={async (files) => {
@@ -169,5 +178,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        white-space: nowrap;
+        gap: 2rem;
     }
 </style>
