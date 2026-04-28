@@ -57,6 +57,7 @@ export interface LoadContext {
 
 export interface CollideContext {
     hovered?: string;
+    ignoreList?: string[];
 }
 
 export interface ActionContext {

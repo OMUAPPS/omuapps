@@ -16,6 +16,6 @@ export class SceneMainMenu implements SceneHandler<SceneMainMenuData> {
         private readonly game: Game,
     ) {}
 
-    async handle(scene: SceneMainMenuData) {
+    async handle() {
     }
 }

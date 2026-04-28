@@ -1,14 +1,15 @@
 import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext';
 import { AABB2 } from '$lib/math/aabb2';
 import { clamp, lerp, lerp01 } from '$lib/math/math';
-import { Vec2 } from '$lib/math/vec2';
+import { Vec2, type Vec2Like } from '$lib/math/vec2';
 import { Vec4 } from '$lib/math/vec4';
-import type { Asset } from '../../core/asset';
+import { getAssetKey, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
 import type { AssetTransform } from '../../core/game-renderer';
 import { type ValidateResult } from '../../core/helper';
 import { getTransform } from '../../core/transform';
-import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemRender } from '../attribute-handler';
+import type { ActionContext, AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, ItemRender } from '../attribute-handler';
+import type { ItemPool } from '../item';
 import LayeredEditor from './LayeredEditor.svelte';
 
 export interface LayerSolid {
@@ -50,6 +51,11 @@ export interface AttrLayered {
     layers: Layer[];
     capacity: number;
     mask?: AssetTransform;
+    pour?: {
+        point: Vec2Like;
+        infinite: boolean;
+        volume: number;
+    };
 }
 
 export class AttributeLayered implements AttributeHandler<AttrLayered> {
@@ -123,27 +129,94 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         return { type: 'valid', value };
     }
 
-    /** * コンテナ自体のカバーやデバッグ情報の描画
-         */
+    async actions({ item, attr }: AttributeInvoke<AttrLayered>, pool: ItemPool, event: ItemMouseEvent, ctx: ActionContext): Promise<void> {
+        const { states } = this.game.item;
+        if (states.held !== item.id) return;
+        if (!attr.pour) return;
+        const { pour } = attr;
+        const transform = this.game.item.getWorldTransform(item);
+        const worldPoint = transform.xform(pour.point);
+        const hitId = await this.game.item.raycast(pool, worldPoint, [item.id]);
+        if (!hitId) return;
+        const hitItem = this.game.item.get(hitId);
+        if (!hitItem) return;
+        if (!hitItem.attrs.layered) return;
+        console.log(hitItem);
+        const targetLayered = hitItem.attrs.layered;
+        const sourceLayers = attr.layers;
+        const pourVolume = pour.volume;
+        ctx.actions.push({
+            title: `${hitItem.name}に注ぐ`,
+            id: `container-${item.id}`,
+            priority: item.pool === 'fridge' ? 500 : 300,
+            invoke: async () => {
+                this.pour(targetLayered, sourceLayers, pourVolume, pour.infinite);
+                this.game.item.updateItem(item);
+                this.game.item.updateItem(hitItem);
+            },
+        });
+    }
+
+    private pour(target: AttrLayered, source: Layer[], volume: number, infinite: boolean) {
+        const lastLayer = source.pop();
+        if (!lastLayer) return;
+        const targetLastLayer = target.layers.at(-1);
+        const add = targetLastLayer && this.isLayerKindEqual(targetLastLayer, lastLayer);
+        const targetCapacityLeft = target.capacity - target.layers.reduce((sum, layer) => sum += layer.volume, 0);
+        const subVolume = Math.min(lastLayer.volume, volume, targetCapacityLeft);
+        if (add) {
+            if (!infinite) {
+                lastLayer.volume -= subVolume;
+            }
+            targetLastLayer.volume += subVolume;
+        } else {
+            const clone = this.clone(lastLayer);
+            clone.volume = subVolume;
+            target.layers.push(clone);
+        }
+        if (infinite || lastLayer.volume >= volume) {
+            source.push(lastLayer);
+        }
+    }
+
+    private isLayerKindEqual(layerA: Layer, layerB: Layer): boolean {
+        if (layerA.type !== layerB.type) return false;
+        if (layerA.name !== layerB.name) return false;
+        if (getAssetKey(layerA.side.asset) !== getAssetKey(layerB.side.asset)) return false;
+        if (getAssetKey(layerA.top.asset) !== getAssetKey(layerB.top.asset)) return false;
+        return true;
+    }
+
+    private clone(layer: Layer): Layer {
+        return {
+            ...layer,
+        };
+    }
+
     async renderOverlayPost({ item, attr }: AttributeInvoke<AttrLayered>): Promise<void> {
         const { matrices, draw } = this.game.pipeline;
         const scene = this.game.states.scene.value;
+        if (scene.type !== 'factory' || scene.selecting?.type !== 'edit_item' || scene.selecting.itemId !== item.id) return;
 
-        const { mask } = attr;
-        if (mask && scene.type === 'factory' && scene.selecting?.type === 'edit_item' && scene.selecting.itemId === item.id) {
+        const { mask, pour } = attr;
+        if (mask) {
             const textureState = this.game.asset.getTexture(mask.asset);
-            if (textureState.type !== 'ready') return;
-            const tex = textureState.data.texture;
-            const halfSize = new Vec2(tex.width / 2, tex.height / 2);
+            if (textureState.type === 'ready') {
+                const tex = textureState.data.texture;
+                const halfSize = new Vec2(tex.width / 2, tex.height / 2);
 
-            // 中心基準の描画範囲
-            const bounds = new AABB2(halfSize.scale(-1), halfSize);
-            const mat = getTransform(mask.transform).getMat4();
+                const bounds = new AABB2(halfSize.scale(-1), halfSize);
+                const mat = getTransform(mask.transform).getMat4();
 
-            matrices.model.scope(() => {
-                matrices.model.multiply(mat);
-                draw.texture(...bounds.toArray(), tex, Vec4.ONE.with({ w: 0.2 }));
-            });
+                matrices.model.scope(() => {
+                    matrices.model.multiply(mat);
+                    draw.texture(...bounds.toArray(), tex, Vec4.ONE.with({ w: 0.2 }));
+                });
+            }
+        }
+        if (pour) {
+            const { point } = pour;
+            draw.circle(point.x, point.y, 0, 10, Vec4.ONE);
         }
     }
 
@@ -192,7 +265,6 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
             return lerp(attr.curvature.bottom, attr.curvature.top, t);
         };
         let total = 0;
-        // for (const layer of attr.layers) {
         for (let index = 0; index < attr.layers.length; index++) {
             const layer = attr.layers[index];
             const last = index === attr.layers.length - 1;

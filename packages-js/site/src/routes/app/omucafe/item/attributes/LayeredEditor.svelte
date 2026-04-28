@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, Combobox, FileDrop, Slider } from '@omujs/ui';
+    import { Button, Checkbox, Combobox, FileDrop, Slider } from '@omujs/ui';
     import Collapse from '../../common/Collapse.svelte';
     import EditAsset from '../../common/EditAsset.svelte';
     import EditTransform from '../../common/EditTransform.svelte';
@@ -16,20 +16,34 @@
 
 {#if attr}
     <Collapse name="容器">
-        <small>容量</small>
-        <Slider bind:value={attr.capacity} min={0} max={800} step={1} />
-        <small>始まる高さ</small>
-        <Slider bind:value={attr.positionY} min={0} max={800} step={1} unit="px" />
-        <small>横の位置</small>
-        <Slider bind:value={attr.positionX} min={-400} max={400} step={1} unit="px" />
-        <small>高さ</small>
-        <Slider bind:value={attr.height} min={0} max={800} clamp={false} step={1} unit="px" />
-        <small>幅</small>
-        <Slider bind:value={attr.width} min={0} max={800} step={1} unit="px" />
-        <small>上の曲率</small>
-        <Slider bind:value={attr.curvature.top} min={0} max={400} step={1} />
-        <small>下の曲率</small>
-        <Slider bind:value={attr.curvature.bottom} min={0} max={400} step={1} />
+        <label>
+            <small>容量</small>
+            <Slider bind:value={attr.capacity} min={0} max={800} step={1} />
+        </label>
+        <label>
+            <small>始まる高さ</small>
+            <Slider bind:value={attr.positionY} min={0} max={800} step={1} unit="px" />
+        </label>
+        <label>
+            <small>横の位置</small>
+            <Slider bind:value={attr.positionX} min={-400} max={400} step={1} unit="px" />
+        </label>
+        <label>
+            <small>高さ</small>
+            <Slider bind:value={attr.height} min={0} max={800} clamp={false} step={1} unit="px" />
+        </label>
+        <label>
+            <small>幅</small>
+            <Slider bind:value={attr.width} min={0} max={800} step={1} unit="px" />
+        </label>
+        <label>
+            <small>上の曲率</small>
+            <Slider bind:value={attr.curvature.top} min={0} max={400} step={1} />
+        </label>
+        <label>
+            <small>下の曲率</small>
+            <Slider bind:value={attr.curvature.bottom} min={0} max={400} step={1} />
+        </label>
         <small>マスキング</small>
         <EditAsset bind:asset={() => attr.mask?.asset, (asset) => {
             if (!asset) return;
@@ -42,6 +56,40 @@
         }} />
         {#if attr.mask}
             <EditTransform bind:transform={attr.mask.transform} />
+        {/if}
+    </Collapse>
+    <Collapse name="注ぐ">
+        <label>
+            <small>有効</small>
+            <Checkbox bind:value={() => !!attr.pour, (value) => {
+                if (value) {
+                    attr.pour = {
+                        infinite: false,
+                        point: { x: 0, y: 0 },
+                        volume: 100,
+                    };
+                } else {
+                    attr.pour = undefined;
+                }
+            }} />
+        </label>
+        {#if attr.pour}
+            <label>
+                <small>減らない</small>
+                <Checkbox bind:value={attr.pour.infinite} />
+            </label>
+            <label>
+                <small>注ぐ量</small>
+                <Slider bind:value={attr.pour.volume} min={0} max={800} step={1} />
+            </label>
+            <label>
+                <small>位置X</small>
+                <Slider bind:value={attr.pour.point.x} min={-800} max={800} step={1} unit="px" />
+            </label>
+            <label>
+                <small>位置Y</small>
+                <Slider bind:value={attr.pour.point.y} min={-800} max={800} step={1} unit="px" />
+            </label>
         {/if}
     </Collapse>
     <h2>内容物</h2>

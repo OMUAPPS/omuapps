@@ -2,7 +2,8 @@ import type { InputEvent } from '$lib/components/canvas/pipeline';
 import { AABB2, type AABB2Like } from '$lib/math/aabb2';
 import { lerp } from '$lib/math/math';
 import type { Transform2D } from '$lib/math/transform2d';
-import type { Vec2Like } from '$lib/math/vec2';
+import { Vec2, type Vec2Like } from '$lib/math/vec2';
+import { Timer } from '$lib/timer';
 import { Game } from '../core/game';
 import type { BufferedMap } from '../core/game-state';
 import { clone, generateUid, type ValidateResult } from '../core/helper';
@@ -107,7 +108,6 @@ export class ItemSystem {
 
     public readonly items: BufferedMap<Item>;
 
-    private itemCounter = 0;
     private loadingItems: Map<string, LoadTask> = new Map();
     private inputPass: PoolInputPass | undefined;
 
@@ -366,6 +366,54 @@ export class ItemSystem {
         }
 
         return dependencies;
+    }
+
+    public async raycast(pool: ItemPool, point: Vec2Like, ignoreList: string[]) {
+        const { renderPass } = this.game.itemRenderer;
+        if (!renderPass) return;
+        const rootPool = renderPass.pools[pool.id];
+        if (!rootPool) {
+            throw new Error(`Pool ${pool.id} not found.`);
+        }
+        const rootTransform = getTransform(rootPool.transform);
+        const viewPoint = rootTransform.xform(point);
+
+        const ctx: CollideContext = {
+            ignoreList,
+        };
+
+        for (const key in renderPass.pools) {
+            const { pool, transform } = renderPass.pools[key];
+
+            const viewTransform = getTransform(transform);
+            const view = viewTransform.affineInverse().getMat4();
+            const localPos = view.transform2(viewPoint);
+            const localPrev = view.transform2(viewPoint);
+            const localDelta = view.basisTransform2(Vec2.ZERO);
+
+            const rootEvent: ItemMouseEvent = {
+                kind: 'mouse-move',
+                mouse: this.game.pipeline.input.mouse,
+                timestamp: Timer.now(),
+                localPos,
+                localPrev,
+                localDelta,
+                poolPos: localPos,
+                poolPrev: localPrev,
+                poolDelta: localDelta,
+            };
+
+            const rootItems = Object.values(pool.items);
+            for (let i = rootItems.length - 1; i >= 0; i--) {
+                const item = rootItems[i];
+                const data = this.items.get(item.id);
+                if (ignoreList.includes(item.id)) continue;
+                if (data && !data.parent) {
+                    await this.traverseCollision(data, pool, rootEvent, ctx);
+                }
+            }
+        }
+        return ctx.hovered;
     }
 
     // =========================================================================================
@@ -641,9 +689,10 @@ export class ItemSystem {
         const localEvent = this.toLocalEvent(item, event);
 
         for (let i = item.children.length - 1; i >= 0; i--) {
-        // for (let i = 0; i < item.children.length; i++) {
             const child = this.items.get(item.children[i]);
-            if (child) await this.traverseCollision(child, pool, localEvent, ctx);
+            if (!child) continue;
+            if (ctx.ignoreList?.includes(child.id)) continue;
+            await this.traverseCollision(child, pool, localEvent, ctx);
         }
 
         await this.game.attribute.emit('collide', item, pool, localEvent, ctx);

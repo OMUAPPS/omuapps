@@ -186,12 +186,12 @@ export class ItemRenderer {
     }
 
     public async getItemRender(item: Item): Promise<ItemRenderState> {
-        const tasks = await this.game.item.loadItem(item);
-        if (tasks.length > 0) return { type: 'loading', tasks, update: item.update };
-
-        // 2. キャッシュチェック
+        // 1. キャッシュチェック
         const existing = this.itemRender.get(item.id);
         if (existing && existing.update === item.update) return existing;
+
+        const tasks = await this.game.item.loadItem(item);
+        if (tasks.length > 0) return { type: 'loading', tasks, update: item.update };
 
         // 子要素のレンダー取得（再帰）
         const childrenRender = await this.gatherChildrenItemRender(item);
