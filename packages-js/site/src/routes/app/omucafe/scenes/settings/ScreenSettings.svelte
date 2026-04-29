@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { dev } from '$app/environment';
     import { Button, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
     import type { Game } from '../../core/game';
     import { CafePack } from '../../core/game-state';
+    import { testScripting } from '../../script/script';
     import type { SceneSettingsData } from './settings';
 
     interface Props {
@@ -128,6 +130,17 @@
                         <i class="ti ti-chevron-right"></i>
                     </Button>
                 </label>
+                {#if dev}
+                    <label>
+                        <p>run</p>
+                        <Button onclick={() => {
+                            testScripting();
+                        }} primary>
+                            設定
+                            <i class="ti ti-chevron-right"></i>
+                        </Button>
+                    </label>
+                {/if}
             </div>
         </div>
     </main>
