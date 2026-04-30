@@ -164,6 +164,11 @@ class AssetExtension:
         if address.is_private:
             return web.Response(status=403)
         no_cache = bool(request.query.get("no_cache"))
+        cors_headers = {
+            "Access-Control-Allow-Origin": request.headers.get("Origin", "*"),
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
+            "Access-Control-Allow-Headers": "Content-Type",
+        }
         try:
             async with self.server.client.get(
                 url,
@@ -171,7 +176,7 @@ class AssetExtension:
                 headers = {
                     "Cache-Control": "no-cache" if no_cache else "max-age=3600",
                     "Content-Type": resp.content_type,
-                    "Access-Control-Allow-Origin": "*",
+                    **cors_headers,
                 }
                 response = web.StreamResponse(status=resp.status, headers=headers)
                 await response.prepare(request)
@@ -179,14 +184,14 @@ class AssetExtension:
                     await response.write(chunk)
                 return response
         except TimeoutError:
-            return web.Response(status=504)
+            return web.Response(status=504, headers=cors_headers)
         except aiohttp.ClientConnectionResetError:
-            return web.Response(status=502)
+            return web.Response(status=502, headers=cors_headers)
         except aiohttp.ClientResponseError as e:
-            return web.Response(status=e.status, text=e.message)
+            return web.Response(status=e.status, text=e.message, headers=cors_headers)
         except Exception:
             logger.error("Failed to proxy request")
-            return web.Response(status=500)
+            return web.Response(status=500, headers=cors_headers)
 
     async def _handle_assets(self, request: web.Request) -> web.StreamResponse:
         self._verify_asset_token(request)
