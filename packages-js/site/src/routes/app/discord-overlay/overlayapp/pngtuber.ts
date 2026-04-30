@@ -437,7 +437,7 @@ export class PNGTuber implements Avatar {
         context.talking = action.talking;
         context.layer = action.config.pngtuber.layer;
 
-        const ticks = context.tickTimer.tick(1000 / 60);
+        const ticks = Math.min(context.tickTimer.tick(1000 / 60), 10);
         for (let i = 0; i < ticks; i++) {
             if (action.talking && context.origin.position.y >= 0 && context.bounceVelocity === 0) {
                 context.bounceVelocity = 250;
@@ -620,7 +620,7 @@ export class PNGTuber implements Avatar {
                     offset: localPoint.sub(new Vec2(width / 2, height / 2)),
                     transform,
                 };
-            };
+            }
         }
         if (topLayer) {
             return {
