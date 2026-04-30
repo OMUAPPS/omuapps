@@ -79,24 +79,26 @@
     let onlineChats = $state(0);
 
     onMount(async () => {
-        omu.server.apps.event.remove.listen((removedItems) => {
-            removedItems.forEach((item) => {
-                delete $pages[`app-${item.id.key()}`];
-                unregisterPage(`app-${item.id.key()}`);
+        omu.onReady(async () => {
+            omu.server.apps.event.remove.listen((removedItems) => {
+                removedItems.forEach((item) => {
+                    delete $pages[`app-${item.id.key()}`];
+                    unregisterPage(`app-${item.id.key()}`);
+                });
             });
-        });
 
-        function updateOnlineChats() {
-            onlineChats = chat.rooms.cache.values().filter((room) => room.connected).toArray().length;
-        }
+            function updateOnlineChats() {
+                onlineChats = chat.rooms.cache.values().filter((room) => room.connected).toArray().length;
+            }
 
-        chat.rooms.listen(() => updateOnlineChats());
-        await chat.rooms.fetchItems({
-            limit: 10,
-            backward: true,
+            chat.rooms.listen(() => updateOnlineChats());
+            await chat.rooms.fetchItems({
+                limit: 10,
+                backward: true,
+            });
+            updateOnlineChats();
+            openApps();
         });
-        updateOnlineChats();
-        openApps();
     });
 </script>
 
