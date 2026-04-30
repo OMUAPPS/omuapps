@@ -12,38 +12,72 @@ type DragDrop = {
 
 export const dragDropApps: string[] = [];
 export const dragDrops: Record<string, DragDrop> = {};
-let dragId = 0;
 
-function getDragId(): string {
-    return dragId.toString(36);
+/**
+ * Manages the current drag session ID, ensuring consistency across drag events.
+ */
+class DragSessionManager {
+    private currentId = 0;
+    private sessionDragId = '';
+
+    /**
+     * Starts a new drag session and returns its ID.
+     */
+    startSession(): string {
+        this.currentId++;
+        this.sessionDragId = this.currentId.toString(36);
+        return this.sessionDragId;
+    }
+
+    /**
+     * Gets the current drag session ID.
+     */
+    getCurrentSessionId(): string {
+        return this.sessionDragId;
+    }
+
+    /**
+     * Ends the current drag session.
+     */
+    endSession(): void {
+        this.sessionDragId = '';
+    }
 }
 
-function nextDragId(): string {
-    dragId ++;
-    return getDragId();
-}
+const dragSessionManager = new DragSessionManager();
 
+/**
+ * Converts file info to DragDropFile format, skipping unsupported types.
+ */
 function getFileType(info: FileInfo): 'file' | 'directory' | null {
     if (info.isFile) return 'file';
     if (info.isDirectory) return 'directory';
     return null;
 }
 
+/**
+ * Converts file paths to DragDropFile objects in parallel.
+ * Filters out files with unsupported types.
+ */
 async function getFilesByPaths(paths: string[]): Promise<DragDropFile[]> {
-    const files: DragDropFile[] = [];
-    for (const path of paths) {
+    const filePromises = paths.map(async (path) => {
         const info = await stat(path);
         const type = getFileType(info);
-        if (!type) continue;
-        files.push({
+        if (!type) return null;
+        return {
             name: await basename(path),
             size: info.size,
             type,
-        });
-    }
-    return files;
+        };
+    });
+
+    const results = await Promise.all(filePromises);
+    return results.filter((file): file is DragDropFile => file !== null);
 }
 
+/**
+ * Gets the current app that can receive drag-drop events.
+ */
 function getDragDropTarget(): App | null {
     const { currentApp } = dashboard;
     if (!currentApp) return null;
@@ -51,12 +85,19 @@ function getDragDropTarget(): App | null {
     return currentApp;
 }
 
+/**
+ * Initializes drag-drop event handlers for the application.
+ * Manages drag sessions across multiple Tauri events (enter, over, drop, leave).
+ */
 export function initDragDrop() {
     listen(TauriEvent.DRAG_ENTER, async ({ payload: { position, paths } }) => {
-        const drag_id = nextDragId();
+        const drag_id = dragSessionManager.startSession();
         const app = getDragDropTarget();
         if (!app) return;
+
         const files = await getFilesByPaths(paths);
+        dragDrops[drag_id] = { files, paths };
+
         await omu.dashboard.notifyDropDragState({
             drag_id,
             app,
@@ -67,12 +108,15 @@ export function initDragDrop() {
                 files,
             },
         });
-        dragDrops[drag_id] = { files, paths };
     });
+
     listen(TauriEvent.DRAG_OVER, async ({ payload: { position } }) => {
-        const drag_id = getDragId();
+        const drag_id = dragSessionManager.getCurrentSessionId();
+        if (!drag_id) return;
+
         const app = getDragDropTarget();
         if (!app) return;
+
         await omu.dashboard.notifyDropDragState({
             drag_id,
             app,
@@ -83,10 +127,17 @@ export function initDragDrop() {
             },
         });
     });
+
     listen(TauriEvent.DRAG_DROP, async ({ payload: { position, paths } }) => {
-        const drag_id = getDragId();
+        const drag_id = dragSessionManager.getCurrentSessionId();
+        if (!drag_id) return;
+
         const app = getDragDropTarget();
         if (!app) return;
+
+        const files = await getFilesByPaths(paths);
+        dragDrops[drag_id] = { files, paths };
+
         await omu.dashboard.notifyDropDragState({
             drag_id,
             app,
@@ -94,14 +145,21 @@ export function initDragDrop() {
                 type: 'drop',
                 drag_id,
                 position,
-                files: await getFilesByPaths(paths),
+                files,
             },
         });
     });
+
     listen(TauriEvent.DRAG_LEAVE, async () => {
-        const drag_id = getDragId();
+        const drag_id = dragSessionManager.getCurrentSessionId();
+        if (!drag_id) return;
+
         const app = getDragDropTarget();
-        if (!app) return;
+        if (!app) {
+            dragSessionManager.endSession();
+            return;
+        }
+
         await omu.dashboard.notifyDropDragState({
             drag_id,
             app,
@@ -110,5 +168,7 @@ export function initDragDrop() {
                 drag_id,
             },
         });
+
+        dragSessionManager.endSession();
     });
 }
