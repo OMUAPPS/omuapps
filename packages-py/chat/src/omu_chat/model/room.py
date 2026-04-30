@@ -21,6 +21,7 @@ class RoomMetadata(TypedDict):
     ended_at: NotRequired[str]
     first_message_id: NotRequired[str]
     last_message_id: NotRequired[str]
+    likes: NotRequired[int]
 
 
 type Status = Literal["online", "reserved", "offline"]

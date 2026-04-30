@@ -361,7 +361,7 @@ export class LayoutEngine {
             .offset(anchor)
             .expand({ x: 14, y: 8 });
 
-        const center = bounds.center();
+        const center = bounds.center;
         draw.rectangle(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, PALETTE_RGB.TOOLTIP_BACKGROUND);
 
         draw.triangle(

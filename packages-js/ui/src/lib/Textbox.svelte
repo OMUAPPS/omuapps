@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { createEventDispatcher, onDestroy } from 'svelte';
 
@@ -14,7 +13,7 @@
     }
 
     let {
-        value = $bindable(''),
+        value = $bindable(),
         placeholder = '',
         disabled = false,
         readonly = false,
@@ -26,7 +25,7 @@
     let timer: number | undefined;
     let input: HTMLInputElement | undefined = $state(undefined);
 
-    run(() => {
+    $effect(() => {
         if (input && focused) {
             input.focus();
         }

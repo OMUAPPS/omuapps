@@ -1,12 +1,13 @@
-import { AABB2 } from '$lib/math/aabb2.js';
+import { AABB2, type AABB2Like } from '$lib/math/aabb2.js';
 import { Bezier } from '$lib/math/bezier.js';
 import { lerp, TAU } from '$lib/math/math.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
+import { Timer } from '$lib/timer.js';
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlShader, GlTexture } from './glcontext.js';
 import type { Matrices } from './matrices.js';
 
-const VERTEX_SHADER = `#version 300 es
+export const VERTEX_SHADER = `#version 300 es
 
 precision highp float;
 
@@ -53,6 +54,48 @@ out vec4 fragColor;
 
 void main() {
     fragColor = texture(u_texture, v_texcoord) * u_color;
+    fragColor.rgb *= u_color.a;
+}
+`;
+
+const TEXTURE_CURVED_FRAGMENT_SHADER = `#version 300 es
+
+precision highp float;
+
+uniform sampler2D u_texture;
+uniform vec4 u_color;
+uniform vec2 u_resolution;
+uniform float u_curvatureTop;
+uniform float u_curvatureBottom;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+void main() {
+    vec2 uv = v_texcoord;
+    vec2 coord = uv * u_resolution;
+    float curve = sqrt(4.0 * (uv.x - uv.x * uv.x));
+    if (u_curvatureBottom > 0.0) {
+        if (u_resolution.y + curve * u_curvatureBottom - u_curvatureBottom < coord.y) {
+            discard;
+        }
+    } else {
+        if (curve * u_curvatureBottom < coord.y - u_resolution.y) {
+            discard;
+        }
+    }
+    if (u_curvatureTop > 0.0) {
+        if (u_curvatureTop - curve * u_curvatureTop > coord.y) {
+            discard;
+        }
+    } else {
+        if ((1.0 - curve) * u_curvatureTop - u_curvatureTop > coord.y) {
+            discard;
+        }
+    }
+    fragColor = texture(u_texture, uv) * u_color;
+    fragColor.rgb *= u_color.a;
 }
 `;
 
@@ -107,7 +150,8 @@ void main() {
     float alpha = 0.0;
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
-            vec2 sampleCoord = v_texcoord + vec2(float(x), float(y)) * offset;
+            vec2 dir = normalize(vec2(float(x), float(y)));
+            vec2 sampleCoord = v_texcoord + dir * offset;
             bool isOnEdge = sampleCoord.x < 0.0 || sampleCoord.x > 1.0 || sampleCoord.y < 0.0 || sampleCoord.y > 1.0;
             if (!isOnEdge) {
                 alpha = max(alpha, texture(u_texture, sampleCoord).a);
@@ -314,7 +358,8 @@ float closestBezierPoint(
 }
 
 vec4 getColor(float dir, float dist, float t) {
-    float radius = mix(u_widthIn, u_widthOut, t);
+    float inoutT = -(cos(PI * t) - 1.0) / 2.0;
+    float radius = mix(u_widthIn, u_widthOut, inoutT);
     float alpha = smoothstep(radius - 1.0, radius - 2.0, dist);
     return u_color * alpha;
 }
@@ -363,6 +408,7 @@ void main() {
     float dist = length(uv);
     float alpha = smoothstep(u_radiusOuter, u_radiusOuter - u_smoothness, dist) * smoothstep(u_radiusInner - u_smoothness, u_radiusInner, dist);
     fragColor = u_color * alpha;
+    fragColor.rgb *= u_color.a;
 }
 `;
 
@@ -449,33 +495,153 @@ void main() {
     fragColor = color * u_color * alpha;
 }`;
 
-type TextTexture = {
+const GRADIENT_RECT_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform vec4 u_color1;
+uniform vec4 u_color2;
+uniform vec2 u_dir;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+void main() {
+    vec2 uv = v_texcoord;
+    float t = dot(uv, u_dir) / dot(u_dir, u_dir);
+    vec4 color = mix(u_color1, u_color2, t);
+    fragColor = color;
+    fragColor.rgb *= color.a;
+}`;
+
+const BLUR_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform vec2 u_dir;
+uniform float[32] u_weight;
+uniform float u_weightCount;
+uniform float u_radius;
+uniform sampler2D u_texture;
+uniform vec2 u_resolution;
+uniform vec4 u_color;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+float getWeight(float offset) {
+    float t = abs(offset) / u_radius;
+    int index = int(floor(t * u_weightCount));
+    return mix(u_weight[index], u_weight[index + 1], fract(t * u_weightCount));
+}
+
+void main() {
+    vec2 texelSize = 1.0 / u_resolution;
+    vec4 color = vec4(0.0);
+    int half_radius = int(u_radius) / 2;
+    float alpha = 0.0;
+    for (int i = 0; i <= int(u_radius); i++) {
+        int index = i - half_radius;
+        vec2 offset = u_dir * float(index) * texelSize;
+        float weight = getWeight(float(index));
+        vec4 sampleCol = texture(u_texture, v_texcoord + offset);
+        color += sampleCol * weight;
+        alpha += weight;
+    }
+    if (alpha > 0.0) {
+        color /= alpha;
+    }
+    fragColor = color * u_color * u_color.a;
+}
+`;
+
+const THRESHOLD_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform sampler2D u_texture;
+uniform float u_threshold;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+void main() {
+    vec4 color = texture(u_texture, v_texcoord);
+    float brightness = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+    float alpha = step(u_threshold, brightness);
+    fragColor = vec4(vec3(alpha), color.a);
+}
+`;
+
+interface CachedTexture {
     texture: GlTexture;
-    width: number;
-    height: number;
-    font: string;
-};
+    lastUsed: number;
+}
+
+class CachedTexturePool {
+    private cache = new Map<string, CachedTexture>();
+
+    constructor(
+        private timeout: number = 60000,
+    ) {}
+
+    private clean() {
+        const oldestTexture = this.cache.size > 0 ? Array.from(this.cache.entries()).reduce((oldest, entry) => entry[1].lastUsed < oldest[1].lastUsed ? entry : oldest) : null;
+        if (!oldestTexture) return;
+        const elapsed = Timer.now() - oldestTexture[1].lastUsed;
+        if (elapsed > this.timeout) {
+            oldestTexture[1].texture.delete();
+            this.cache.delete(oldestTexture[0]);
+        }
+    }
+
+    get(key: string): GlTexture | null {
+        this.clean();
+        const cached = this.cache.get(key);
+        if (cached) {
+            cached.lastUsed = Timer.now();
+            return cached.texture;
+        }
+        return null;
+    }
+
+    render(key: string, render: () => GlTexture): GlTexture {
+        this.clean();
+        const now = Timer.now();
+        const cached = this.cache.get(key);
+        if (cached) {
+            cached.lastUsed = now;
+            return cached.texture;
+        }
+        const texture = render();
+        this.cache.set(key, { texture, lastUsed: now });
+        return texture;
+    }
+}
 
 export class Draw {
     public readonly vertexShader: GlShader;
     private readonly colorProgram: GlProgram;
+    private readonly textureCurvedProgram: GlProgram;
     private readonly textureProgram: GlProgram;
     private readonly textureMaskProgram: GlProgram;
     private readonly textureColorProgram: GlProgram;
     private readonly textureOutlineProgram: GlProgram;
+    private readonly gradientRectProgram: GlProgram;
     private readonly bezierProgram: GlProgram;
     private readonly circleProgram: GlProgram;
     private readonly circleTextureProgram: GlProgram;
     private readonly roundedRectProgram: GlProgram;
     private readonly roundedRectTextureProgram: GlProgram;
+    private readonly blurProgram: GlProgram;
+    private readonly thresholdProgram: GlProgram;
     public readonly vertexBuffer: GlBuffer;
     public readonly texcoordBuffer: GlBuffer;
     private readonly frameBuffer: GlFramebuffer;
     private readonly frameBufferTexture: GlTexture;
     private readonly textCanvas: OffscreenCanvas;
     private readonly textContext: OffscreenCanvasRenderingContext2D;
-    private readonly textRenderPool: Map<string, TextTexture> = new Map();
-    private readonly loadedCharacters: Set<string> = new Set();
+    private readonly textRenderPool: CachedTexturePool;
     public fontFamily: string = 'sans-serif';
     public fontSize: number = 10;
     public fontWeight: string = '600';
@@ -485,17 +651,22 @@ export class Draw {
         private readonly matrices: Matrices,
         private readonly glContext: GlContext,
     ) {
+        this.textRenderPool = new CachedTexturePool();
         this.vertexShader = glContext.createShader({ type: 'vertex', source: VERTEX_SHADER });
         this.colorProgram = this.createProgram(COLOR_FRAGMENT_SHADER);
+        this.textureCurvedProgram = this.createProgram(TEXTURE_CURVED_FRAGMENT_SHADER);
         this.textureProgram = this.createProgram(TEXTURE_FRAGMENT_SHADER);
         this.textureMaskProgram = this.createProgram(TEXTURE_MASK_FRAGMENT_SHADER);
         this.textureColorProgram = this.createProgram(TEXTURE_COLOR_FRAGMENT_SHADER);
         this.textureOutlineProgram = this.createProgram(TEXTURE_OUTLINE_FRAGMENT_SHADER);
+        this.gradientRectProgram = this.createProgram(GRADIENT_RECT_FRAGMENT_SHADER);
         this.bezierProgram = this.createProgram(QUADRATIC_BEZIER_FRAGMENT_SHADER);
         this.circleProgram = this.createProgram(CIRCLE_FRAGMENT_SHADER);
         this.circleTextureProgram = this.createProgram(CIRCLE_TEXTURE_FRAGMENT_SHADER);
         this.roundedRectProgram = this.createProgram(ROUNDED_RECT_FRAGMENT_SHADER);
         this.roundedRectTextureProgram = this.createProgram(ROUNDED_RECT_TEXTURE_FRAGMENT_SHADER);
+        this.blurProgram = this.createProgram(BLUR_FRAGMENT_SHADER);
+        this.thresholdProgram = this.createProgram(THRESHOLD_FRAGMENT_SHADER);
         this.vertexBuffer = glContext.createBuffer();
         this.texcoordBuffer = glContext.createBuffer();
         this.frameBuffer = glContext.createFramebuffer();
@@ -506,11 +677,23 @@ export class Draw {
             throw new Error('Failed to get 2d rendering context from text offscreen canvas');
         }
         this.textContext = textContext;
+        this.ensureFrameBuffer(4, 4);
     }
 
     private ensureFrameBuffer(width: number, height: number): void {
         this.frameBufferTexture.use(() => {
-            this.frameBufferTexture.ensureSize(width, height);
+            this.frameBufferTexture.setImage(null, {
+                width,
+                height,
+                internalFormat: 'rgba',
+                format: 'rgba',
+            });
+            this.frameBufferTexture.setParams({
+                magFilter: 'linear',
+                minFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
         });
 
         this.frameBuffer.use(() => {
@@ -521,6 +704,20 @@ export class Draw {
     private createProgram(fragmentSource: string): GlProgram {
         const fragmentShader = this.glContext.createShader({ type: 'fragment', source: fragmentSource });
         return this.glContext.createProgram([this.vertexShader, fragmentShader]);
+    }
+
+    public scissor(bounds: AABB2) {
+        const { gl } = this.glContext;
+        const { canvas } = gl;
+        gl.enable(gl.SCISSOR_TEST);
+        const mvp = this.matrices.getModelToView();
+        const viewBounds = mvp.transformAABB2(bounds);
+        gl.scissor(viewBounds.min.x, canvas.height - viewBounds.max.y, viewBounds.width, viewBounds.height);
+    }
+
+    public endScissor() {
+        const { gl } = this.glContext;
+        gl.disable(gl.SCISSOR_TEST);
     }
 
     private get font(): string {
@@ -543,21 +740,10 @@ export class Draw {
 
     private unpackMultipliedAlpha(): ImageData {
         const data = this.textContext.getImageData(0, 0, this.textCanvas.width, this.textCanvas.height);
-        // const pixels = data.data;
-        // for (let i = 0; i < pixels.length; i += 4) {
-        //     const r = pixels[i + 0];
-        //     const g = pixels[i + 1];
-        //     const b = pixels[i + 2];
-        //     const a = pixels[i + 3];
-        //     pixels[i + 0] = r / a;
-        //     pixels[i + 1] = g / a;
-        //     pixels[i + 2] = b / a;
-        //     pixels[i + 3] = a;
-        // }
         return data;
     }
 
-    private async generateTextTexture(text: string): Promise<TextTexture | null> {
+    private generateTextTexture(text: string): GlTexture | null {
         const key = JSON.stringify({ font: this.font, text });
         const existing = this.textRenderPool.get(key);
         if (existing) {
@@ -578,50 +764,43 @@ export class Draw {
         if (dimensions.x === 0 || dimensions.y === 0) {
             return null;
         }
-        const texture = this.glContext.createTexture();
-        texture.use(() => {
-            texture.setImage(this.unpackMultipliedAlpha(), {
-                width: dimensions.x,
-                height: dimensions.y,
-                internalFormat: 'rgba',
-                format: 'rgba',
+        return this.textRenderPool.render(key, () => {
+            const texture = this.glContext.createTexture();
+            texture.use(() => {
+                texture.setImage(this.unpackMultipliedAlpha(), {
+                    width: dimensions.x,
+                    height: dimensions.y,
+                    internalFormat: 'rgba',
+                    format: 'rgba',
+                });
+                texture.setParams({
+                    minFilter: 'linear',
+                    magFilter: 'linear',
+                    wrapS: 'clamp-to-edge',
+                    wrapT: 'clamp-to-edge',
+                });
             });
-            texture.setParams({
-                minFilter: 'linear',
-                magFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
-            });
+            return texture;
         });
-        const textTexture: TextTexture = {
-            texture,
-            width: dimensions.x,
-            height: dimensions.y,
-            font: this.fontFamily,
-        };
-        this.textRenderPool.set(key, textTexture);
-        return textTexture;
     }
 
     public async text(left: number, top: number, text: string, color: Vec4Like): Promise<boolean> {
         this.textContext.font = this.font;
-        const textTexture = await this.generateTextTexture(text);
-        if (!textTexture) {
+        const texture = this.generateTextTexture(text);
+        if (!texture) {
             return false;
         }
-        const { width, height, texture } = textTexture;
-        this.textureColor(left, top, left + width, top + height, texture, color);
+        this.textureColor(left, top, left + texture.width, top + texture.height, texture, color);
         return true;
     }
 
     public async textAlign(anchor: Vec2Like, text: string, align: Vec2Like, color?: Vec4Like, stroke?: { width: number; color: Vec4 }): Promise<boolean> {
         this.textContext.font = this.font;
-        const textTexture = await this.generateTextTexture(text);
-        if (!textTexture) {
+        const texture = this.generateTextTexture(text);
+        if (!texture) {
             return false;
         }
-        const { width, height, texture } = textTexture;
-        const pos = Vec2.from(anchor).sub({ x: width * align.x, y: height * align.y });
+        const pos = Vec2.from(anchor).sub({ x: texture.width * align.x, y: texture.height * align.y });
         if (stroke) {
             for (let index = 0; index < 8; index++) {
                 const dx = Math.cos(index / 8 * TAU) * stroke.width;
@@ -629,17 +808,27 @@ export class Draw {
                 this.texture(
                     pos.x + dx,
                     pos.y + dy,
-                    pos.x + dx + width,
-                    pos.y + dy + height,
+                    pos.x + dx + texture.width,
+                    pos.y + dy + texture.height,
                     texture,
                     stroke.color,
                 );
             }
         }
         if (color) {
-            this.texture(pos.x, pos.y, pos.x + width, pos.y + height, texture, color);
+            this.texture(pos.x, pos.y, pos.x + texture.width, pos.y + texture.height, texture, color);
         }
         return true;
+    }
+
+    public async textFit(bounds: AABB2, text: string, align: Vec2Like, color?: Vec4Like, stroke?: { width: number; color: Vec4 }) {
+        const prevSize = this.fontSize;
+        const metrics = this.measureTextActual(text);
+        const scale = Math.min(bounds.width / metrics.width, bounds.height / metrics.height);
+        this.fontSize *= scale;
+        const success = await this.textAlign(bounds.at(align), text, align, color, stroke);
+        this.fontSize = prevSize;
+        return success;
     }
 
     public setMesh(program: GlProgram, vertices?: Float32Array, texcoords?: Float32Array): void {
@@ -655,6 +844,24 @@ export class Draw {
             });
             program.getAttribute('a_texcoord').set(this.texcoordBuffer, 2, this.glContext.gl.FLOAT, false, 0, 0);
         }
+    }
+
+    public setMeshRect(program: GlProgram, left: number, top: number, right: number, bottom: number): void {
+        this.setMesh(program, new Float32Array([
+            left, top, 0,
+            right, top, 0,
+            right, bottom, 0,
+            left, top, 0,
+            right, bottom, 0,
+            left, bottom, 0,
+        ]), new Float32Array([
+            0, 0,
+            1, 0,
+            1, 1,
+            0, 0,
+            1, 1,
+            0, 1,
+        ]));
     }
 
     public setMatrices(program: GlProgram): void {
@@ -676,7 +883,7 @@ export class Draw {
             this.setMatrices(this.colorProgram);
             this.colorProgram.getUniform('u_color').asVec4().set(color);
 
-            this.colorProgram.getAttribute('a_position').set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0); ;
+            this.colorProgram.getAttribute('a_position').set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 3);
         });
     }
@@ -685,14 +892,7 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.colorProgram.use(() => {
-            this.setMesh(this.colorProgram, new Float32Array([
-                left, top, 0,
-                right, top, 0,
-                right, bottom, 0,
-                left, top, 0,
-                right, bottom, 0,
-                left, bottom, 0,
-            ]));
+            this.setMeshRect(this.colorProgram, left, top, right, bottom);
             this.setMatrices(this.colorProgram);
             this.colorProgram.getUniform('u_color').asVec4().set(color);
 
@@ -702,45 +902,118 @@ export class Draw {
         });
     }
 
-    public rectangleStroke(left: number, top: number, right: number, bottom: number, color: Vec4Like, width: number): void {
+    public rectangleGradient2(left: number, top: number, right: number, bottom: number, color1: Vec4Like, color2: Vec4Like, dir: Vec2): void {
+        const { gl } = this.glContext;
+
+        this.gradientRectProgram.use(() => {
+            this.setMesh(this.gradientRectProgram, new Float32Array([
+                left, top, 0,
+                right, top, 0,
+                right, bottom, 0,
+                left, top, 0,
+                right, bottom, 0,
+                left, bottom, 0,
+            ]), new Float32Array([
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 0,
+                1, 1,
+                0, 1,
+            ]));
+            this.setMatrices(this.gradientRectProgram);
+            this.gradientRectProgram.getUniform('u_color1').asVec4().set(color1);
+            this.gradientRectProgram.getUniform('u_color2').asVec4().set(color2);
+            this.gradientRectProgram.getUniform('u_dir').asVec2().set(dir);
+
+            const position = this.gradientRectProgram.getAttribute('a_position');
+            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    public rectangleStroke(left: number, top: number, right: number, bottom: number, color: Vec4Like, width: number, side: 'outer' | 'inner' | 'middle' = 'middle'): void {
         const { gl } = this.glContext;
         width /= 2;
+
+        const expand = side === 'inner'
+            ? 0
+            : side === 'middle'
+                ? width / 2
+                : width;
+        const bounds = new AABB2(new Vec2(left, top), new Vec2(right, bottom)).expand(
+            { x: expand, y: expand },
+        );
+        const { min, max } = bounds;
 
         this.colorProgram.use(() => {
             this.setMesh(this.colorProgram, new Float32Array([
                 // top
-                left - width, top - width, 0,
-                right - width, top - width, 0,
-                right - width, top + width, 0,
-                left - width, top - width, 0,
-                right - width, top + width, 0,
-                left - width, top + width, 0,
+                min.x - width, min.y - width, 0,
+                max.x - width, min.y - width, 0,
+                max.x - width, min.y + width, 0,
+                min.x - width, min.y - width, 0,
+                max.x - width, min.y + width, 0,
+                min.x - width, min.y + width, 0,
                 // right
-                right - width, top - width, 0,
-                right + width, top - width, 0,
-                right + width, bottom - width, 0,
-                right - width, top - width, 0,
-                right + width, bottom - width, 0,
-                right - width, bottom - width, 0,
+                max.x - width, min.y - width, 0,
+                max.x + width, min.y - width, 0,
+                max.x + width, max.y - width, 0,
+                max.x - width, min.y - width, 0,
+                max.x + width, max.y - width, 0,
+                max.x - width, max.y - width, 0,
                 // bottom
-                left + width, bottom - width, 0,
-                right + width, bottom - width, 0,
-                right + width, bottom + width, 0,
-                left + width, bottom - width, 0,
-                right + width, bottom + width, 0,
-                left + width, bottom + width, 0,
+                min.x + width, max.y - width, 0,
+                max.x + width, max.y - width, 0,
+                max.x + width, max.y + width, 0,
+                min.x + width, max.y - width, 0,
+                max.x + width, max.y + width, 0,
+                min.x + width, max.y + width, 0,
                 // left
-                left - width, top + width, 0,
-                left + width, top + width, 0,
-                left + width, bottom + width, 0,
-                left - width, top + width, 0,
-                left + width, bottom + width, 0,
-                left - width, bottom + width, 0,
+                min.x - width, min.y + width, 0,
+                min.x + width, min.y + width, 0,
+                min.x + width, max.y + width, 0,
+                min.x - width, min.y + width, 0,
+                min.x + width, max.y + width, 0,
+                min.x - width, max.y + width, 0,
             ]));
             this.setMatrices(this.colorProgram);
 
             this.colorProgram.getUniform('u_color').asVec4().set(color);
             gl.drawArrays(gl.TRIANGLES, 0, 24);
+        });
+    }
+
+    public textureCurved({ min, max }: AABB2Like, texture: GlTexture, color: Vec4Like = Vec4.ONE, curvatureTop: number, curvatureBottom: number): void {
+        const { gl } = this.glContext;
+
+        this.textureCurvedProgram.use(() => {
+            this.setMesh(
+                this.textureCurvedProgram, new Float32Array([
+                    min.x, min.y, 0,
+                    max.x, min.y, 0,
+                    max.x, max.y, 0,
+                    min.x, min.y, 0,
+                    max.x, max.y, 0,
+                    min.x, max.y, 0,
+                ]),
+                new Float32Array([
+                    0, 0,
+                    1, 0,
+                    1, 1,
+                    0, 0,
+                    1, 1,
+                    0, 1,
+                ]),
+            );
+            this.setMatrices(this.textureCurvedProgram);
+
+            this.textureCurvedProgram.getUniform('u_texture').asSampler2D().set(texture);
+            this.textureCurvedProgram.getUniform('u_color').asVec4().set(color);
+            this.textureCurvedProgram.getUniform('u_resolution').asVec2().set({ x: Math.abs(max.x - min.x), y: Math.abs(max.y - min.y) });
+            this.textureCurvedProgram.getUniform('u_curvatureTop').asFloat().set(curvatureTop);
+            this.textureCurvedProgram.getUniform('u_curvatureBottom').asFloat().set(curvatureBottom);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
 
@@ -819,21 +1092,7 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.textureMaskProgram.use(() => {
-            this.setMesh(this.textureMaskProgram, new Float32Array([
-                left, top, 0,
-                right, top, 0,
-                right, bottom, 0,
-                left, top, 0,
-                right, bottom, 0,
-                left, bottom, 0,
-            ]), new Float32Array([
-                0, 0,
-                1, 0,
-                1, 1,
-                0, 0,
-                1, 1,
-                0, 1,
-            ]));
+            this.setMeshRect(this.textureMaskProgram, left, top, right, bottom);
             this.setMatrices(this.textureMaskProgram);
 
             this.textureMaskProgram.getUniform('u_texture').asSampler2D().set(texture);
@@ -1048,21 +1307,7 @@ export class Draw {
         radiusOuter /= 2;
 
         this.circleTextureProgram.use(() => {
-            this.setMesh(this.circleTextureProgram, new Float32Array([
-                x - radiusOuter, y - radiusOuter, 0,
-                x + radiusOuter, y - radiusOuter, 0,
-                x + radiusOuter, y + radiusOuter, 0,
-                x - radiusOuter, y - radiusOuter, 0,
-                x + radiusOuter, y + radiusOuter, 0,
-                x - radiusOuter, y + radiusOuter, 0,
-            ]), new Float32Array([
-                0, 0,
-                1.0, 0,
-                1.0, 1.0,
-                0, 0,
-                1.0, 1.0,
-                0, 1.0,
-            ]));
+            this.setMeshRect(this.circleTextureProgram, x - radiusOuter, y - radiusOuter, x + radiusOuter, y + radiusOuter);
             this.setMatrices(this.circleTextureProgram);
 
             this.circleTextureProgram.getUniform('u_resolution').asVec2().set({ x: radiusOuter * 2, y: radiusOuter * 2 });
@@ -1076,8 +1321,8 @@ export class Draw {
     }
 
     public roundedRectTexture(
-        start: Vec2,
-        end: Vec2,
+        start: Vec2Like,
+        end: Vec2Like,
         radius: number,
         texture: GlTexture,
         color: Vec4 = Vec4.ONE,
@@ -1086,17 +1331,10 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.roundedRectTextureProgram.use(() => {
-            this.setMesh(this.roundedRectTextureProgram, new Float32Array([
-                start.x, start.y, 0,
-                end.x, start.y, 0,
-                end.x, end.y, 0,
-                start.x, start.y, 0,
-                end.x, end.y, 0,
-                start.x, end.y, 0,
-            ]));
+            this.setMeshRect(this.roundedRectTextureProgram, start.x, start.y, end.x, end.y);
             this.setMatrices(this.roundedRectTextureProgram);
             this.roundedRectTextureProgram.getUniform('u_color').asVec4().set(color);
-            this.roundedRectTextureProgram.getUniform('u_resolution').asVec2().set(end.sub(start));
+            this.roundedRectTextureProgram.getUniform('u_resolution').asVec2().set(Vec2.from(end).sub(start));
             this.roundedRectTextureProgram.getUniform('u_radius').asFloat().set(radius);
             this.roundedRectTextureProgram.getUniform('u_smoothness').asFloat().set(smoothness);
             this.roundedRectTextureProgram.getUniform('u_texture').asSampler2D().set(texture);
@@ -1118,21 +1356,7 @@ export class Draw {
         const { gl } = this.glContext;
 
         this.roundedRectProgram.use(() => {
-            this.setMesh(this.roundedRectProgram, new Float32Array([
-                start.x, start.y, 0,
-                end.x, start.y, 0,
-                end.x, end.y, 0,
-                start.x, start.y, 0,
-                end.x, end.y, 0,
-                start.x, end.y, 0,
-            ]), new Float32Array([
-                0, 0,
-                1, 0,
-                1, 1,
-                0, 0,
-                1, 1,
-                0, 1,
-            ]));
+            this.setMeshRect(this.roundedRectProgram, start.x, start.y, end.x, end.y);
             this.setMatrices(this.roundedRectProgram);
             this.roundedRectProgram.getUniform('u_color').asVec4().set(color);
             this.roundedRectProgram.getUniform('u_resolution').asVec2().set(end.sub(start));
@@ -1142,6 +1366,78 @@ export class Draw {
 
             const position = this.roundedRectProgram.getAttribute('a_position');
             position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    private getBlurWeight(): Float32Array {
+        const weightCount = 32;
+        const weights = new Float32Array(weightCount);
+        const sigma = weightCount / 6;
+        let sum = 0;
+        for (let i = 0; i < weightCount; i++) {
+            const x = i / weightCount * 6 - 3;
+            const weight = Math.exp(-0.5 * (x / sigma) ** 2);
+            weights[i] = weight;
+            sum += weight;
+        }
+        for (let i = 0; i < weightCount; i++) {
+            weights[i] /= sum;
+        }
+        return weights;
+    }
+
+    public blurTextureStep(left: number, top: number, right: number, bottom: number, tex: GlTexture, radius: number, dir: Vec2Like, color: Vec4Like = Vec4.ONE): void {
+        const bounds = new AABB2(new Vec2(left, top), new Vec2(right, bottom));
+        const { gl } = this.glContext;
+
+        this.blurProgram.use(() => {
+            this.setMeshRect(this.blurProgram, left, top, right, bottom);
+            this.setMatrices(this.blurProgram);
+
+            const weights = this.getBlurWeight();
+            this.blurProgram.getUniform('u_weight[0]').asFloatArray().set(weights);
+            this.blurProgram.getUniform('u_weightCount').asFloat().set(weights.length);
+            this.blurProgram.getUniform('u_radius').asFloat().set(radius);
+            this.blurProgram.getUniform('u_texture').asSampler2D().set(tex);
+            this.blurProgram.getUniform('u_resolution').asVec2().set(bounds.size);
+            this.blurProgram.getUniform('u_dir').asVec2().set(dir);
+            this.blurProgram.getUniform('u_color').asVec4().set(color);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    public blurTexture(left: number, top: number, right: number, bottom: number, tex: GlTexture, radius: number): void {
+        const bounds = new AABB2(new Vec2(left, top), new Vec2(right, bottom));
+        const size = bounds.size;
+        this.frameBufferTexture.use(() => {
+            this.frameBufferTexture.ensureSize(bounds.size.x, bounds.size.y);
+        });
+
+        const { stateManager } = this.glContext;
+        this.frameBuffer.use(() => {
+            stateManager.pushViewport(size);
+            this.matrices.push();
+            this.matrices.identity();
+            this.matrices.projection.orthographic(0, 0, size.x, size.y, -1, 1);
+            this.blurTextureStep(0, 0, size.x, size.y, tex, radius, { x: 1, y: 0 });
+            this.matrices.pop();
+            stateManager.popViewport();
+        });
+
+        this.blurTextureStep(left, top, right, bottom, this.frameBufferTexture, radius, { x: 0, y: 1 });
+    }
+
+    public thresholdTexture(left: number, top: number, right: number, bottom: number, tex: GlTexture, threshold: number) {
+        const { gl } = this.glContext;
+
+        this.thresholdProgram.use(() => {
+            this.setMeshRect(this.thresholdProgram, left, top, right, bottom);
+            this.setMatrices(this.thresholdProgram);
+
+            this.thresholdProgram.getUniform('u_texture').asSampler2D().set(tex);
+            this.thresholdProgram.getUniform('u_threshold').asFloat().set(threshold);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }

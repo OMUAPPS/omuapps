@@ -187,11 +187,11 @@ class TableImpl<T> implements Table<T> {
 
     constructor(
         private readonly omu: Omu,
-        tableType: TableType<T>,
+        public readonly type: TableType<T>,
     ) {
-        this.id = tableType.id;
-        this.serializer = tableType.serializer;
-        this.keyFunction = tableType.keyFunction;
+        this.id = type.id;
+        this.serializer = type.serializer;
+        this.keyFunction = type.keyFunction;
         this.cache = new Map();
         this.event = {
             add: new EventEmitter<[Map<string, T>]>(),

@@ -3,6 +3,7 @@ import type { InputEventMouse } from '$lib/components/canvas/pipeline';
 import type { AABB2 } from '$lib/math/aabb2';
 import type { Vec2 } from '$lib/math/vec2';
 import type { Component } from 'svelte';
+import type { ValidateResult } from '../core/helper';
 import type { Action } from '../core/input-system';
 import type { Item, ItemPool } from './item';
 
@@ -15,6 +16,7 @@ export interface ItemRender {
     update: number;
     texture: GlTexture;
     target: GlFramebuffer;
+    renderBounds: AABB2;
     bounds: AABB2;
 }
 
@@ -41,9 +43,12 @@ export interface LoadTask {
 }
 
 export type ItemMouseEvent = InputEventMouse & {
-    offset: Vec2;
-    offsetPrev: Vec2;
-    offsetDelta: Vec2;
+    localPos: Vec2;
+    localPrev: Vec2;
+    localDelta: Vec2;
+    poolPos: Vec2;
+    poolPrev: Vec2;
+    poolDelta: Vec2;
 };
 
 export interface LoadContext {
@@ -52,24 +57,44 @@ export interface LoadContext {
 
 export interface CollideContext {
     hovered?: string;
+    ignoreList?: string[];
 }
 
 export interface ActionContext {
     actions: Action[];
 }
 
+export type AttributeTypeOfHandler<T extends AttributeHandler<unknown>> = T extends AttributeHandler<infer Attr> ? Attr : never;
+
+export interface CalculateBoundsContext {
+    render: AABB2;
+}
+
+export interface RenderPass {
+    order: number;
+    render(): Promise<void>;
+}
+
+export interface RenderContext {
+    render: ItemRender;
+    children: Record<string, ItemRender>;
+    passes: RenderPass[];
+}
+
 export interface AttributeHandler<T> {
     name: string;
     editor: Component<{ attr: T }>;
     create(): T;
+    validate(value: T): ValidateResult<T>;
     load?(invoke: AttributeInvoke<T>, ctx: LoadContext): Promise<void>;
-    bounds?(invoke: AttributeInvoke<T>, result: { render: AABB2 }, children: Record<string, ItemRender>): Promise<void>;
-    renderPre?(invoke: AttributeInvoke<T>, render: ItemRender): Promise<void>;
-    renderChildren?(invoke: AttributeInvoke<T>, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
-    renderPost?(invoke: AttributeInvoke<T>, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
-    renderOverlay?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
+    bounds?(invoke: AttributeInvoke<T>, ctx: CalculateBoundsContext, children: Record<string, ItemRender>): Promise<void>;
+    getRenderPass?(invoke: AttributeInvoke<T>, ctx: RenderContext): Promise<void>;
+    renderOverlayPre?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
+    renderOverlayPost?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
     overlay?(invoke: AttributeInvoke<T>, render: ItemRender): Promise<void>;
     actions?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent, ctx: ActionContext): Promise<void>;
     collide?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent, ctx: CollideContext): Promise<void>;
     mouse?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent): Promise<void>;
+    drag?(invoke: AttributeInvoke<T>, pool: ItemPool): Promise<void>;
+    drop?(invoke: AttributeInvoke<T>, pool: ItemPool): Promise<void>;
 }

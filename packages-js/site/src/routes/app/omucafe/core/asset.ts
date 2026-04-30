@@ -2,6 +2,7 @@ import type { GlTexture } from '$lib/components/canvas/glcontext';
 import { hash } from '$lib/helper';
 import type { Identifier } from '@omujs/omu';
 import type { Game } from './game';
+import type { ValidateResult } from './helper';
 
 export type Asset = {
     type: 'asset';
@@ -17,6 +18,27 @@ export function getAssetKey(asset: Asset): string {
     } else {
         return `url:${asset.url}`;
     }
+}
+
+export function validateAsset(value: Asset): ValidateResult<Asset> {
+    if (typeof value !== 'object' || typeof value.type !== 'string') {
+        return { type: 'invalid', message: 'Assetはオブジェクトで、typeプロパティを持つ必要があります' };
+    }
+    if (value.type === 'asset') {
+        if (!value.id) {
+            return { type: 'invalid', message: 'アセットIDが指定されていません' };
+        }
+    } else {
+        if (!value.url) {
+            return { type: 'invalid', message: 'URLが指定されていません' };
+        }
+        try {
+            new URL(value.url);
+        } catch {
+            return { type: 'invalid', message: '無効なURLです' };
+        }
+    }
+    return { type: 'valid', value };
 }
 
 export type LoadingResult<T, E> = ({
@@ -95,10 +117,39 @@ export class AssetManager {
             const buffer = await this.download(asset.id);
             return buffer;
         } else {
-            const response = await fetch(asset.url);
-            const arrayBuffer = await response.arrayBuffer();
-            return new Uint8Array(arrayBuffer);
+            if (asset.url.startsWith('https://')) {
+                const proxiedUrl = this.game.app.omu.assets.proxy(asset.url);
+                const response = await fetch(proxiedUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                return new Uint8Array(arrayBuffer);
+            } else {
+                const response = await fetch(asset.url);
+                const arrayBuffer = await response.arrayBuffer();
+                return new Uint8Array(arrayBuffer);
+            }
         }
+    });
+
+    private readonly blobs = new Loader<Asset, Blob>((data) => getAssetKey(data), async (asset) => {
+        const buffer = await this.assets.get(asset).promise;
+        if (buffer.type === 'error') {
+            throw buffer.error;
+        }
+        return new Blob([buffer.data as BlobPart]);
+    });
+
+    private readonly urls = new Loader<Asset, string>((data) => getAssetKey(data), async (asset) => {
+        const blobState = this.blobs.get(asset);
+        if (blobState.type === 'error') {
+            throw blobState.error;
+        }
+        const blob = await blobState.promise.then(result => {
+            if (result.type === 'error') {
+                throw result.error;
+            }
+            return result.data;
+        });
+        return URL.createObjectURL(blob);
     });
 
     private readonly textures = new Loader<Asset, AssetTexture>((data) => getAssetKey(data), async (asset) => {
@@ -111,6 +162,17 @@ export class AssetManager {
         return texture;
     });
 
+    private readonly audioBuffers = new Loader<Asset, AudioBuffer>((data) => getAssetKey(data), async (asset) => {
+        const result = await this.assets.get(asset).promise;
+        if (result.type === 'error') {
+            throw result.error;
+        }
+        const { data } = result;
+        const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
+        const cachedBuffer = await this.game.audio.ctx.decodeAudioData(arrayBuffer);
+        return cachedBuffer;
+    });
+
     private readonly dataCanvas: OffscreenCanvas;
     private readonly dataContext: OffscreenCanvasRenderingContext2D;
 
@@ -118,21 +180,45 @@ export class AssetManager {
         private readonly game: Game,
     ) {
         this.dataCanvas = new OffscreenCanvas(1, 1);
-        const ctx = this.dataCanvas.getContext('2d');
+        const ctx = this.dataCanvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) {
             throw new Error('Failed to create canvas context');
         }
         this.dataContext = ctx;
+        if (game.side === 'client') {
+            this.garbageAssetCollection();
+        }
+    }
+
+    private garbageAssetCollection() {
+        const states = this.game.states;
+        const allString = states.getAllJsonStringified(states.assets);
+        const toRemove = new Set<string>();
+        for (const [id, asset] of states.assets.entries()) {
+            const included1 = allString.includes(id);
+            const included2 = asset.type === 'asset' && allString.includes(asset.id);
+            if (included1 || included2) continue;
+            toRemove.add(id);
+        }
+        for (const id of toRemove) {
+            const asset = states.assets.get(id);
+            if (!asset) continue;
+            if (asset.type === 'asset') {
+                const id = this.getAssetId(asset.id);
+                this.game.app.omu.assets.delete(id);
+            }
+            states.assets.delete(id);
+        }
     }
 
     private getAssetId(id: string): Identifier {
         const { omu } = this.game.app;
-        return omu.app.id.join('asset', id);
+        return omu.app.id.base.join('asset', id);
     }
 
     private async download(id: string): Promise<Uint8Array> {
         const { omu } = this.game.app;
-        const assetId = omu.app.id.join('asset', id);
+        const assetId = this.getAssetId(id);
         return (await omu.assets.download(assetId)).buffer;
     }
 
@@ -142,6 +228,18 @@ export class AssetManager {
 
     public getTextureByUrl(url: string): TextureStatus {
         return this.textures.get({ type: 'url', url });
+    }
+
+    public getAudioBuffer(asset: Asset): LoadingState<AudioBuffer> {
+        return this.audioBuffers.get(asset);
+    }
+
+    public getBlob(asset: Asset): LoadingState<Blob> {
+        return this.blobs.get(asset);
+    }
+
+    public getUrl(asset: Asset): LoadingState<string> {
+        return this.urls.get(asset);
     }
 
     private getImageData(image: HTMLImageElement): ImageData {
@@ -186,10 +284,8 @@ export class AssetManager {
         return asset;
     }
 
-    public async uploadFile(file: File): Promise<Asset> {
+    public async uploadBuffer(buffer: Uint8Array): Promise<Asset> {
         const { omu } = this.game.app;
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = new Uint8Array(arrayBuffer);
         const id = hash(buffer);
         const asset: Asset = {
             type: 'asset',
@@ -198,5 +294,11 @@ export class AssetManager {
         const assetId = this.getAssetId(id);
         await omu.assets.upload(assetId, buffer);
         return this.upload(asset);
+    }
+
+    public async uploadFile(file: File): Promise<Asset> {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = new Uint8Array(arrayBuffer);
+        return this.uploadBuffer(buffer);
     }
 }

@@ -64,7 +64,7 @@ export class ObjectManager {
                 if (!object) return;
                 this.app.world.attahed[userId] = this.app.world.attahed[userId].filter(({ object }) => object.id !== objectId);
                 this.app.world.objects[object.object.id] = object.object;
-                const center = render.worldBounds.center();
+                const center = render.worldBounds.center;
                 object.object.position = center;
                 this.heldObject = objectId;
             }

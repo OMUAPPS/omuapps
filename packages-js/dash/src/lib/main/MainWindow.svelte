@@ -128,11 +128,11 @@
                             <Tooltip>
                                 <div class="tooltip">
                                     <h3>{$t('screen.manage-apps.name')}</h3>
-                                    <small
-                                    >{$t(
-                                        'screen.manage-apps.description',
-                                    )}</small
-                                    >
+                                    <small>
+                                        {$t(
+                                            'screen.manage-apps.description',
+                                        )}
+                                    </small>
                                 </div>
                             </Tooltip>
                             <i class="ti ti-edit"></i>

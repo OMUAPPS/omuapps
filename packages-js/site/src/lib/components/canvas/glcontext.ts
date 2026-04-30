@@ -453,6 +453,10 @@ export class GlTexture {
         private params?: TextureParams,
     ) {}
 
+    public get size() {
+        return new Vec2(this.width, this.height);
+    }
+
     public static create(stateManager: GLStateManager, gl: WebGL2RenderingContext): GlTexture {
         const texture = gl.createTexture();
         if (texture == null) {
@@ -604,6 +608,14 @@ export class GlFramebuffer {
         return new GlFramebuffer(stateManager, gl, framebuffer);
     }
 
+    public clear(color: Vec4Like): void {
+        if (!this.stateManager.isFramebufferBound(this)) {
+            throw new Error('Framebuffer not bound');
+        }
+        this.gl.clearColor(color.x, color.y, color.z, color.w);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT);
+    }
+
     public use(callback: () => void): void {
         this.stateManager.bindFramebuffer(this, () => {
             callback();
@@ -674,10 +686,20 @@ export class GlFramebuffer {
             throw new Error('Invalid dimensions for reading pixels');
         }
         const data = this.readPixels(x, y, width, height, format);
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i + 0] / 255;
+            const g = data[i + 1] / 255;
+            const b = data[i + 2] / 255;
+            const a = data[i + 3] / 255;
+            data[i + 0] = r / a * 255;
+            data[i + 1] = g / a * 255;
+            data[i + 2] = b / a * 255;
+            data[i + 3] = a * 255;
+        }
         return new ImageData(new Uint8ClampedArray(data), width, height);
     }
 
-    public readAs(x: number, y: number, width: number, height: number, type = 'image/png'): Promise<Blob> {
+    public readAsBlob(x: number, y: number, width: number, height: number, type = 'image/png'): Promise<Blob> {
         width = Math.ceil(width);
         height = Math.ceil(height);
         if (width <= 0 || height <= 0) {
@@ -693,6 +715,10 @@ export class GlFramebuffer {
         }
         ctx.putImageData(imageData, 0, 0);
         return canvas.convertToBlob({ type });
+    }
+
+    public delete() {
+        this.gl.deleteFramebuffer(this.framebuffer);
     }
 }
 
@@ -724,8 +750,8 @@ export class GlContext {
 
     public destroy(): void {}
 
-    public static create(canvas: HTMLCanvasElement | OffscreenCanvas): GlContext {
-        const gl = canvas.getContext('webgl2', { premultipliedAlpha: true }) as WebGL2RenderingContext | null;
+    public static create(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebGLContextAttributes): GlContext {
+        const gl = canvas.getContext('webgl2', { premultipliedAlpha: true, ...options }) as WebGL2RenderingContext | null;
         if (gl == null) {
             throw new Error('WebGL2 not supported');
         }

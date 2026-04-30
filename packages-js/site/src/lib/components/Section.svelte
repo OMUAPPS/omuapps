@@ -22,11 +22,11 @@
 
 <style lang="scss">
     h2 {
-        margin-bottom: 0.5rem;
         text-align: center;
         color: var(--color-1);
         border-bottom: 1px solid var(--color-1);
         padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
         font-size: 1.17em;
     }
 

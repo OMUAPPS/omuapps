@@ -7,10 +7,18 @@ export interface Mouse {
     pos: Vec2;
     delta: Vec2;
     entered: boolean;
+    buttons: Record<number, boolean>;
+}
+
+export interface Keyboard {
+    keys: Record<string, {
+        timestamp: number;
+    } | undefined>;
 }
 
 export interface Input {
     mouse: Mouse;
+    keyboard: Keyboard;
     [Symbol.iterator](): Generator<InputEvent>;
 }
 
@@ -27,66 +35,94 @@ export class HTMLInput implements Input {
     })[] = [];
 
     private prev: Vec2 = Vec2.ZERO;
-    public mouse: Mouse = { pos: Vec2.ZERO, delta: Vec2.ZERO, entered: false };
+    public mouse: Mouse = { pos: Vec2.ZERO, delta: Vec2.ZERO, entered: false, buttons: {} };
+    public keyboard: Keyboard = { keys: {} };
 
-    constructor(element: HTMLElement) {
-        window.addEventListener('mousemove', (ev) => this.queue.push({ type: 'mouse', ev }));
-        window.addEventListener('mousedown', (ev) => this.queue.push({ type: 'mouse', ev }));
-        window.addEventListener('mouseup', (ev) => this.queue.push({ type: 'mouse', ev }));
+    constructor() {
         window.addEventListener('mouseenter', (ev) => this.queue.push({ type: 'mouse', ev }));
         window.addEventListener('mouseleave', (ev) => this.queue.push({ type: 'mouse', ev }));
+        window.addEventListener('pointermove', (ev) => this.queue.push({ type: 'mouse', ev }));
+        window.addEventListener('pointerdown', (ev) => this.queue.push({ type: 'mouse', ev }));
+        window.addEventListener('pointerup', (ev) => this.queue.push({ type: 'mouse', ev }));
         window.addEventListener('wheel', (ev) => this.queue.push({ type: 'wheel', ev }));
         window.addEventListener('keydown', (ev) => this.queue.push({ type: 'keyboard', ev }));
         window.addEventListener('keyup', (ev) => this.queue.push({ type: 'keyboard', ev }));
     }
 
     *[Symbol.iterator](): Generator<InputEvent> {
+        const buttons = this.mouse.buttons;
         while (this.queue.length > 0) {
             const event = this.queue.shift();
             if (!event) break;
             if (event.type === 'mouse') {
                 const pos = new Vec2(event.ev.clientX, event.ev.clientY);
                 const delta = pos.sub(this.prev);
+                let entered = true;
+                if (event.ev.target && event.ev.target instanceof HTMLElement) {
+                    let element: HTMLElement | null = event.ev.target;
+                    while (element) {
+                        // [data-input]
+                        if (element.hasAttribute('data-input')) {
+                            entered = false;
+                            break;
+                        }
+                        element = element.parentElement;
+                    }
+                }
                 this.prev = pos;
-
+                if (this.mouse.entered !== entered) {
+                    this.mouse.entered = entered;
+                    if (entered) {
+                        yield {
+                            timestamp: event.ev.timeStamp,
+                            kind: 'mouse-enter',
+                            mouse: this.mouse,
+                        };
+                    } else {
+                        yield {
+                            timestamp: event.ev.timeStamp,
+                            kind: 'mouse-leave',
+                            mouse: this.mouse,
+                        };
+                    }
+                }
                 this.mouse = {
                     pos,
                     delta,
-                    entered: true,
+                    entered,
+                    buttons,
                 };
 
-                if (event.ev.type === 'mousemove') {
+                if (event.ev.type === 'pointermove') {
+                    if ((event.ev as unknown as TouchEvent).touches?.length === 0) {
+                        return;
+                    }
                     yield {
                         timestamp: event.ev.timeStamp,
                         kind: 'mouse-move',
                         mouse: this.mouse,
                     };
-                } else if (event.ev.type === 'mousedown') {
+                } else if (event.ev.type === 'pointerdown') {
+                    if ((event.ev as unknown as TouchEvent).touches?.length === 0) {
+                        return;
+                    }
+                    buttons[event.ev.button] = true;
                     yield {
                         timestamp: event.ev.timeStamp,
                         kind: 'mouse-down',
                         mouse: this.mouse,
                         button: event.ev.button,
                     };
-                } else if (event.ev.type === 'mouseup') {
+                } else if (event.ev.type === 'pointerup') {
+                    if ((event.ev as unknown as TouchEvent).touches?.length === 0) {
+                        return;
+                    }
+                    buttons[event.ev.button] = false;
                     yield {
                         timestamp: event.ev.timeStamp,
                         kind: 'mouse-up',
                         mouse: this.mouse,
                         button: event.ev.button,
-                    };
-                } else if (event.ev.type === 'mouseenter') {
-                    yield {
-                        timestamp: event.ev.timeStamp,
-                        kind: 'mouse-enter',
-                        mouse: this.mouse,
-                    };
-                } else if (event.ev.type === 'mouseleave') {
-                    this.mouse.entered = false;
-                    yield {
-                        timestamp: event.ev.timeStamp,
-                        kind: 'mouse-leave',
-                        mouse: this.mouse,
                     };
                 }
             } else if (event.type == 'wheel') {
@@ -98,12 +134,16 @@ export class HTMLInput implements Input {
                 };
             } else if (event.type == 'keyboard') {
                 if (event.ev.type === 'keydown') {
+                    this.keyboard.keys[event.ev.key] = {
+                        timestamp: event.ev.timeStamp,
+                    };
                     yield {
                         timestamp: event.ev.timeStamp,
                         kind: 'key-down',
                         key: event.ev.key,
                     };
                 } else if (event.ev.type === 'keyup') {
+                    delete this.keyboard.keys[event.ev.key];
                     yield {
                         timestamp: event.ev.timeStamp,
                         kind: 'key-up',
@@ -126,7 +166,7 @@ export interface EventKey extends TimedInputEvent {
 
 export interface EventKeyUp extends EventKey {
     kind: 'key-up';
-};
+}
 
 export interface EventKeyDown extends EventKey {
     kind: 'key-down';

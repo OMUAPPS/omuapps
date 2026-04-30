@@ -89,7 +89,7 @@
         const dist = Math.max(
             offset.dot(align) * 2,
             new AABB2(Vec2.ZERO, new Vec2(dimensions.x, dimensions.y)).distance(dragPosWorld),
-            onCorner && avatarPositions[id] ? Vec2.from(avatarPositions[id].targetPos).sub(currentPos).mul({ x: align.y, y: align.x }).length() : 0,
+            onCorner && avatarPositions[id] ? Vec2.from(avatarPositions[id].targetPos).sub(currentPos).mul({ x: align.y, y: align.x }).length : 0,
         );
 
         return dist > -150 && dist < 300;

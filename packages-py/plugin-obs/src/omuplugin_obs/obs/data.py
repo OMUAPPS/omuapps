@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from enum import IntEnum
 
 import obspython  # type: ignore
@@ -243,9 +244,14 @@ class OBSData(Reference[obs_data_t]):
         return cls(obs_data)
 
     @classmethod
-    def from_json(cls, json_dict: dict) -> OBSData:
+    @contextmanager
+    def from_json(cls, json_dict: dict):
         json_string = json.dumps(json_dict)
-        return cls.create_from_json(json_string)
+        data = cls.create_from_json(json_string)
+        try:
+            yield data
+        finally:
+            data.release()
 
     @classmethod
     def create_from_json(cls, json_string: str) -> OBSData:

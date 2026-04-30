@@ -1,89 +1,119 @@
 <script lang="ts">
-    import { Tooltip } from '@omujs/ui';
+    import { Button, Tooltip } from '@omujs/ui';
+    import EditText from '../../common/EditText.svelte';
     import type { Game } from '../../core/game';
-    import type { AttributeKey } from '../../item/attribute';
-    import type { SceneFactoryData } from './factory';
+    import EditItem from './EditItem.svelte';
+    import EditProductEntry from './EditProductEntry.svelte';
+    import { preview, type SceneFactoryData } from './factory';
 
     interface Props {
         scene: SceneFactoryData;
         game: Game;
     }
 
-    let { game, scene }: Props = $props();
+    let { game, scene = $bindable() }: Props = $props();
 
-    let lastAttributeString = JSON.stringify(scene.item?.attrs);
+    function goBack() {
+        game.startTransition({ type: 'kitchen' }, {
+            title: 'キッチンへ移動中…',
+            duration: 750,
+        });
+    }
 
-    const { attributeRegistry } = game.itemSystem;
-
-    $effect.pre(() => {
-        const attributeString = JSON.stringify(scene.item?.attrs);
-        if (lastAttributeString !== attributeString) {
-            scene.item!.update++;
-        }
-        lastAttributeString = attributeString;
-    });
 </script>
 
 <main>
-    <div class="menu">
-        <h1>工場</h1>
-        <button onclick={() => {
-            game.states.scene.store.set({
-                type: 'kitchen',
-            });
-        }}>
-            もどる
-        </button>
-        {#if scene && scene.item}
-            {@const { item } = scene}
-            <h2>属性</h2>
-            <div class="attributes">
-                {#each Object.entries(attributeRegistry.values) as [key, attribute] (key)}
-                    {@const attr = item.attrs[key as AttributeKey]}
-                    {#if attr}
-                        <div class="attr">
-                            <h3>
-                                {attribute.name}
-                                <button onclick={() => {
-                                    delete item.attrs[key as AttributeKey];
-                                }}>
-                                    <Tooltip>
-                                        削除
-                                    </Tooltip>
-                                    <i class="ti ti-x"></i>
-                                </button>
-                            </h3>
-                            <div class="body">
-                                <attribute.editor bind:attr={item.attrs[key as AttributeKey] as never} />
-                            </div>
-                        </div>
-                    {/if}
-                {/each}
-                <select
-                    onchange={(event) => {
-                        const key = event.currentTarget.value;
-                        const attribute = attributeRegistry.values[key as AttributeKey];
-                        if (!attribute) return;
-                        item.attrs[key as AttributeKey] = attribute.create() as never;
-                    }}
-                >
-                    <option value="">
-                        追加
-                    </option>
-                    {#each Object.entries(attributeRegistry.values) as [key, attribute] (key)}
-                        {@const attr = item.attrs[key as AttributeKey]}
-                        {#if !attr}
-                            <option value={key}>
-                                {attribute.name}
-                            </option>
-                        {/if}
-                    {/each}
-                </select>
+    {#if game.side === 'client'}
+        <div class="menu" data-input>
+            <div class="panel">
+                <Button onclick={goBack} primary>
+                    <i class="ti ti-chevron-left"></i>
+                    もどる
+                </Button>
+                <h1>商品研究所</h1>
+                <p>
+                    商品やアイテムを編集できます。
+                </p>
+
+                <div class="actions">
+                    <Button primary onclick={() => {
+                        game.startTransition({
+                            type: 'export',
+                        });
+                    }}>
+                        <Tooltip>
+                            他の人に共有することができます。
+                        </Tooltip>
+                        輸出
+                    </Button>
+                </div>
             </div>
-        {/if}
-    </div>
-    <pre>{JSON.stringify(scene, null, 4)}
-    </pre>
+            {#if !scene.selecting}
+                <div class="panel omu-scroll">
+                    <h1>商品化</h1>
+                    <Button primary onclick={() => {
+                        scene.selecting = { type: 'pick_product' };
+                        scene = { ...scene };
+                    }}>
+                        アイテムを選択する
+                        <i class="ti ti-pointer"></i>
+                    </Button>
+                    <div class="product-list">
+                        <h1>商品一覧</h1>
+                        {#each game.states.products.values() as product (product.id)}
+                            <div class="entry">
+                                <button onclick={() => {
+                                    scene.selecting = { type: 'edit_product', productId: product.id };
+                                    scene = { ...scene };
+                                }}>
+                                    {#if $preview[product.itemId]}
+                                        <img src={$preview[product.itemId].url} alt="">
+                                    {/if}
+                                    <EditText value={product.name} size="1.8rem" />
+                                </button>
+                            </div>
+                        {:else}
+                            商品がありません
+                        {/each}
+                    </div>
+                </div>
+            {:else if scene.selecting.type === 'pick_product'}
+                {@const { selecting } = scene}
+                <div class="panel">
+                    <h1>商品にするアイテムを選択してください</h1>
+                    <Button onclick={() => {
+                        scene.selecting = selecting.back;
+                        scene = { ...scene };
+                    }} primary>
+                        やめる
+                        <i class="ti ti-x"></i>
+                    </Button>
+                </div>
+            {:else if scene.selecting.type === 'edit_product'}
+                <div class="panel omu-scroll">
+                    <button class="close" onclick={() => {
+                        scene.selecting = undefined;
+                        scene = { ...scene };
+                    }}>
+                        閉じる
+                        <i class="ti ti-x"></i>
+                    </button>
+                    <EditProductEntry id={scene.selecting.productId} />
+                </div>
+            {:else if scene.selecting.type === 'edit_item'}
+                <div class="panel omu-scroll">
+                    <button class="close" onclick={() => {
+                        scene.selecting = undefined;
+                        scene = { ...scene };
+                    }}>
+                        閉じる
+                        <i class="ti ti-x"></i>
+                    </button>
+                    <EditItem id={scene.selecting.itemId} />
+                </div>
+            {/if}
+        </div>
+    {/if}
 </main>
 
 <style lang="scss">
@@ -94,80 +124,91 @@
     }
 
     .menu {
-        width: 20rem;
+        width: 26rem;
         display: flex;
         flex-direction: column;
-        background: var(--color-bg-2);
-        padding: 0 1rem;
+        gap: 2rem;
+        padding: 2rem;
+        padding-right: 0;
+        background: linear-gradient(
+            to right,
+            color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%),
+            transparent
+        );
     }
 
-    h1,
-    h2 {
-        color: var(--color-1);
-        font-size: 1.3rem;
-        border-bottom: 1px solid;
-        padding: 0.5rem 1rem;
-        margin-bottom: 1rem;
-        text-align: left;
-    }
-
-    .attributes {
+    .panel {
+        position: relative;
         display: flex;
-        flex-direction: column;
         align-items: stretch;
-        align-items: flex-end;
-        gap: 1rem;
-        flex: 1;
+        flex-direction: column;
+        padding: 1.5rem 1.5rem;
+        background: var(--color-bg-1);
+        box-shadow: 0 0 1rem rgba($color: #888, $alpha: 0.3);
+        border-radius: 0.25rem;
+
+        > .close {
+            align-self: flex-start;
+            padding: 0.75rem 1.5rem;
+            margin: 2px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: var(--color-1);
+            color: var(--color-bg-1);
+            border-radius: 2px;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 2rem;
+        }
     }
 
-    .attr {
+    h1 {
+        margin: 0.5rem 0;
+        margin-top: 1rem;
+        text-align: left;
+        font-size: 1.5rem;
+        color: var(--color-1);
+        corner-shape: squircle;
+        padding: 0.5rem 0;
+        border-bottom: 2px solid var(--color-1);
         width: 100%;
-        margin-bottom: 0.5rem;
-        outline: 1px solid var(--color-outline);
-        background: var(--color-bg-2);
+        margin-bottom: 1rem;
+    }
 
-        > h3 {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            text-align: center;
-            border-bottom: 1px solid var(--color-outline);
-            background: var(--color-bg-1);
-            text-transform: capitalize;
-            font-size: 1rem;
-            padding-left: 1rem;
-            height: 3rem;
-            color: var(--color-1);
-            text-align: left;
+    .product-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        .entry {
+            width: 100%;
+            outline: 1px solid var(--color-outline);
+            border-radius: 0.5rem;
+            overflow: hidden;
 
             > button {
-                height: 100%;
-                width: 3rem;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+                padding: 0.75rem 1.5rem;
+                background: var(--color-bg-2);
+                color: var(--color-text);
+                border-radius: 2px;
                 border: none;
-                background: transparent;
-                color: var(--color-1);
+                cursor: pointer;
 
-                &:hover {
-                    background: rgb(206, 13, 13);
-                    color: #fff;
+                > img {
+                    width: 8rem;
+                    height: 8rem;
+                    object-fit: contain;
                 }
             }
         }
-
-        > .body {
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
     }
 
-    pre {
-        height: 20rem;
-        overflow: auto;
-    }
-
-    select {
-        padding: 0.5rem 1rem;
+    .actions {
+        margin-top: 2rem;
     }
 </style>

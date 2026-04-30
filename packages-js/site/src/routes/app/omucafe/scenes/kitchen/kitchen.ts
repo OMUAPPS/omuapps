@@ -1,81 +1,261 @@
+import type { GlTexture } from '$lib/components/canvas/glcontext';
 import { AABB2 } from '$lib/math/aabb2';
-import { Vec2 } from '$lib/math/vec2';
-import type { Game } from '../../core/game';
-import { DEFAULT_TRANSFORM } from '../../core/transform';
-import type { PoolOptions } from '../../item/item';
+import { lerp } from '$lib/math/math';
+import { Vec2, type Vec2Like } from '$lib/math/vec2';
+import { Timer } from '$lib/timer';
+import { elasticIn } from 'svelte/easing';
+import { PALETTE_RGB } from '../../colors';
+import { Game } from '../../core/game';
+import { CLIENT_RESOLUTION, CLIENT_WORLD_BOUNDS } from '../../core/game-renderer';
+import type { Action } from '../../core/input-system';
+import type { ItemPool, PoolOptions } from '../../item/item';
 import client_background from '../../resources/client_background.png';
-import client_kitchen from '../../resources/client_kitchen.png';
 import type { SceneHandler } from '../scene';
+import { CustomerRenderer } from './component/customer';
+import { Display } from './component/display';
+import { ParticleRenderer } from './component/particle';
+import { SCENE_CONFIG, type SceneKitchenData } from './config';
+import asset_vertical_background from './img/asset_vertical_background.png';
+import asset_vertical_counter from './img/asset_vertical_counter.png';
+import asset_vertical_kitchen from './img/asset_vertical_kitchen.png';
+import client_counter from './img/client_counter.png';
+import client_kitchen from './img/client_kitchen.png';
 import ScreenKitchen from './ScreenKitchen.svelte';
-import beef from './beef.png';
 
-export interface SceneKitchenData {
-    type: 'kitchen';
+export type { SceneKitchenData };
+
+export interface SceneLayout {
+    center: Vec2;
+    kitchenOptions: PoolOptions;
+    counterOptions: PoolOptions;
 }
+
+export interface SceneAssetsCommon {
+    texBackground: GlTexture;
+    texKitchen: GlTexture;
+    texCounter: GlTexture;
+}
+
+// ==========================================
+// 1. レイアウト計算ロジックの分離 (Layout Calculator)
+// ==========================================
+class KitchenLayoutCalculator {
+    static calculateClient(game: Game): SceneLayout {
+        const { DESIGN } = SCENE_CONFIG;
+        return {
+            center: Vec2.ZERO,
+            kitchenOptions: this.createPoolOptions('キッチン', game.states.kitchen.value, DESIGN.WIDTH, DESIGN.HEIGHT, Vec2.ZERO),
+            counterOptions: this.createPoolOptions('カウンター', game.states.counter.value, DESIGN.COUNTER_WIDTH, DESIGN.COUNTER_HEIGHT, { x: 0, y: -DESIGN.COUNTER_HEIGHT }),
+        };
+    }
+
+    static calculateOverlay(game: Game, assets: SceneAssetsCommon): SceneLayout {
+        const { renderer, states } = game;
+        const { DESIGN, OFFSETS } = SCENE_CONFIG;
+        const counterHeight = assets.texCounter.height / renderer.scale;
+        const counterOffsetY = renderer.bounds.max.y - counterHeight;
+        const centerX = CLIENT_RESOLUTION.x / 2 - DESIGN.COUNTER_WIDTH / 2;
+
+        return {
+            center: Vec2.ZERO,
+            kitchenOptions: this.createPoolOptions('キッチン', states.kitchen.value, DESIGN.WIDTH, DESIGN.HEIGHT, { x: centerX, y: OFFSETS.OVERLAY.KITCHEN_Y }),
+            counterOptions: this.createPoolOptions('カウンター', states.counter.value, DESIGN.COUNTER_WIDTH, DESIGN.COUNTER_HEIGHT, { x: centerX, y: counterOffsetY + OFFSETS.OVERLAY.COUNTER_Y }),
+        };
+    }
+
+    private static createPoolOptions(name: string, pool: ItemPool, width: number, height: number, offset: Vec2Like): PoolOptions {
+        return {
+            pool,
+            name: 'キッチン',
+            ordering: 'lower',
+            transform: { right: { x: 1, y: 0 }, up: { x: 0, y: 1 }, offset },
+            bounds: new AABB2(
+                new Vec2(-CLIENT_RESOLUTION.x / 2, 0),
+                new Vec2(-CLIENT_RESOLUTION.x / 2 + width, height),
+            ),
+        };
+    }
+}
+
+// ==========================================
+// 3. メインコントローラー (Main Handler)
+// ==========================================
 
 export class SceneKitchen implements SceneHandler<SceneKitchenData> {
     public readonly component = ScreenKitchen;
+    private display: Display;
+    private cachedAssets: SceneAssetsCommon | undefined;
+    private pendingAction: Action | undefined; // 名前を clickAction から変更して意図を明確に
 
-    constructor(
-        private readonly game: Game,
-    ) {
-        // this.addTestItem();
+    // 抽出したレンダラーのインスタンス
+    private particleRenderer: ParticleRenderer;
+    private customerRenderer: CustomerRenderer;
+
+    constructor(private readonly game: Game) {
+        this.display = new Display(this.game);
+        this.particleRenderer = new ParticleRenderer(this.game);
+        this.customerRenderer = new CustomerRenderer(this.game);
     }
 
-    private addTestItem() {
-        const item = this.game.itemSystem.allocateItem({
-            attrs: {
-                image: {
-                    asset: {
-                        type: 'url',
-                        url: beef,
-                    },
-                },
-                dragging: {
-                    active: true,
-                },
-                container: {
-                    active: true,
-                },
-            },
-            transform: DEFAULT_TRANSFORM,
-            children: [],
-            pool: 'kitchen',
-        });
-        const kitchen = this.game.states.kitchen.value;
-        kitchen.items[item.id] = { id: item.id };
+    private async loadAssets(): Promise<SceneAssetsCommon> {
+        if (this.cachedAssets) return this.cachedAssets;
+
+        const { asset: assetManager, side } = this.game;
+        const isClient = side === 'client';
+
+        const [bg, kitchen, counter] = await Promise.all([
+            assetManager.getTextureByUrl(isClient ? client_background : asset_vertical_background).promise,
+            assetManager.getTextureByUrl(isClient ? client_kitchen : asset_vertical_kitchen).promise,
+            assetManager.getTextureByUrl(isClient ? client_counter : asset_vertical_counter).promise,
+        ]);
+
+        this.cachedAssets = {
+            texBackground: bg.unwrap.texture,
+            texKitchen: kitchen.unwrap.texture,
+            texCounter: counter.unwrap.texture,
+        };
+
+        return this.cachedAssets;
+    }
+
+    private async renderScene(assets: SceneAssetsCommon, layout: SceneLayout, scene: SceneKitchenData) {
+        switch (this.game.side) {
+            case 'client':
+                await this.renderClientSide(assets, layout, scene);
+                break;
+            case 'overlay':
+                await this.renderOverlaySide(assets, layout);
+                break;
+            case 'background':
+                await this.renderBackgroundSide(assets);
+                break;
+            default:
+                console.warn(`Unhandled game side: ${this.game.side}`);
+        }
+    }
+
+    private async renderClientSide(assets: SceneAssetsCommon, layout: SceneLayout, scene: SceneKitchenData) {
+        const { draw } = this.game.pipeline;
+        const { itemRenderer, trashbin, fridge, states, renderer } = this.game;
+        const isInEditMode = scene.editMode?.type === 'kitchen';
+
+        draw.texture(...renderer.containBounds.toArray(), assets.texBackground);
+
+        this.particleRenderer.render();
+        if (!isInEditMode) {
+            await this.customerRenderer.render((action) => { this.pendingAction = action; });
+        }
+
+        draw.texture(...renderer.bounds.toArray(), assets.texKitchen);
+
+        itemRenderer.initPass();
+
+        const counterTextureBounds = CLIENT_WORLD_BOUNDS.fit(assets.texCounter.size).offset({ x: 0, y: SCENE_CONFIG.OFFSETS.CLIENT.COUNTER_Y });
+        draw.texture(...counterTextureBounds.toArray(), assets.texCounter);
+
+        await this.renderDisplay(scene, assets);
+        await itemRenderer.renderPool(states.counter.value, layout.counterOptions);
+        await itemRenderer.renderPool(states.kitchen.value, layout.kitchenOptions);
+
+        await trashbin.render(new Vec2(renderer.bounds.max.x - SCENE_CONFIG.OFFSETS.OVERLAY.TRASHBIN_X, renderer.bounds.max.y));
+        await fridge.render();
+        await itemRenderer.renderHeld();
+
+        if (isInEditMode && scene.editMode) {
+            await this.renderEditModeEffects(scene.editMode.timestamp);
+        }
+    }
+
+    private async renderEditModeEffects(timestamp: number) {
+        const { draw } = this.game.pipeline;
+        const { renderer } = this.game;
+        const { EDIT_MODE } = SCENE_CONFIG.UI;
+
+        const elapsed = Timer.now() - timestamp;
+        const t = elasticIn(1 - 1 / elapsed);
+        const margin = lerp(-100, 50, t);
+        const color = PALETTE_RGB.ACCENT.lerp(PALETTE_RGB.SECONDARY, (Math.sin(Timer.now() / EDIT_MODE.WAVE_SPEED_DIVISOR * Math.PI) + 1) / 2).with({ w: t });
+        const bounds = renderer.bounds.shrink({ x: -50, y: margin });
+        const wave = Math.sin(elapsed / EDIT_MODE.WAVE_SPEED_DIVISOR * Math.PI) * 5;
+
+        draw.rectangleGradient2(renderer.bounds.min.x, renderer.bounds.min.y, renderer.bounds.max.x, renderer.bounds.min.y + EDIT_MODE.GRADIENT_HEIGHT, PALETTE_RGB.KITCHN_EDITMODE_GRADIENT_1.with({ w: t }), PALETTE_RGB.KITCHN_EDITMODE_GRADIENT_2, Vec2.UP);
+        draw.rectangleGradient2(renderer.bounds.min.x, renderer.bounds.max.y, renderer.bounds.max.x, renderer.bounds.max.y - EDIT_MODE.GRADIENT_HEIGHT, PALETTE_RGB.KITCHN_EDITMODE_GRADIENT_1.with({ w: t }), PALETTE_RGB.KITCHN_EDITMODE_GRADIENT_2, Vec2.UP);
+        draw.rectangleStroke(...bounds.shrink({ x: 0, y: wave }).toArray(), color, 10);
+
+        draw.fontSize = 64;
+        await draw.textAlign(bounds.min.add({ x: 250, y: 50 }), '編集モード', Vec2.ZERO, color);
+        draw.fontSize = 32;
+        await draw.textAlign(bounds.min.add({ x: 250, y: 124 }), 'すべてのものを動かせます', Vec2.ZERO, color);
+    }
+
+    private async renderOverlaySide(assets: SceneAssetsCommon, layout: SceneLayout) {
+        const { draw } = this.game.pipeline;
+        const { itemRenderer, states, fridge, renderer } = this.game;
+        const { OFFSETS } = SCENE_CONFIG;
+
+        const counterHeight = assets.texCounter.height / renderer.scale;
+        const { min, max } = layout.kitchenOptions.bounds;
+
+        draw.texture(min.x, min.y + OFFSETS.OVERLAY.KITCHEN_Y, max.x, max.y + OFFSETS.OVERLAY.KITCHEN_Y, assets.texKitchen);
+        itemRenderer.initPass();
+        await itemRenderer.renderPool(states.kitchen.value, layout.kitchenOptions);
+
+        draw.texture(renderer.bounds.min.x, renderer.bounds.max.y - counterHeight + OFFSETS.OVERLAY.COUNTER_Y, renderer.bounds.max.x, renderer.bounds.max.y + OFFSETS.OVERLAY.COUNTER_Y, assets.texCounter);
+        await itemRenderer.renderPool(states.counter.value, layout.counterOptions);
+
+        await fridge.render();
+        await itemRenderer.renderHeld();
+
+        await this.game.boardRenderer.render();
+        this.particleRenderer.render();
+    }
+
+    private async renderBackgroundSide(assets: SceneAssetsCommon) {
+        const { draw } = this.game.pipeline;
+        draw.texture(...this.game.renderer.containBounds.toArray(), assets.texBackground);
+    }
+
+    private async renderDisplay(scene: SceneKitchenData, assets: SceneAssetsCommon) {
+        const counterBounds = CLIENT_WORLD_BOUNDS.fit(assets.texCounter.size);
+        this.display.bounds = new AABB2(
+            counterBounds.max.sub(SCENE_CONFIG.OFFSETS.DISPLAY.MAX_SUB_1),
+            counterBounds.max.sub(SCENE_CONFIG.OFFSETS.DISPLAY.MAX_SUB_2),
+        );
+        await this.display.render(scene);
+    }
+
+    private async processInput(layout: SceneLayout) {
+        const { input: eventPipeline } = this.game.pipeline;
+        const { item, fridge, input: inputSystem, trashbin, states } = this.game;
+
+        for (const event of eventPipeline) {
+            inputSystem.clear();
+            item.initPass();
+
+            await fridge.handleInput(event);
+            await trashbin.handleInput(event);
+            await item.handleMouse(states.counter.value, layout.counterOptions, event);
+            await item.handleMouse(states.kitchen.value, layout.kitchenOptions, event);
+            this.display.handle(event);
+
+            // 描画プロセス等でキューに積まれたアクションをゲーム側に通知
+            if (this.pendingAction) {
+                this.game.input.add(this.pendingAction);
+            }
+
+            item.endInput();
+            await inputSystem.handle(event);
+        }
     }
 
     async handle(scene: SceneKitchenData) {
-        const { draw, input, matrices } = this.game.pipeline;
-        const kitchen = this.game.states.kitchen.value;
-        if (this.game.side === 'client') {
-            const texBackground = (await this.game.assetManager.getTextureByUrl(client_background).promise).unwrap.texture;
-            const texKitchen = (await this.game.assetManager.getTextureByUrl(client_kitchen).promise).unwrap.texture;
-            draw.texture(0, 0, matrices.width, matrices.height, texBackground);
-            draw.texture(0, 0, matrices.width, matrices.height, texKitchen);
-        }
-        const width = 1920 * 1.5;
-        const height = 1080 * 1.5;
-        const bounds = new AABB2(new Vec2(0, matrices.height / 2), new Vec2(width, matrices.height));
-        kitchen.bounds = bounds;
-        const scale = Math.min(matrices.width / width, matrices.height / height);
-        const KITCHEN_OPTIONS: PoolOptions = {
-            transform: {
-                right: Vec2.RIGHT.scale(scale),
-                up: Vec2.UP.scale(scale),
-                offset: Vec2.ZERO,
-            },
-            pool: kitchen,
-        };
-        this.game.itemSystem.initRenderPass();
-        await this.game.itemSystem.renderPool(kitchen, KITCHEN_OPTIONS);
-        for (const event of input) {
-            this.game.inputSystem.clear();
-            this.game.itemSystem.initPass();
-            await this.game.itemSystem.handleMouse(kitchen, KITCHEN_OPTIONS, event);
-            this.game.itemSystem.endInput();
-            await this.game.inputSystem.handle(event);
-        }
+        const assets = await this.loadAssets();
+        const layout = this.game.side === 'client'
+            ? KitchenLayoutCalculator.calculateClient(this.game)
+            : KitchenLayoutCalculator.calculateOverlay(this.game, assets);
+
+        this.pendingAction = undefined; // イテレーションごとにクリア
+        await this.renderScene(assets, layout, scene);
+        await this.processInput(layout);
     }
 }
