@@ -202,7 +202,7 @@
             {:else if $config.canvas.tool?.type === 'move'}
                 <label>
                     アイテムの大きさ
-                    <Slider bind:value={$config.canvas.sacle} min={0.5} max={2.0} step={0.01} />
+                    <Slider bind:value={$config.canvas.sacle} min={0.5} max={2.0} step={0.01} clamp={false} />
                 </label>
                 <label>
                     アイテムの回転

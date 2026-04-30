@@ -265,7 +265,6 @@ export function testScripting() {
                 ],
             },
             'std:sleep': {
-                // target: int
                 insts: [
                     {
                         type: 'const',

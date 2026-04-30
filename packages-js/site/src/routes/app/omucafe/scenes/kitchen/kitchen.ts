@@ -44,8 +44,8 @@ class KitchenLayoutCalculator {
         const { DESIGN } = SCENE_CONFIG;
         return {
             center: Vec2.ZERO,
-            kitchenOptions: this.createPoolOptions(game.states.kitchen.value, DESIGN.WIDTH, DESIGN.HEIGHT, Vec2.ZERO),
-            counterOptions: this.createPoolOptions(game.states.counter.value, DESIGN.COUNTER_WIDTH, DESIGN.COUNTER_HEIGHT, { x: 0, y: -DESIGN.COUNTER_HEIGHT }),
+            kitchenOptions: this.createPoolOptions('キッチン', game.states.kitchen.value, DESIGN.WIDTH, DESIGN.HEIGHT, Vec2.ZERO),
+            counterOptions: this.createPoolOptions('カウンター', game.states.counter.value, DESIGN.COUNTER_WIDTH, DESIGN.COUNTER_HEIGHT, { x: 0, y: -DESIGN.COUNTER_HEIGHT }),
         };
     }
 
@@ -58,12 +58,12 @@ class KitchenLayoutCalculator {
 
         return {
             center: Vec2.ZERO,
-            kitchenOptions: this.createPoolOptions(states.kitchen.value, DESIGN.WIDTH, DESIGN.HEIGHT, { x: centerX, y: OFFSETS.OVERLAY.KITCHEN_Y }),
-            counterOptions: this.createPoolOptions(states.counter.value, DESIGN.COUNTER_WIDTH, DESIGN.COUNTER_HEIGHT, { x: centerX, y: counterOffsetY + OFFSETS.OVERLAY.COUNTER_Y }),
+            kitchenOptions: this.createPoolOptions('キッチン', states.kitchen.value, DESIGN.WIDTH, DESIGN.HEIGHT, { x: centerX, y: OFFSETS.OVERLAY.KITCHEN_Y }),
+            counterOptions: this.createPoolOptions('カウンター', states.counter.value, DESIGN.COUNTER_WIDTH, DESIGN.COUNTER_HEIGHT, { x: centerX, y: counterOffsetY + OFFSETS.OVERLAY.COUNTER_Y }),
         };
     }
 
-    private static createPoolOptions(pool: ItemPool, width: number, height: number, offset: Vec2Like): PoolOptions {
+    private static createPoolOptions(name: string, pool: ItemPool, width: number, height: number, offset: Vec2Like): PoolOptions {
         return {
             pool,
             name: 'キッチン',

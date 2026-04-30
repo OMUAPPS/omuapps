@@ -541,7 +541,9 @@ export class ItemSystem {
             id: `drop-${held.id}-into-${pool.id}`,
             priority: pool.id === 'export'
                 ? 1000
-                : pool.id === 'fridge' ? 300 : 200,
+                : pool.id === 'fridge'
+                    ? 300
+                    : 200,
             invoke: async () => {
                 await this.dropItem();
                 this.setPool(held, pool);

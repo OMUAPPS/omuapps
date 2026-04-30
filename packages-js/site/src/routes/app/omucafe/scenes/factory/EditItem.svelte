@@ -104,10 +104,12 @@
                             <Tooltip>コピー</Tooltip>
                             <i class="ti ti-copy"></i>
                         </button>
-                        <button onclick={() => deleteAttribute(key as AttributeKey)}>
-                            <Tooltip>削除</Tooltip>
-                            <i class="ti ti-x"></i>
-                        </button>
+                        {#if key !== 'image'}
+                            <button onclick={() => deleteAttribute(key as AttributeKey)}>
+                                <Tooltip>削除</Tooltip>
+                                <i class="ti ti-x"></i>
+                            </button>
+                        {/if}
                     </h3>
                     <div class="body">
                         <attribute.editor

@@ -378,7 +378,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             ctx.actions.push({
                 title: `${item.name}に乗せる`,
                 id: `container-${item.id}`,
-                priority: item.pool === 'fridge' ? 400 : 200,
+                priority: item.pool === 'fridge' ? 400 : 300,
                 invoke: async () => {
                     this.game.item.dropItem();
                     this.game.item.attachItem(item, heldItem);
