@@ -686,6 +686,16 @@ export class GlFramebuffer {
             throw new Error('Invalid dimensions for reading pixels');
         }
         const data = this.readPixels(x, y, width, height, format);
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i + 0] / 255;
+            const g = data[i + 1] / 255;
+            const b = data[i + 2] / 255;
+            const a = data[i + 3] / 255;
+            data[i + 0] = r / a * 255;
+            data[i + 1] = g / a * 255;
+            data[i + 2] = b / a * 255;
+            data[i + 3] = a * 255;
+        }
         return new ImageData(new Uint8ClampedArray(data), width, height);
     }
 
