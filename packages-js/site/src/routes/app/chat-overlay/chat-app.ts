@@ -1,5 +1,5 @@
 import type { Chat } from '@omujs/chat';
-import { type Omu, type SessionParam } from '@omujs/omu';
+import { Serializer, type Omu, type SessionParam } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
@@ -34,12 +34,17 @@ export type Config = {
         };
         css: string;
     };
+    chat: {
+        filter: {
+            onlyConnected: boolean;
+        };
+    };
 };
 
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
     defaultValue: {
-        version: 0,
+        version: 1,
         hud: {
             startup: false,
         },
@@ -52,7 +57,23 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
             list: {},
             css: '',
         },
+        chat: {
+            filter: {
+                onlyConnected: true,
+            },
+        },
     },
+    serializer: Serializer.transform<Config>((config) => {
+        if (config.version === 0) {
+            config.version = 1;
+            config.chat = {
+                filter: {
+                    onlyConnected: true,
+                },
+            };
+        }
+        return config;
+    }),
 });
 const SESSION_REGISTRY_TYPE = RegistryType.createJson<SessionParam | null>(APP_ID, {
     name: 'session',
