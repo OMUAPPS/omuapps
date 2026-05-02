@@ -49,7 +49,7 @@ const LAYOUT = {
     ITEM_SPACE: 400,
     ITEM_Y_OFFSET: 400,
     CLIENT_CONTAINER_SHRINK: { x: 100, y: 100 },
-    CLIENT_DUMMY_Y_OFFSET: 0,
+    CLIENT_DUMMY_Y_OFFSET: -50,
     DATE_TEXT_POSITION: { x: 0.25, y: 0.85 },
     DATE_TEXT_SHADOW_OFFSET: { x: 2, y: 2 },
 } as const;
