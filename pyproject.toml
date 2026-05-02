@@ -72,3 +72,10 @@ disable = [
 
 [tool.pyright]
 include = ["packages-py/*"]
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    ".venv",
+    "packages-js/*",
+    "appdata",
+]
