@@ -167,7 +167,7 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         ctx.actions.push({
             title: isFull ? `${hitItem.name}はいっぱいです` : `${hitItem.name}に注ぐ`,
             id: `layered-pour-${item.id}`,
-            priority: item.pool === 'fridge' ? 500 : 300,
+            priority: 100,
             invoke: async () => {
                 this.pour(targetLayered, sourceLayers, pourVolume, pour.infinite);
                 this.game.item.updateItem(item);
