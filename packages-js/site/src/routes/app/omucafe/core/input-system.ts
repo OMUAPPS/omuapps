@@ -45,7 +45,6 @@ export class InputSystem {
             const action = this.actions.at(this.currentIndex);
             await action?.invoke();
             console.log(action?.title);
-            this.currentIndex = 0;
         } else if (event.kind === 'mouse-wheel') {
             this.currentIndex += event.delta > 0 ? 1 : -1;
             this.currentIndex = clamp(this.currentIndex, 0, this.actions.length - 1);
