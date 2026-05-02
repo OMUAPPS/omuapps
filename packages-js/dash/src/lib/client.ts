@@ -47,6 +47,7 @@ omu.plugins.require({
     omu_chat: `>=${VERSION}`,
     omu_chat_youtube: `>=${VERSION}`,
     omu_chat_twitch: `>=${VERSION}`,
+    omu_chat_picarto: `>=${VERSION}`,
     omu_chatprovider: `>=${VERSION}`,
 });
 omu.permissions.require(

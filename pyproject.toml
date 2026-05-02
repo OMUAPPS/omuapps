@@ -29,6 +29,7 @@ dev = [
     "omu-chat",
     "omu-chat-twitch",
     "omu-chat-youtube",
+    "omu-chat-picarto",
     "omuplugin_obs",
     "omuserver",
 ]
@@ -42,6 +43,7 @@ omu-chatprovider = { workspace = true }
 omu-chat = { workspace = true }
 omu-chat-twitch = { workspace = true }
 omu-chat-youtube = { workspace = true }
+omu-chat-picarto = { workspace = true }
 omuplugin_obs = { workspace = true }
 omuserver = { workspace = true }
 
@@ -78,4 +80,5 @@ exclude = [
     ".venv",
     "packages-js/*",
     "appdata",
+    "**/.*",
 ]
