@@ -86,6 +86,7 @@ export class Game {
                         this.dragFile = undefined;
                         const response = await handler.read(event.drag_id);
                         const files = Object.values(response.files);
+                        if (files.length === 0) return;
                         const firstExtension = files[0].file.name.split('.').pop();
                         const extensionsAreConsistent = files.every(({ file }) => file.name.split('.').pop() === firstExtension);
                         if (extensionsAreConsistent) {
