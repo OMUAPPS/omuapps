@@ -12,7 +12,7 @@ import { generateUid } from '../core/helper';
 import bell from './se/bell.wav';
 
 const CONFIG = {
-    ORDER_PREFIX: '#',
+    ORDER_PREFIXES: ['#', '＃', '♯', '#️⃣'],
 };
 
 interface OrderMatch {
@@ -186,7 +186,7 @@ export class OrderSystem {
 
             while ((index = normalizedText.indexOf(normalizedAlias, index)) !== -1) {
                 // 見つかった文字列の1つ前の文字がプレフィックス（#）であればマッチ
-                if (normalizedText[index - 1].replace('＃', '#') === CONFIG.ORDER_PREFIX) {
+                if (CONFIG.ORDER_PREFIXES.includes(normalizedText[index - 1])) {
                     return true;
                 }
                 index += normalizedAlias.length;
