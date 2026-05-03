@@ -15,7 +15,7 @@ export class FridgeSystem {
     public offsetX = 0;
     public scroll = 0;
     public hovered = false;
-    public bounds = new AABB2(Vec2.ZERO, new Vec2(this.width, 1080 * 4));
+    public bounds = new AABB2(Vec2.ZERO, new Vec2(this.width, 1080 * 7));
 
     constructor(
         private readonly game: Game,
@@ -43,7 +43,7 @@ export class FridgeSystem {
         const { texture: fridgeBottom } = (await this.game.asset.getTextureByUrl(fridge_bottom).promise).unwrap;
         let offsetY = CLIENT_WORLD_BOUNDS.min.y - this.scroll + 100;
         draw.texture(renderBounds.min.x, offsetY, renderBounds.max.x, offsetY += fridgeTop.height * scale, fridgeTop);
-        for (let index = 0; index < 10; index++) {
+        for (let index = 0; index < 16; index++) {
             draw.texture(renderBounds.min.x, offsetY, renderBounds.max.x, offsetY += fridgeStep.height * scale, fridgeStep);
         }
         draw.texture(renderBounds.min.x, offsetY, renderBounds.max.x, offsetY += fridgeBottom.height * scale, fridgeBottom);
