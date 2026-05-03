@@ -15,20 +15,20 @@ export interface Action {
 
 export class InputSystem {
     public readonly actions: Action[] = [];
-    private currentIndex = 0;
+    private lastAction?: Action;
+    private currentAction?: Action;
 
     constructor(
         private readonly game: Game,
     ) { }
 
     get current(): Action | undefined {
-        return this.actions[this.currentIndex];
+        return this.currentAction;
     }
 
     public add(...action: Action[]) {
         this.actions.push(...action);
         this.actions.sort(comparator((action) => -action.priority));
-        this.currentIndex = clamp(this.currentIndex, 0, this.actions.length - 1);
     }
 
     public clear() {
@@ -38,16 +38,30 @@ export class InputSystem {
     public async handle(event: InputEvent) {
         // 4. Trigger Action (Mouse Down)
         if (this.game.fridge.hovered) {
-            this.currentIndex = 0;
+            this.currentAction = this.actions.at(-1);
             this.actions.splice(1);
         }
         if (event.kind === 'mouse-down') {
-            const action = this.actions.at(this.currentIndex);
-            await action?.invoke();
-            console.log(action?.title);
+            const index = this.actions.findIndex((action) => action.id === this.currentAction?.id);
+            if (index === -1) {
+                const action = this.actions[0];
+                this.lastAction = action;
+                await action?.invoke();
+                console.log(action?.title);
+            } else {
+                const action = this.actions[index];
+                this.lastAction = action;
+                await action?.invoke();
+                console.log(action?.title);
+            }
         } else if (event.kind === 'mouse-wheel') {
-            this.currentIndex += event.delta > 0 ? 1 : -1;
-            this.currentIndex = clamp(this.currentIndex, 0, this.actions.length - 1);
+            const index = this.actions.findIndex((action) => action.id === this.currentAction?.id);
+            if (index === -1) {
+                this.currentAction = this.actions[0];
+            } else {
+                const actionIndex = clamp(index + (event.delta > 0 ? 1 : -1), 0, this.actions.length - 1);
+                this.currentAction = this.actions[actionIndex];
+            }
         }
     }
 
@@ -57,7 +71,7 @@ export class InputSystem {
         const { draw, input, matrices } = this.game.pipeline;
         if (!this.actions.length) return;
         if (this.game.fridge.hovered) {
-            this.currentIndex = 0;
+            this.currentAction = undefined;
             this.actions.splice(1);
         }
 
@@ -97,10 +111,12 @@ export class InputSystem {
             { x: 0, y: 0, z: 0, w: 3 },
         );
 
+        const currentAction = this.currentAction && this.actions.find((act) => act.id === this.currentAction!.id);
+
         // 4. 各アクションの項目を描画
         for (let index = 0; index < this.actions.length; index++) {
             const action = this.actions[index];
-            const isSelected = index === this.currentIndex;
+            const isSelected = currentAction ? action.id === currentAction.id : index === 0;
             const itemY = startY + padding + index * itemHeight;
 
             const lastT = this.animationTimes[index] ??= isSelected ? 1 : 0;
