@@ -404,7 +404,8 @@ def source_update(source_json: SourceJson) -> UpdateResponse:
         if source is None:
             raise ValueError(f"Source with query {source_json} does not exist")
         with OBSData.from_json(dict(source_json["data"])) as new_data:
-            source.settings.apply(new_data)
+            with source.settings as settings:
+                settings.apply(new_data)
 
         with get_scene(source_json.get("scene")) as scene:
             with scene.sceneitem_from_source(source) as scene_item:
@@ -433,7 +434,8 @@ def source_get_by_name(request: SourceGetByNameRequest) -> SourceJson:
                 raise ValueError(f"Source with name {request['name']} does not exist")
             source_json = source_to_json(scene_item)
             if source_json is None:
-                raise ValueError(f"Source with type {scene_item.source.id} is not supported")
+                with scene_item.source as source:
+                    raise ValueError(f"Source with type {source.id} is not supported")
             return source_json
 
 
@@ -608,31 +610,26 @@ _THREAD: threading.Thread | None = None
 
 @dataclass(frozen=True)
 class Task:
-    future: asyncio.Future  # P, T のジェネリクスは一旦省略
-    run: Callable
-    loop: asyncio.AbstractEventLoop  # 呼び出し元のループを保持
+    future: asyncio.Future
+    run: Callable[[], None]
+    loop: asyncio.AbstractEventLoop
 
 
-# 2. enqueue 関数を修正
 async def enqueue(callback: Callable):
     loop = asyncio.get_running_loop()
     future = loop.create_future()
-    # タスクをキューに入れる（ここには元のループ情報も含める）
     task = Task(future=future, run=callback, loop=loop)
     _QUEUE.put(task)
     return await future
 
 
-# 3. process_task (OBSメインスレッド) を修正
 def process_task():
     while not _QUEUE.empty():
         task = _QUEUE.get_nowait()
         try:
             result = task.run()
-            # 呼び出し元(omu)のループに対してスレッドセーフに結果をセット
             task.loop.call_soon_threadsafe(task.future.set_result, result)
         except Exception as e:
-            # エラー時もスレッドセーフに例外をセット
             task.loop.call_soon_threadsafe(task.future.set_exception, e)
 
 
