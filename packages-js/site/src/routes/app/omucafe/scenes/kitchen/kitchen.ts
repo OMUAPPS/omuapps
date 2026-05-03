@@ -66,7 +66,7 @@ class KitchenLayoutCalculator {
     private static createPoolOptions(name: string, pool: ItemPool, width: number, height: number, offset: Vec2Like): PoolOptions {
         return {
             pool,
-            name: 'キッチン',
+            name,
             ordering: 'lower',
             transform: { right: { x: 1, y: 0 }, up: { x: 0, y: 1 }, offset },
             bounds: new AABB2(
