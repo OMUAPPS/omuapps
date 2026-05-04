@@ -33,6 +33,7 @@
     });
 
     const unlistenRooms = chat.rooms.listen(updateOnlineRooms);
+    const unlistenAuthors = chat.authors.listen();
 
     omu.onReady(async () => {
         const [initialMessages, initialRooms] = await Promise.all([
@@ -46,6 +47,7 @@
 
     onDestroy(() => {
         unlistenRooms();
+        unlistenAuthors();
     });
 </script>
 
