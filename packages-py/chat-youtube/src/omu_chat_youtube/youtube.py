@@ -38,10 +38,13 @@ class YoutubeChatService(ProviderService):
         path_parts = list(filter(None, uri.path.split("/")))
         if not path_parts:
             return None
-        if path_parts[0] == "watch":
+        url_type = path_parts[0]
+        if url_type == "watch":
             query_v = urllib.parse.parse_qs(uri.query).get("v")
             if query_v:
                 return query_v[0]
+        if url_type in {"live", "shorts"}:
+            return path_parts[-1]
 
     async def start_url(self, ctx: ProviderContext, url: str):
         video_id = self._parse_video_id_by_url(url)

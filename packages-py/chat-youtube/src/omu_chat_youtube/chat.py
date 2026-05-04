@@ -106,7 +106,7 @@ class YoutubeChatAPI:
             .map(lambda x: x.get("liveChatRenderer"))
             .map(lambda x: x.get("continuations"))
             .map(lambda x: x[0])
-            .map(lambda x: x.get("invalidationContinuationData"))
+            .map(lambda x: x.get("invalidationContinuationData") or x.get("timedContinuationData"))
             .map(lambda x: x.get("continuation"))
             .get()
         )
@@ -159,7 +159,9 @@ class YoutubeChatAPI:
             self.chat_continuation = None
         else:
             continuation = continuations[0]
-            self.chat_continuation = continuation.get("invalidationContinuationData", {}).get("continuation", None)
+            self.chat_continuation = (
+                continuation.get("invalidationContinuationData", {}) or continuation.get("timedContinuationData", {})
+            ).get("continuation", None)
         chat_actions = live_chat_continuation.get("actions", [])
         mutations = (
             traverse(data)
