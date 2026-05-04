@@ -11,9 +11,14 @@
     let messages = $state<Models.Message[]>([]);
     let onlineRoomIds = $state<Set<string>>(new Set());
 
-    let visibleMessages = $derived.by(() => {
+    let filteredMessages: Models.Message[] = $derived.by(() => {
         if (!$config.chat.filter.onlyConnected) return messages;
         return messages.filter((msg) => onlineRoomIds.has(msg.roomId.key()));
+    });
+    let visibleMessages: Models.Message[] = $derived.by(() => {
+        if ($config.asset.displayCount === undefined) return filteredMessages;
+        const sliced = filteredMessages.slice(filteredMessages.length - $config.asset.displayCount);
+        return sliced;
     });
 
     const updateOnlineRooms = (rooms: Map<string, Models.Room> | Models.Room[]) => {
@@ -46,7 +51,7 @@
 
 {#if $config.asset.type === 'youtube'}
     <ChatRendererYoutube messages={visibleMessages} />
-{:else}
+{:else if $config.asset.type === 'default'}
     <ChatRendererDefault messages={visibleMessages} />
 {/if}
 

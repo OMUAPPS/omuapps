@@ -11,6 +11,7 @@ export type Config = {
     };
     asset: {
         type: 'default' | 'youtube';
+        displayCount?: number;
         transition: {
             duration: number;
         };

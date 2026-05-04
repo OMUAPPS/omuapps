@@ -2,7 +2,6 @@
     import { Models } from '@omujs/chat';
     import { ComponentRenderer } from '@omujs/ui';
     import { ChatOverlayApp } from '../../chat-app';
-    import './youtube.css';
 
     let { chat } = ChatOverlayApp.getInstance();
 
@@ -11,6 +10,9 @@
     }
 
     let { messages }: Props = $props();
+
+    let message = $derived(messages.at(-1));
+    let author = $derived(message && message.authorId && chat.authors.get(message.authorId.key()));
     let height = $state(0);
 </script>
 
@@ -73,10 +75,7 @@
                             class="style-scope yt-live-chat-item-list-renderer"
                             style="transform: translateY(0px);"
                         >
-                            {#each [...new Map(messages.map((m) => [m.key(), m])).values()] as message (message.key())}
-                                {@const author =
-                                    message.authorId &&
-                                        chat.authors.get(message.authorId.key())}
+                            {#if message}
                                 {#await author then author}
                                     {@const isModerator = author?.roles?.some((role) => role.isModerator)}
                                     {@const isOwner = author?.roles?.some((role) => role.isOwner)}
@@ -205,7 +204,7 @@
                                         </div>
                                     </yt-live-chat-text-message-renderer>
                                 {/await}
-                            {/each}
+                            {/if}
                         </div>
                     </div>
                 </div>
@@ -227,3 +226,128 @@
         ></ytd-lottie-player>
     </yt-live-chat-animation-overlay-renderer>
 </div>
+
+<style>
+    :global(body) {
+        background: transparent !important;
+        overflow: hidden;
+    }
+
+    :root {
+        --lcv-name-color: rgb(238, 238, 238, 0.7);
+        --lcv-text-color: #eee;
+    }
+
+    .container {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        border-radius: 1rem;
+        color: #eee;
+    }
+
+    .messages {
+        display: flex;
+        flex-direction: column-reverse;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 1rem;
+        font-size: 1.2rem;
+        padding: 1rem 1.5rem;
+        overflow: hidden;
+        transition: background 0.1s;
+        animation: fade 0.2s forwards;
+    }
+
+    .fade {
+        position: absolute;
+        inset: 0;
+        mask-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 1) 95%,
+            rgba(0, 0, 0, 0) 100%
+        );
+    }
+
+    .list {
+        position: absolute;
+        inset: 0;
+    }
+
+    @keyframes fade {
+        0% {
+            opacity: 0;
+            scale: 0.95;
+        }
+
+        100% {
+            opacity: 1;
+            scale: 1;
+        }
+    }
+
+    .message {
+        display: flex;
+        animation: message-in-down 150ms forwards;
+    }
+
+    @keyframes message-in-down {
+        0% {
+            transform: translateY(-100%);
+        }
+        100% {
+            transform: translateY(0);
+        }
+    }
+
+    .newer-bottom {
+        > .fade {
+            mask-image: linear-gradient(
+                to top,
+                rgba(0, 0, 0, 1) 95%,
+                rgba(0, 0, 0, 0) 100%
+            );
+
+            > .list {
+                top: unset;
+
+                > .messages {
+                    flex-direction: column;
+
+                    .message {
+                        animation: message-in-up 150ms forwards;
+                    }
+                }
+            }
+        }
+    }
+
+    @keyframes message-in-up {
+        0% {
+            transform: translateY(100%);
+        }
+        100% {
+            transform: translateY(0);
+        }
+    }
+
+    .name {
+        font-size: 0.8em;
+        vertical-align: text-top;
+        margin-bottom: 0.25rem;
+        color: var(--lcv-name-color);
+    }
+
+    .avatar {
+        > img {
+            border-radius: 999px;
+            width: 2rem;
+            height: 2rem;
+        }
+        margin-right: 1rem;
+    }
+
+    .body {
+        color: var(--lcv-text-color);
+    }
+</style>
