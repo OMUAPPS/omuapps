@@ -12,14 +12,15 @@ class InvalidationId(TypedDict):
     protoCreationTimestampMs: str
 
 
-class InvalidationContinuationData(ClickTrackingParams):
+class ContinuationData(ClickTrackingParams):
     invalidationId: InvalidationId
     timeoutMs: int
     continuation: str
 
 
 class ContinuationItem(TypedDict):
-    invalidationContinuationData: InvalidationContinuationData
+    invalidationContinuationData: ContinuationData
+    timedContinuationData: ContinuationData
 
 
 type Continuations = list[ContinuationItem]

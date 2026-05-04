@@ -8,6 +8,7 @@ export type TableConfig = {
 };
 
 export interface Table<T> {
+    type: TableType<T>;
     readonly cache: ReadonlyMap<string, T>;
     readonly event: TableEvents<T>;
     get(key: string): Promise<T | undefined>;

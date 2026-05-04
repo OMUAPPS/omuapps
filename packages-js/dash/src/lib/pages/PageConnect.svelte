@@ -1,41 +1,41 @@
 <script lang="ts">
-    import { chat, omu } from '$lib/client.js';
+    import { chat, omu, provider } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { ChatEvents } from '@omujs/chat';
-    import { Header, Tooltip } from '@omujs/ui';
+    import { Header, Textbox, Tooltip } from '@omujs/ui';
     import ConnectPageSetup from './_components/ConnectSetup.svelte';
     import PanelChannels from './_components/PanelChannels.svelte';
     import PanelMessages from './_components/PanelMessages.svelte';
     import PanelRooms from './_components/PanelRooms.svelte';
 
-    let { data }: { data: unknown } = $props();
+    let { data: _data }: { data: unknown } = $props();
 
-    let setupOpen = $state(false);
+    let screen: 'chat' | 'start_from_url' | 'setup' = $state('chat');
 
     omu.onReady(async () => {
-        setupOpen = await chat.channels.size() == 0;
+        screen = await chat.channels.size() == 0 ? 'setup' : 'chat';
 
         chat.on(ChatEvents.Channel.Remove, async () => {
-            setupOpen = await chat.channels.size() == 0;
+            screen = await chat.channels.size() == 0 ? 'setup' : 'chat';
         });
         chat.on(ChatEvents.Channel.Add, async () => {
-            setupOpen = await chat.channels.size() == 0;
+            screen = await chat.channels.size() == 0 ? 'setup' : 'chat';
         });
     });
+
+    let startURL = $state('');
 </script>
 
-<Header icon="ti-bolt" title={$t('page.connect.title')} subtitle={$t('page.connect.tooltip')} />
 <main>
-    {#if setupOpen}
-        <ConnectPageSetup cancel={() => setupOpen = false} />
-    {:else}
+    <Header icon="ti-bolt" title={$t('page.connect.title')} subtitle={$t('page.connect.tooltip')} />
+    <div class="content">
         <div class="panels">
             <div class="left">
                 <h3>
                     {$t('page.connect.channels')}
                     <i class="ti ti-user"></i>
                     <div class="actions">
-                        <button onclick={() => setupOpen = true}>
+                        <button onclick={() => screen = 'setup'}>
                             <Tooltip>{$t('panels.channels.setup_channel')}</Tooltip>
                             {$t('panels.channels.append_channel')}
                             <i class="ti ti-user-share"></i>
@@ -48,12 +48,18 @@
                 <h3>
                     {$t('page.connect.rooms')}
                     <i class="ti ti-bolt"></i>
+                    <div class="actions">
+                        <button onclick={() => screen = 'start_from_url'}>
+                            {$t('panels.channels.start_from_url')}
+                            <i class="ti ti-link"></i>
+                        </button>
+                    </div>
                 </h3>
                 <div class="rooms">
-                    <PanelRooms openSetup={() => setupOpen = true} />
+                    <PanelRooms openSetup={() => screen = 'setup'} />
                 </div>
             </div>
-            <dir class="right">
+            <dir class="chat">
                 <h3>
                     {$t('page.connect.chat')}
                     <i class="ti ti-message"></i>
@@ -63,14 +69,76 @@
                 </div>
             </dir>
         </div>
-    {/if}
+        {#if screen === 'setup'}
+            <div class="screen-container">
+                <ConnectPageSetup cancel={() => screen = 'chat'} />
+            </div>
+        {:else if screen === 'start_from_url'}
+            <div class="screen-container">
+                <div class="screen">
+                    <h1>URLから接続</h1>
+                    <div class="url">
+                        <Textbox bind:value={startURL} placeholder="youtu.be/..." />
+                    </div>
+                    <div class="actions">
+                        <button onclick={() => screen = 'chat'}>
+                            <Tooltip>{$t('page.connect.input_cancel')}</Tooltip>
+                            {$t('page.connect.input_cancel')}
+                            <i class="ti ti-chevron-left"></i>
+                        </button>
+                        <button onclick={() => {
+                            provider.startFromUrl(startURL);
+                            screen = 'chat';
+                        }}>
+                            <Tooltip>{$t('panels.channels.setup_channel')}</Tooltip>
+                            {$t('panels.channels.append_channel')}
+                            <i class="ti ti-user-share"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {/if}
+    </div>
 </main>
 
 <style lang="scss">
     main {
-        position: relative;
-        height: 100%;
+        position: absolute;
+        inset: 0;
         display: flex;
+        flex-direction: column;
+    }
+
+    .content {
+        position: relative;
+        flex: 1;
+    }
+
+    .screen-container {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 5rem;
+        justify-content: center;
+        background: linear-gradient(
+            to right,
+            color-mix(in srgb, var(--color-bg-1) 99%, transparent 0%) 40%,
+            color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%) 100%
+        );
+    }
+
+    .screen {
+        width: 24rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    h1 {
+        font-size: 1.25rem;
+        color: var(--color-1);
     }
 
     h3 {
@@ -85,7 +153,10 @@
     }
 
     .actions {
+        display: flex;
+        justify-content: space-between;
         margin-left: auto;
+        gap: 1rem;
 
         > button {
             display: flex;
@@ -111,13 +182,10 @@
 
     .panels {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 6rem;
+        inset: 0;
         display: flex;
-        padding: 0.5rem 2rem;
         gap: 2rem;
+        padding: 0.5rem 2rem;
     }
 
     $channel-height: clamp(15.5rem, 20vw, 19rem);
@@ -140,11 +208,10 @@
         }
     }
 
-    .right {
+    .chat {
         display: flex;
         flex-direction: column;
         flex: 1;
-        max-height: 100%;
 
         .chat {
             height: 100%;

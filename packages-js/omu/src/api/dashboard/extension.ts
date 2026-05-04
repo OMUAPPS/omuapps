@@ -122,7 +122,7 @@ export class DashboardExtension {
     }
 
     public async notifyDropDragState(packet: FileDragPacket): Promise<void> {
-        return this.notifyDropDragState(packet);
+        return this.dragdrop.notifyDropDragState(packet);
     }
 
     public requestSpeechRecognition(): PromiseResult<Registry<TranscriptStatus>, UserError> {

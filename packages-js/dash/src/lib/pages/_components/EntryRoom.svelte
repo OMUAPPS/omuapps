@@ -3,9 +3,8 @@
 
     import { ButtonMini, linkOpenHandler, Tooltip } from '@omujs/ui';
 
-    import { chat, omu } from '$lib/client.js';
+    import { omu, provider } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
-    import { devMode } from '$lib/settings';
 
     interface Props {
         entry: Models.Room;
@@ -101,15 +100,16 @@
                     <i class="ti ti-user"></i>
                 </button>
             {/if}
-            {#if $devMode}
-                <div class="actions">
+            <div class="actions">
+                {#if entry.connected}
                     <ButtonMini onclick={() => {
-                        chat.rooms.remove(entry);
+                        provider.stopRoom(entry.id.key());
                     }}>
-                        <i class="ti ti-trash"></i>
+                        <Tooltip>{$t('panels.rooms.diconnect')}</Tooltip>
+                        <i class="ti ti-plug-off"></i>
                     </ButtonMini>
-                </div>
-            {/if}
+                {/if}
+            </div>
         </div>
     </div>
 </article>
@@ -258,5 +258,6 @@
 
     .actions {
         margin-left: auto;
+        display: flex;
     }
 </style>

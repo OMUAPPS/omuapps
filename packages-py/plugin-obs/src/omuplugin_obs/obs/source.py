@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
@@ -9,7 +10,7 @@ from .data import OBSData, OBSDataArray
 from .reference import Reference
 
 if TYPE_CHECKING:
-    from .scene import OBSScene
+    pass
 
 
 class OBSTransitionTarget(IntEnum):
@@ -43,15 +44,16 @@ class OBSSource(Reference[obs_source_t]):
         )
 
     @classmethod
+    @contextmanager
     def create(
         cls,
         type: str,
         name: str,
         settings: OBSData | None = None,
-    ) -> OBSSource:
-        existing_source = cls.get_source_by_name(name)
-        if existing_source is not None:
-            raise ValueError(f"Source with name {name} already exists")
+    ):
+        with cls.get_source_by_name(name) as existing_source:
+            if existing_source is not None:
+                raise ValueError(f"Source with name {name} already exists")
         hotkey_data = obspython.obs_data_create()
         if settings is None:
             settings_data = obspython.obs_data_create()
@@ -63,7 +65,11 @@ class OBSSource(Reference[obs_source_t]):
         obspython.obs_data_release(hotkey_data)
         if obs_source is None:
             raise ValueError("Failed to create source")
-        return cls(obs_source)
+        source = cls(obs_source)
+        try:
+            yield source
+        finally:
+            source.release()
 
     @classmethod
     def create_private(
@@ -82,18 +88,30 @@ class OBSSource(Reference[obs_source_t]):
         return cls(obs_source)
 
     @classmethod
-    def get_source_by_name(cls, name: str) -> OBSSource | None:
+    @contextmanager
+    def get_source_by_name(cls, name: str):
         obs_source = obspython.obs_get_source_by_name(name)
         if obs_source is None:
-            return None
-        return cls(obs_source)
+            yield None
+            return
+        source = cls(obs_source)
+        try:
+            yield source
+        finally:
+            source.release()
 
     @classmethod
-    def get_source_by_uuid(cls, uuid: str) -> OBSSource | None:
+    @contextmanager
+    def get_source_by_uuid(cls, uuid: str):
         obs_source = obspython.obs_get_source_by_uuid(uuid)
         if obs_source is None:
-            return None
-        return cls(obs_source)
+            yield None
+            return
+        source = cls(obs_source)
+        try:
+            yield source
+        finally:
+            source.release()
 
     @classmethod
     def get_transition_by_name(cls, name: str) -> OBSSource | None:
@@ -134,10 +152,15 @@ class OBSSource(Reference[obs_source_t]):
             return obspython.obs_source_get_output_flags(source)
 
     @property
-    def settings(self) -> OBSData:
+    @contextmanager
+    def settings(self):
         with self as source:
             obs_data = obspython.obs_source_get_settings(source)
-        return OBSData(obs_data)
+        data = OBSData(obs_data)
+        try:
+            yield data
+        finally:
+            data.release()
 
     @property
     def name(self) -> str:
@@ -557,12 +580,17 @@ class OBSSource(Reference[obs_source_t]):
     # transition_set_scale_type...
 
     @property
-    def scene(self) -> OBSScene:
+    @contextmanager
+    def scene(self):
         with self as source:
             obs_scene = obspython.obs_scene_from_source(source)
         from .scene import OBSScene
 
-        return OBSScene(obs_scene)
+        scene = OBSScene(obs_scene)
+        try:
+            yield scene
+        finally:
+            scene.release()
 
     @property
     def is_scene(self) -> bool:

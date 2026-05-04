@@ -148,7 +148,6 @@ type Events = {
         cwd: string;
     };
     [TauriEvent.WINDOW_RESIZED]: unknown;
-    [TauriEvent.WINDOW_RESIZED]: unknown;
     [TauriEvent.WINDOW_MOVED]: unknown;
     [TauriEvent.WINDOW_CLOSE_REQUESTED]: unknown;
     [TauriEvent.WINDOW_DESTROYED]: unknown;
@@ -187,7 +186,6 @@ type Commands = {
         };
     }): Cookie[];
     generate_log_file(): string;
-    clean_environment(): void;
     open_python_path(): void;
     open_uv_path(): void;
 };
@@ -234,10 +232,54 @@ export const uninstallProgress = writable<UninstallProgress | undefined>();
 export const serverState = writable<ServerState | undefined>();
 export const backgroundRequested = writable(false);
 
+/**
+ * Registers event listeners for Tauri events.
+ * Consolidates progress and state updates into store subscriptions.
+ */
+async function registerEventListeners() {
+    const listeners: Array<{
+        event: keyof Events;
+        handler: (payload: unknown) => void;
+    }> = [
+        {
+            event: 'start_progress',
+            handler: (payload) => startProgress.set(payload as StartProgress),
+        },
+        {
+            event: 'stop_progress',
+            handler: (payload) => stopProgress.set(payload as StopProgress),
+        },
+        {
+            event: 'clean_progress',
+            handler: (payload) => cleanProgress.set(payload as CleanProgress),
+        },
+        {
+            event: 'uninstall_progress',
+            handler: (payload) => uninstallProgress.set(payload as UninstallProgress),
+        },
+        {
+            event: 'server_state',
+            handler: (payload) => serverState.set(payload as ServerState),
+        },
+        {
+            event: 'webview_message',
+            handler: (payload) => dashboard.processWebviewMessage(payload as WebviewMessage),
+        },
+    ];
+
+    for (const { event, handler } of listeners) {
+        await listen(event, ({ payload }) => handler(payload));
+    }
+}
+
+/**
+ * Initializes Tauri backend: CLI arguments, event listeners, and UI components.
+ */
 async function load() {
     if (!checkOnTauri()) {
         return;
     }
+
     console.log('Initializing Tauri...');
     const matches = await getMatches();
     console.log('arguments', JSON.stringify(matches, null, 2));
@@ -247,24 +289,7 @@ async function load() {
 
     initDragDrop();
     await initTrayIcon();
-    await listen('start_progress', ({ payload }) => {
-        startProgress.set(payload);
-    });
-    await listen('stop_progress', ({ payload }) => {
-        stopProgress.set(payload);
-    });
-    await listen('clean_progress', ({ payload }) => {
-        cleanProgress.set(payload);
-    });
-    await listen('uninstall_progress', ({ payload }) => {
-        uninstallProgress.set(payload);
-    });
-    await listen('server_state', ({ payload }) => {
-        serverState.set(payload);
-    });
-    await listen('webview_message', ({ payload }) => {
-        dashboard.processWebviewMessage(payload);
-    });
+    await registerEventListeners();
 }
 
 if (BROWSER) {
@@ -290,8 +315,12 @@ export type UpdateEvent = {
     type: 'restarting';
 };
 
+/**
+ * Handles update download and installation with progress notifications.
+ * Shuts down server, downloads/installs update, and relaunches application.
+ */
 export async function applyUpdate(update: Update, progress: (event: UpdateEvent) => void) {
-    // state = 'shutting-down';
+    // Shutdown and prepare for update
     progress({ type: 'shutting-down' });
     try {
         omu.server.shutdown();
@@ -299,38 +328,39 @@ export async function applyUpdate(update: Update, progress: (event: UpdateEvent)
     } catch (e) {
         console.error(e);
     }
-    // state = 'updating';
-    progress({ type: 'updating', downloaded: 0, contentLength: 0 });
-    let downloaded = 0;
-    let contentLength = 0;
-    // alternatively we could also call update.download() and update.install() separately
+
+    // Initialize download state with helper for progress notifications
+    let downloadedBytes = 0;
+    let contentLengthBytes = 0;
+    const notifyProgress = () =>
+        progress({ type: 'updating', downloaded: downloadedBytes, contentLength: contentLengthBytes });
+
+    notifyProgress();
+
+    // Download and install update
     await update.downloadAndInstall((event) => {
         switch (event.event) {
             case 'Started':
-                contentLength = event.data.contentLength || 0;
-                console.log(
-                    `started downloading ${event.data.contentLength} bytes`,
-                );
-                progress({ type: 'updating', downloaded, contentLength });
+                contentLengthBytes = event.data.contentLength || 0;
+                console.log(`started downloading ${contentLengthBytes} bytes`);
+                notifyProgress();
                 break;
             case 'Progress':
-                downloaded += event.data.chunkLength;
-                console.log(
-                    `downloaded ${downloaded} from ${contentLength}`,
-                );
-                progress({ type: 'updating', downloaded, contentLength });
+                downloadedBytes += event.data.chunkLength;
+                console.log(`downloaded ${downloadedBytes} from ${contentLengthBytes}`);
+                notifyProgress();
                 break;
             case 'Finished':
                 console.log('download finished');
-                progress({ type: 'updating', downloaded, contentLength });
+                notifyProgress();
                 break;
         }
     });
 
+    // Relaunch application
     console.log('update installed');
-    await relaunch();
-    // state = 'restarting';
     progress({ type: 'restarting' });
+    await relaunch();
 }
 
 import { defaultWindowIcon } from '@tauri-apps/api/app';
@@ -344,9 +374,11 @@ import { get, writable } from 'svelte/store';
 import { initDragDrop } from './dragdrop.js';
 import { isBetaEnabled } from './settings.js';
 
+/**
+ * Initializes the tray icon with menu and window visibility handlers.
+ */
 async function initTrayIcon() {
-    let visible = false;
-    visible = await appWindow.isVisible();
+    let visible = await appWindow.isVisible();
 
     const menu = await Menu.new({
         items: [
@@ -354,15 +386,13 @@ async function initTrayIcon() {
                 id: 'toggle',
                 text: visible ? 'Hide' : 'Show',
                 action: async () => {
-                    const item = await menu.get('toggle');
-                    if (!item) throw new Error('Menu item not found');
                     if (visible) {
                         await appWindow.hide();
                     } else {
                         await appWindow.show();
                     }
                     visible = await appWindow.isVisible();
-                    item.setText(visible ? 'Hide' : 'Show');
+                    await updateToggleMenuText(menu, visible);
                 },
             },
             {
@@ -375,26 +405,25 @@ async function initTrayIcon() {
         ],
     });
 
+    // Register window focus/blur handlers to keep menu in sync
     listen(TauriEvent.WINDOW_BLUR, async () => {
         if (await appWindow.isVisible()) return;
         visible = false;
-        const item = await menu.get('toggle');
-        if (item) {
-            item.setText('Show');
-        }
+        await updateToggleMenuText(menu, visible);
     });
+
     listen(TauriEvent.WINDOW_FOCUS, async () => {
         visible = true;
-        const item = await menu.get('toggle');
-        if (item) {
-            item.setText('Hide');
-        }
+        await updateToggleMenuText(menu, visible);
     });
-    const tray = await TrayIcon.getById('omuapps');
-    if (tray) {
-        tray.setMenu(menu);
+
+    // Register or update existing tray icon
+    const existingTray = await TrayIcon.getById('omuapps');
+    if (existingTray) {
+        existingTray.setMenu(menu);
         return;
     }
+
     const icon = await defaultWindowIcon();
     await TrayIcon.new({
         id: 'omuapps',
@@ -402,4 +431,14 @@ async function initTrayIcon() {
         menu,
         showMenuOnLeftClick: true,
     });
+}
+
+/**
+ * Updates the toggle menu item text based on window visibility state.
+ */
+async function updateToggleMenuText(menu: Menu, isVisible: boolean): Promise<void> {
+    const item = await menu.get('toggle');
+    if (item) {
+        item.setText(isVisible ? 'Hide' : 'Show');
+    }
 }

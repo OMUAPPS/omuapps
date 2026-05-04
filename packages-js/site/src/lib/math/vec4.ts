@@ -18,6 +18,10 @@ export class Vec4 {
         return new Vec4(vec.x, vec.y, vec.z, vec.w);
     }
 
+    public static fromArray(arr: [number, number, number, number]): Vec4 {
+        return new Vec4(...arr);
+    }
+
     public static fromColorHex(hex: string): Vec4 {
         if (hex.startsWith('#')) {
             hex = hex.slice(1);
@@ -43,16 +47,16 @@ export class Vec4 {
                 break;
             }
             case 6: {
-                r = parseInt(hex.slice(0, 2), 16) / 16;
-                g = parseInt(hex.slice(2, 4), 16) / 16;
-                b = parseInt(hex.slice(4, 6), 16) / 16;
+                r = parseInt(hex.slice(0, 2), 16) / 255;
+                g = parseInt(hex.slice(2, 4), 16) / 255;
+                b = parseInt(hex.slice(4, 6), 16) / 255;
                 break;
             }
             case 8: {
-                r = parseInt(hex.slice(0, 2), 16) / 16;
-                g = parseInt(hex.slice(2, 4), 16) / 16;
-                b = parseInt(hex.slice(4, 6), 16) / 16;
-                a = parseInt(hex.slice(6, 8), 16) / 16;
+                r = parseInt(hex.slice(0, 2), 16) / 255;
+                g = parseInt(hex.slice(2, 4), 16) / 255;
+                b = parseInt(hex.slice(4, 6), 16) / 255;
+                a = parseInt(hex.slice(6, 8), 16) / 255;
                 break;
             }
             default: {
@@ -81,6 +85,19 @@ export class Vec4 {
 
     equal(other: Vec4Like): boolean {
         return this.x === other.x && this.y === other.y && this.z === other.z && this.w === other.w;
+    }
+
+    public distance(other: Vec4Like) {
+        const dx = other.x - this.x;
+        const dy = other.y - this.y;
+        const dz = other.z - this.z;
+        const dw = other.w - this.w;
+        return Math.sqrt(
+            dx * dx
+            + dy * dy
+            + dz * dz
+            + dw * dw,
+        );
     }
 
     with(values: Partial<Vec4Like>): Vec4 {
@@ -125,6 +142,15 @@ export class Vec4 {
             this.y - other.y,
             this.z - other.z,
             this.w - other.w,
+        );
+    }
+
+    mul(other: Vec4Like): Vec4 {
+        return new Vec4(
+            this.x * other.x,
+            this.y * other.y,
+            this.z * other.z,
+            this.w * other.w,
         );
     }
 

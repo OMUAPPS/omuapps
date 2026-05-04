@@ -6,7 +6,7 @@
         accept?: string | null;
         handle?: (files: FileList) => void;
         fileDrop?: HTMLInputElement | null;
-        button?: import('svelte').Snippet<[any]>;
+        button?: import('svelte').Snippet<[{ open: () => void }]>;
         children?: import('svelte').Snippet;
     }
 

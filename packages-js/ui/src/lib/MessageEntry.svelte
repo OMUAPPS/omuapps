@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Models } from '@omujs/chat';
 
+    import { onMount } from 'svelte';
     import MessageRenderer from './MessageRenderer.svelte';
     import { chat } from './stores.js';
 
@@ -21,6 +22,13 @@
     }
     $chat.rooms.get(entry.roomId.key()).then((res) => {
         room = res;
+    });
+
+    onMount(() => {
+        return $chat.authors.listen((authors) => {
+            if (!entry.authorId) return;
+            author = authors.get(entry.authorId.key());
+        });
     });
 
     function handleCopy() {

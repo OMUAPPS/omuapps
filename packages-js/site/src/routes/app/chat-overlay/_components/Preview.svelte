@@ -1,12 +1,10 @@
 <script lang="ts">
-    import Section from "$lib/components/Section.svelte";
-    import { Combobox } from "@omujs/ui";
-    import AssetRenderer from "../asset/AssetRenderer.svelte";
-    import { ChatOverlayApp } from "../chat-app";
+    import Section from '$lib/components/Section.svelte';
+    import { Checkbox, Combobox, Slider } from '@omujs/ui';
+    import AssetRenderer from '../asset/AssetRenderer.svelte';
+    import { ChatOverlayApp } from '../chat-app';
 
     let { config } = ChatOverlayApp.getInstance();
-
-    let tab: "asset" | "hud" = $state("hud");
 </script>
 
 <div class="container">
@@ -23,12 +21,12 @@
                 <Combobox
                     options={{
                         default: {
-                            label: "デフォルト",
-                            value: "default",
+                            label: 'デフォルト',
+                            value: 'default',
                         },
                         youtube: {
-                            label: "Youtube互換",
-                            value: "youtube",
+                            label: 'Youtube互換',
+                            value: 'youtube',
                         },
                     }}
                     bind:value={$config.asset.type}
@@ -37,18 +35,33 @@
                     }}
                 />
             </label>
-            {#if $config.asset.type === "default"}
+            <label class="setting">
+                <span>接続している配信のみ</span>
+                <Checkbox bind:value={$config.chat.filter.onlyConnected} />
+            </label>
+            <label class="setting">
+                <span>表示する数を制限する</span>
+                <Checkbox bind:value={() => $config.asset.displayCount !== undefined, (limit) => {
+                    $config.asset.displayCount = limit ? 1 : undefined;
+                }} />
+            </label>
+            <label>
+                {#if $config.asset.displayCount !== undefined}
+                    <Slider bind:value={$config.asset.displayCount} min={1} max={20} step={1} />
+                {/if}
+            </label>
+            {#if $config.asset.type === 'default'}
                 <label>
                     <span>並び</span>
                     <Combobox
                         options={{
                             top: {
-                                label: "新しいものは上",
-                                value: "newer-top",
+                                label: '新しいものは上',
+                                value: 'newer-top',
                             },
                             bottom: {
-                                label: "新しいものは下",
-                                value: "newer-bottom",
+                                label: '新しいものは下',
+                                value: 'newer-bottom',
                             },
                         }}
                         bind:value={$config.asset.list.direction}

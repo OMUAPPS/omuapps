@@ -220,7 +220,7 @@ export class PNGAvatar implements Avatar {
         };
 
         const updatePhysics = (action: AvatarAction) => {
-            const ticks = context.tickTimer.tick(1000 / 60);
+            const ticks = Math.min(context.tickTimer.tick(1000 / 60), 10);
             for (let tick = 0; tick < ticks; tick++) {
                 if (action.talking && context.y >= 0 && context.bounceVelocity === 0) {
                     context.bounceVelocity = 250;

@@ -81,39 +81,48 @@ export class Dashboard implements DashboardHandler {
         handle(event);
     }
 
-    async speechRecognitionStart(): Promise<UserResponse<undefined>> {
-        if (this.recognition) return { type: 'ok', value: undefined };
-
+    /**
+     * Checks if speech recognition is permitted and initializes the recognizer.
+     * Returns the SpeechRecognition API constructor if available.
+     */
+    private async initializeSpeechRecognition(): Promise<typeof SpeechRecognition | undefined> {
         const accepted = get(speechRecognition) || await new Promise<boolean>((resolve) => {
             pushScreen(ScreenRequestSpeechRecognition, 'settings', {
                 resolve: (accept: boolean) => resolve(accept),
             });
         });
 
-        if (!accepted) return { type: 'cancelled' };
+        if (!accepted) return undefined;
 
         speechRecognition.set(true);
         await navigator.permissions.query({ name: 'microphone' as PermissionName });
 
-        const Recognizer = typeof SpeechRecognition !== 'undefined' ? SpeechRecognition : (typeof webkitSpeechRecognition !== 'undefined' ? webkitSpeechRecognition : undefined);
-        if (!Recognizer) return { type: 'cancelled' };
+        const Recognizer = typeof SpeechRecognition !== 'undefined'
+            ? SpeechRecognition
+            : typeof webkitSpeechRecognition !== 'undefined'
+                ? webkitSpeechRecognition
+                : undefined;
 
-        const recognition = this.recognition = new (Recognizer)();
-        recognition.continuous = false;
-        recognition.lang = navigator.language;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
+        return Recognizer;
+    }
+
+    /**
+     * Attaches event handlers to the SpeechRecognition instance.
+     * Manages recognition lifecycle, result handling, and state updates.
+     */
+    private attachRecognitionHandlers(recognition: SpeechRecognition): void {
+        let timestamp = Date.now();
 
         recognition.onerror = ({ error }: { error: string }) => {
             if (error === 'no-speech') return;
             console.error('Speech recognition error:', error);
         };
 
-        let timestamp = Date.now();
-
         recognition.onresult = async ({ results }: { results: SpeechRecognitionResultList }) => {
             const segments: TranscriptSegment[] = Array.from(results)
-                .flatMap((result) => Array.from(result).map(({ confidence, transcript }) => ({ confidence, transcript })));
+                .flatMap((result) =>
+                    Array.from(result).map(({ confidence, transcript }) => ({ confidence, transcript })),
+                );
             await this.omu.dashboard.speechRecognition.set({
                 type: results[results.length - 1].isFinal ? 'final' : 'result',
                 timestamp,
@@ -139,7 +148,21 @@ export class Dashboard implements DashboardHandler {
         recognition.onend = () => {
             recognition.start();
         };
+    }
 
+    async speechRecognitionStart(): Promise<UserResponse<undefined>> {
+        if (this.recognition) return { type: 'ok', value: undefined };
+
+        const Recognizer = await this.initializeSpeechRecognition();
+        if (!Recognizer) return { type: 'cancelled' };
+
+        const recognition = this.recognition = new (Recognizer as typeof SpeechRecognition)();
+        recognition.continuous = false;
+        recognition.lang = navigator.language;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        this.attachRecognitionHandlers(recognition);
         recognition.start();
 
         return { type: 'ok', value: undefined };
@@ -150,34 +173,41 @@ export class Dashboard implements DashboardHandler {
         await appWindow.setFocus();
     }
 
-    async handlePermissionRequest(request: PromptRequestAppPermissions): Promise<PromptResult> {
+    /**
+     * Shows an app window and displays a prompt dialog.
+     * Common pattern for app-related requests.
+     */
+    private async showAppPrompt<T>(
+        component: ScreenComponentType<T>,
+        target: string,
+        props: Omit<T, 'resolve'>,
+    ): Promise<PromptResult> {
         await this.showAppWindow();
-        return this.showPrompt(ScreenRequestPermission, `app-${request.app.id}`, { request });
+        return this.showPrompt(component, target, props);
+    }
+
+    async handlePermissionRequest(request: PromptRequestAppPermissions): Promise<PromptResult> {
+        return this.showAppPrompt(ScreenRequestPermission, `app-${request.app.id}`, { request });
     }
 
     async handlePluginRequest(request: PromptRequestAppPlugins): Promise<PromptResult> {
-        await this.showAppWindow();
-        return this.showPrompt(ScreenRequestPlugin, `app-${request.app.id}`, { request });
+        return this.showAppPrompt(ScreenRequestPlugin, `app-${request.app.id}`, { request });
     }
 
     async handleInstallApp(request: PromptRequestAppInstall): Promise<PromptResult> {
-        await this.showAppWindow();
-        return this.showPrompt(ScreenRequestAppInstall, 'explore', { request });
+        return this.showAppPrompt(ScreenRequestAppInstall, 'explore', { request });
     }
 
     async handleUpdateApp(request: PromptRequestAppUpdate): Promise<PromptResult> {
-        await this.showAppWindow();
-        return this.showPrompt(ScreenRequestAppUpdate, `app-${request.old_app.id}`, { request });
+        return this.showAppPrompt(ScreenRequestAppUpdate, `app-${request.old_app.id}`, { request });
     }
 
     async handleIndexInstall(request: PromptRequestIndexInstall): Promise<PromptResult> {
-        await this.showAppWindow();
-        return this.showPrompt(ScreenRequestIndexInstall, 'explore', { request });
+        return this.showAppPrompt(ScreenRequestIndexInstall, 'explore', { request });
     }
 
     async handleHttpPortRequest(request: PromptRequestHttpPort): Promise<PromptResult> {
-        await this.showAppWindow();
-        return this.showPrompt(ScreenRequestHttpPort, `app-${request.app.id}`, { request });
+        return this.showAppPrompt(ScreenRequestHttpPort, `app-${request.app.id}`, { request });
     }
 
     async handleHostRequest(request: HostRequest, params: InvokedParams): Promise<PromptResult> {
@@ -306,6 +336,10 @@ export class Dashboard implements DashboardHandler {
         return handle?.id;
     }
 
+    /**
+     * Displays a prompt dialog and waits for user response.
+     * Renders a screen component with the given props and target.
+     */
     private showPrompt<T>(component: ScreenComponentType<T>, target: string, props: Omit<T, 'resolve'>): Promise<PromptResult> {
         return new Promise<PromptResult>((resolve) => {
             pushScreen(component, target, {

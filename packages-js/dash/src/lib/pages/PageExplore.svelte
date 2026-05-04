@@ -8,7 +8,7 @@
     import ExploreIndex from './_components/ExploreIndex.svelte';
     import { filter } from './explore.js';
 
-    let { data }: { data: unknown } = $props();
+    let { data: _data }: { data: unknown } = $props();
 
     const index = omu.server.index.compatSvelte();
 

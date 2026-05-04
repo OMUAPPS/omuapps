@@ -104,14 +104,13 @@
         {#if author}
             <div class="author-info">
                 <div class="author">
-                    <span>{author.name}</span>
+                    <span>{author.name ?? author.metadata.screen_id ?? author.id.path.at(-1)}</span>
                     {#each author.roles || [] as role (role.id)}
                         <Role {role} />
                     {/each}
-                    <small
-                    >{author.metadata?.screen_id ||
-                        author.id.path.at(-1)}</small
-                    >
+                    <small>
+                        {author.metadata?.screen_id || author.id.path.at(-1)}
+                    </small>
                 </div>
                 {#if createdAt}
                     <span class="time">

@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { AssetButton } from '@omujs/ui';
-    import { OMUCAFE_OVERLAY_APP } from '../../app';
     import type { Game } from '../../core/game';
     import type { SceneKitchenData } from './kitchen';
 
@@ -9,30 +7,13 @@
         game: Game;
     }
 
-    let { game }: Props = $props();
-
-    const scene = game.states.scene.store;
+    let { scene = $bindable(), game }: Props = $props();
 </script>
 
-<main>
-    <button onclick={() => {
-        $scene = {
-            type: 'main_menu',
-        };
-    }}>
-        menu
-    </button>
-    <button onclick={() => {
-        $scene = {
-            type: 'factory',
-        };
-    }}>
-        factory
-    </button>
-    <div class="asset">
-        <AssetButton asset={OMUCAFE_OVERLAY_APP} single />
-    </div>
-</main>
+{#if game.side === 'client'}
+    <main>
+    </main>
+{/if}
 
 <style>
     main {

@@ -5,6 +5,7 @@ export type Vec2Like = { x: number; y: number };
 export class Vec2 {
     public static ZERO = new Vec2(0, 0);
     public static ONE = new Vec2(1, 1);
+    public static ONE_NEGATIVE = new Vec2(-1, -1);
     public static UP = new Vec2(0, 1);
     public static DOWN = new Vec2(0, -1);
     public static LEFT = new Vec2(-1, 0);
@@ -31,6 +32,13 @@ export class Vec2 {
         return new Vec2(
             lerp(minOut.x, maxOut.x, invLerp(minIn.x, maxIn.x, this.x)),
             lerp(minOut.y, maxOut.y, invLerp(minIn.y, maxIn.y, this.y)),
+        );
+    }
+
+    public with(values: Partial<Vec2Like>): Vec2 {
+        return new Vec2(
+            values.x ?? this.x,
+            values.y ?? this.y,
         );
     }
 
@@ -62,7 +70,7 @@ export class Vec2 {
         return new Vec2(this.x - other.x, this.y - other.y);
     }
 
-    public length(): number {
+    public get length(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
@@ -75,13 +83,16 @@ export class Vec2 {
     }
 
     public distance(other: Vec2Like): number {
-        return this.sub(other).length();
+        return this.sub(other).length;
     }
 
     public rotate(angle: number): Vec2 {
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
-        return new Vec2(this.x * cos - this.y * sin, this.x * sin + this.y * cos);
+        return new Vec2(
+            this.x * cos - this.y * sin,
+            this.x * sin + this.y * cos,
+        );
     }
 
     public turnLeft(): Vec2 {
@@ -92,8 +103,13 @@ export class Vec2 {
         return new Vec2(this.y, -this.x);
     }
 
+    public get normalized(): Vec2 {
+        const len = this.length;
+        return new Vec2(this.x / len, this.y / len);
+    }
+
     public normalize(): Vec2 {
-        const len = this.length();
+        const len = this.length;
         return new Vec2(this.x / len, this.y / len);
     }
 
@@ -117,5 +133,9 @@ export class Vec2 {
             return new Vec2(obj[0], obj[1]);
         }
         return new Vec2(obj.x, obj.y);
+    }
+
+    public equals(other: Vec2): boolean {
+        return this.x === other.x && this.y === other.y;
     }
 }

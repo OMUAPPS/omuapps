@@ -18,7 +18,12 @@
         "newLine": "LF",
         "skipLibCheck": true,
         "isolatedDeclarations": true,
-        "composite": true
+        "composite": true,
+        "lib": [
+            "esnext",
+            "DOM",
+            "DOM.Iterable"
+        ],
     },
     "compileOnSave": false,
     "include": [

@@ -1,29 +1,40 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import type { RenderPipeline } from '$lib/components/canvas/pipeline';
+    import { fade } from 'svelte/transition';
+    import Chat from './Chat.svelte';
     import { Game } from './core/game';
     import { GameState } from './core/game-state';
     import { OmucafeApp } from './omucafe-app';
 
     let game: Game | undefined = $state();
-    let scene = $derived(game?.states.scene.store);
 
     async function setPipeline(pipeline: RenderPipeline) {
         const states = new GameState(OmucafeApp.getInstance());
         await states.wait();
         game = new Game(OmucafeApp.getInstance(), pipeline, states);
-        await game.loop();
+        await game.startLoop();
     }
+
+    let scene = $derived(game?.states.scene.store);
+    const transition = $derived(game?.states.transition.store);
 </script>
 
 <main>
     <Canvas {setPipeline} />
-    {#if $scene && game}
-        {@const Component = $scene && game?.sceneSystem.getComponent($scene)}
-        {#if Component}
-            <!-- Union vs Intersection -->
-            <Component scene={$scene as never} {game} />
-        {/if}
+    {#if scene && $scene && game}
+        {@const Component = $scene && game?.scene.getComponent($scene)}
+        {#key [Component, $scene]}
+            {#if Component && $transition && (!$transition.current || $transition.current.to.type === $scene.type)}
+                <div class="screen" transition:fade={{ duration: 250 }}>
+                    <!-- Union vs Intersection -->
+                    <Component bind:scene={$scene as never} {game} />
+                </div>
+            {/if}
+        {/key}
+    {/if}
+    {#if $scene?.type !== 'main_menu'}
+        <Chat />
     {/if}
 </main>
 
@@ -33,5 +44,18 @@
         inset: 0;
         display: flex;
         justify-content: center;
+    }
+
+    .screen {
+        animation: fadeIn forwards 0.25s;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
     }
 </style>

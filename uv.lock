@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 members = [
     "omu",
     "omu-chat",
+    "omu-chat-picarto",
     "omu-chat-twitch",
     "omu-chat-youtube",
     "omu-chatprovider",
@@ -472,7 +473,7 @@ wheels = [
 
 [[package]]
 name = "iwashi"
-version = "3.1.2"
+version = "3.2.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -480,9 +481,9 @@ dependencies = [
     { name = "click" },
     { name = "loguru" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/27/7f/82782d73ef1789d56191cef8bdc2162b42fcf0455c1fb1705e0f19c80c8b/iwashi-3.1.2.tar.gz", hash = "sha256:89b411b10402a6e64491dadf423d42d82e090962054d784d73bc7b27ec570bad", size = 62479, upload-time = "2025-01-30T06:56:49.099Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/76/b9/806243ede5e80ce6d753da3f911e4aee163bd3df3521ac42455ddfb20604/iwashi-3.2.4.tar.gz", hash = "sha256:f468e17d981573edced36af9ab736399e3a83fa1f157e956617c28d225f19ef7", size = 128875, upload-time = "2026-05-04T06:20:42.022Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/65/d3/6d78d75feb17cc522667114566afda8bc7b556786330a4b1c822a677043c/iwashi-3.1.2-py3-none-any.whl", hash = "sha256:d71c986378a3c69e56e33ce53af0c7cbf6046d85e05b6c4b31a6a04eb1f37057", size = 70598, upload-time = "2025-01-30T06:56:47.342Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/cf/e17854e01a00c0a92c91e7f8c9ea577e0e73d0709bc3cfc905df35b74910/iwashi-3.2.4-py3-none-any.whl", hash = "sha256:fd4a3323825e010a9582ac47c59d16130316b1c79025621e2ff45a2475f57f8f", size = 72923, upload-time = "2026-05-04T06:20:40.807Z" },
 ]
 
 [[package]]
@@ -688,7 +689,7 @@ wheels = [
 
 [[package]]
 name = "omu"
-version = "0.10.2"
+version = "0.10.5"
 source = { editable = "packages-py/omu" }
 dependencies = [
     { name = "aiohttp" },
@@ -703,7 +704,7 @@ requires-dist = [
 
 [[package]]
 name = "omu-chat"
-version = "0.10.2"
+version = "0.10.5"
 source = { editable = "packages-py/chat" }
 dependencies = [
     { name = "loguru" },
@@ -717,8 +718,23 @@ requires-dist = [
 ]
 
 [[package]]
+name = "omu-chat-picarto"
+version = "0.10.5"
+source = { editable = "packages-py/chat-picarto" }
+dependencies = [
+    { name = "loguru" },
+    { name = "omu-chatprovider" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "loguru", specifier = ">=0.7.2" },
+    { name = "omu-chatprovider", editable = "packages-py/chat-provider" },
+]
+
+[[package]]
 name = "omu-chat-twitch"
-version = "0.10.2"
+version = "0.10.5"
 source = { editable = "packages-py/chat-twitch" }
 dependencies = [
     { name = "loguru" },
@@ -733,7 +749,7 @@ requires-dist = [
 
 [[package]]
 name = "omu-chat-youtube"
-version = "0.10.2"
+version = "0.10.5"
 source = { editable = "packages-py/chat-youtube" }
 dependencies = [
     { name = "loguru" },
@@ -748,7 +764,7 @@ requires-dist = [
 
 [[package]]
 name = "omu-chatprovider"
-version = "0.10.2"
+version = "0.10.5"
 source = { editable = "packages-py/chat-provider" }
 dependencies = [
     { name = "aiohttp" },
@@ -763,7 +779,7 @@ dependencies = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.10.6" },
     { name = "beautifulsoup4", specifier = ">=4.12.3" },
-    { name = "iwashi", specifier = ">=3.1.0" },
+    { name = "iwashi", specifier = ">=3.2.4" },
     { name = "loguru", specifier = ">=0.7.2" },
     { name = "lxml", specifier = ">=5.0.0" },
     { name = "omu-chat", editable = "packages-py/chat" },
@@ -771,7 +787,7 @@ requires-dist = [
 
 [[package]]
 name = "omuplugin-obs"
-version = "0.10.2"
+version = "0.10.5"
 source = { editable = "packages-py/plugin-obs" }
 dependencies = [
     { name = "loguru" },
@@ -798,6 +814,7 @@ dev = [
     { name = "loguru" },
     { name = "omu" },
     { name = "omu-chat" },
+    { name = "omu-chat-picarto" },
     { name = "omu-chat-twitch" },
     { name = "omu-chat-youtube" },
     { name = "omu-chatprovider" },
@@ -818,6 +835,7 @@ dev = [
     { name = "loguru", specifier = ">=0.7.2" },
     { name = "omu", editable = "packages-py/omu" },
     { name = "omu-chat", editable = "packages-py/chat" },
+    { name = "omu-chat-picarto", editable = "packages-py/chat-picarto" },
     { name = "omu-chat-twitch", editable = "packages-py/chat-twitch" },
     { name = "omu-chat-youtube", editable = "packages-py/chat-youtube" },
     { name = "omu-chatprovider", editable = "packages-py/chat-provider" },
@@ -833,7 +851,7 @@ dev = [
 
 [[package]]
 name = "omuserver"
-version = "0.10.2"
+version = "0.10.5"
 source = { editable = "packages-py/server" }
 dependencies = [
     { name = "aiohttp" },

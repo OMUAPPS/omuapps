@@ -37,6 +37,7 @@ apps.push(
     clock,
     tester,
     TRANSLATOR_APP,
+    OMUCAFE_APP,
 );
 
 if (DEV) {
@@ -47,6 +48,5 @@ if (DEV) {
         breaktimer,
         remote,
         QUIZ_APP,
-        OMUCAFE_APP,
     );
 }

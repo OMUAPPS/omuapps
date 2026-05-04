@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from contextlib import contextmanager
 from enum import IntEnum
 from pathlib import Path
 
@@ -57,11 +58,16 @@ class OBSFrontendEvent(IntEnum):
 
 class OBS:
     @staticmethod
-    def frontend_get_current_scene() -> OBSSource | None:
+    @contextmanager
+    def frontend_get_current_scene():
         obs_source = obspython.obs_frontend_get_current_scene()
         if obs_source is None:
-            return None
-        return OBSSource(obs_source)
+            yield None
+        source = OBSSource(obs_source)
+        try:
+            yield source
+        finally:
+            source.release()
 
     @staticmethod
     def frontend_set_current_scene(scene: OBSScene):
@@ -79,19 +85,22 @@ class OBS:
         return scene_names
 
     @staticmethod
-    def get_scene_from_source(source: OBSSource) -> OBSScene:
+    @contextmanager
+    def get_scene_from_source(source: OBSSource):
         with source as obs_source:
             obs_scene = obspython.obs_scene_from_source(obs_source)
-        return OBSScene(obs_scene)
+        scene = OBSScene(obs_scene)
+        try:
+            yield scene
+        finally:
+            scene.release()
 
     @staticmethod
-    def get_scenes() -> list[OBSScene]:
-        scenes = []
+    def get_scenes():
         for scene_name in OBS.frontend_get_scene_names():
-            scene = OBSScene.get_scene_by_name(scene_name)
-            if scene is not None:
-                scenes.append(scene)
-        return scenes
+            with OBSScene.get_scene_by_name(scene_name) as scene:
+                if scene is not None:
+                    yield scene
 
     @staticmethod
     def enum_sources() -> Iterable[OBSSource]:
@@ -115,3 +124,11 @@ class OBS:
             callback(OBSFrontendEvent(event))
 
         # obspython.obs_frontend_add_event_callback(obs_callback)  # type: ignore
+
+    @staticmethod
+    def timer_add(callback: Callable[[], None], milliseconds: int):
+        obspython.timer_add(callback, milliseconds)
+
+    @staticmethod
+    def timer_remove(callback: Callable[[], None]):
+        obspython.timer_remove(callback)

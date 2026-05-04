@@ -3,7 +3,7 @@ import { Mat2 } from './mat2.js';
 import { Mat3 } from './mat3.js';
 import type { Quaternion } from './quaternion.js';
 import { Vec2, type Vec2Like } from './vec2.js';
-import { Vec3 } from './vec3.js';
+import { Vec3, type Vec3Like } from './vec3.js';
 import { Vec4 } from './vec4.js';
 
 export type Mat4Like = {
@@ -142,6 +142,12 @@ export class Mat4 {
             this.m20 * x, this.m21 * y, this.m22 * z, this.m23,
             this.m30, this.m31, this.m32, this.m33,
         );
+    }
+
+    public scaleAt(x: number, y: number, z: number, anchor: Vec3Like) {
+        return this.translate(-anchor.x, -anchor.y, -anchor.z)
+            .scale(x, y, z)
+            .translate(anchor.x, anchor.y, anchor.z);
     }
 
     public translate(x: number, y: number, z: number): Mat4 {
@@ -316,6 +322,14 @@ export class Mat4 {
         const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31;
         const z = this.m02 * point.x + this.m12 * point.y + this.m22 * point.z + this.m32;
         return new Vec3(x, y, z);
+    }
+
+    public transform4(point: Vec4): Vec4 {
+        const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30 * point.w;
+        const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31 * point.w;
+        const z = this.m02 * point.x + this.m12 * point.y + this.m22 * point.z + this.m32 * point.w;
+        const w = this.m03 * point.x + this.m13 * point.y + this.m23 * point.z + this.m33 * point.w;
+        return new Vec4(x, y, z, w);
     }
 
     public equals(other: Mat4): boolean {

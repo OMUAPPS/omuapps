@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 import re
-import urllib.parse
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
@@ -12,7 +11,6 @@ from typing import TYPE_CHECKING
 import bs4
 from iwashi.service import Youtube
 from loguru import logger
-from omu.helper import map_optional
 from omu_chat import Chat
 from omu_chat.model import (
     MODERATOR,
@@ -30,17 +28,20 @@ from omu_chat.model import (
     Vote,
     content,
 )
+from omu_chat.model.channel import Channel
 from omu_chat.model.vote import Choice
 from omu_chatprovider.errors import ProviderError
 from omu_chatprovider.helper import traverse
-from omu_chatprovider.service import ChatService
 from omu_chatprovider.tasks import Tasks
+
+from omu_chat_youtube.ythelper import parse_runs
 
 from . import types
 from .const import (
+    METADATA_UPDATE_INTERVAL,
     YOUTUBE_URL,
 )
-from .types.accessibility import Accessibility
+from .message_handlers import get_message_handler
 from .types.chatactions import (
     AddChatItemActionItem,
     AuthorInfo,
@@ -53,7 +54,6 @@ from .types.chatactions import (
 from .types.frameworkupdates import (
     Mutations,
 )
-from .types.image import Thumbnail
 from .types.metadataactions import MetadataActions
 from .types.runs import Runs
 from .youtubeapi import YoutubeAPI, YoutubePage
@@ -106,7 +106,7 @@ class YoutubeChatAPI:
             .map(lambda x: x.get("liveChatRenderer"))
             .map(lambda x: x.get("continuations"))
             .map(lambda x: x[0])
-            .map(lambda x: x.get("invalidationContinuationData"))
+            .map(lambda x: x.get("invalidationContinuationData") or x.get("timedContinuationData"))
             .map(lambda x: x.get("continuation"))
             .get()
         )
@@ -159,7 +159,9 @@ class YoutubeChatAPI:
             self.chat_continuation = None
         else:
             continuation = continuations[0]
-            self.chat_continuation = continuation.get("invalidationContinuationData", {}).get("continuation", None)
+            self.chat_continuation = (
+                continuation.get("invalidationContinuationData", {}) or continuation.get("timedContinuationData", {})
+            ).get("continuation", None)
         chat_actions = live_chat_continuation.get("actions", [])
         mutations = (
             traverse(data)
@@ -198,10 +200,16 @@ class YoutubeChatAPI:
                 video_view_count_data = view_count_data["videoViewCountRenderer"]
                 viewer_count = int(video_view_count_data["originalViewCount"])
             if "updateTitleAction" in action:
-                title = _parse_runs(action["updateTitleAction"]["title"])
+                title = parse_runs(action["updateTitleAction"]["title"])
             if "updateDescriptionAction" in action:
-                description = _parse_runs(action["updateDescriptionAction"].get("description"))
+                description = parse_runs(action["updateDescriptionAction"].get("description"))
+        mutations = data.get("frameworkUpdates", {}).get("entityBatchUpdate", {}).get("mutations", [])
         metadata = RoomMetadata()
+        for mutation in mutations:
+            payload = mutation["payload"]
+            if "likeCountEntity" in payload:
+                likeCountEntity = payload["likeCountEntity"]
+                metadata["likes"] = int(likeCountEntity["likeCountIfIndifferentNumber"])
         if viewer_count:
             metadata["viewers"] = viewer_count
         if title:
@@ -218,25 +226,25 @@ class ChatData:
     mutations: Mutations
 
 
-class YoutubeChat(ChatService):
+class YoutubeChat:
+    """Service for handling YouTube live chat connections and message processing."""
+
     def __init__(
         self,
         youtube_service: YoutubeChatService,
         chat: Chat,
+        channel: Channel | None,
         room: Room,
         youtube_chat: YoutubeChatAPI,
     ):
         self.youtube = youtube_service
         self.chat = chat
-        self._room = room
+        self.room = room
+        self.channel = channel
         self.youtube_chat = youtube_chat
         self.tasks = Tasks(asyncio.get_running_loop())
         self.author_fetch_queue: list[Author] = []
         self._closed = False
-
-    @property
-    def room(self) -> Room:
-        return self._room
 
     @property
     def closed(self) -> bool:
@@ -248,7 +256,9 @@ class YoutubeChat(ChatService):
         youtube_service: YoutubeChatService,
         chat: Chat,
         room: Room,
+        channel: Channel | None,
     ):
+        """Create a new YoutubeChat instance for the given room."""
         exist_room = await chat.rooms.get(room.id.key())
         if exist_room:
             room.metadata |= exist_room.metadata
@@ -258,16 +268,25 @@ class YoutubeChat(ChatService):
             youtube_service.extractor,
             video_id,
         )
-        room.metadata |= {
-            "thumbnail": f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
-            "url": f"https://www.youtube.com/watch?v={video_id}",
-        }
-        instance = cls(youtube_service, chat, room, youtube_chat)
+        room.metadata |= RoomMetadata(
+            {
+                "thumbnail": f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+            }
+        )
+        instance = cls(
+            youtube_service,
+            chat,
+            channel,
+            room,
+            youtube_chat,
+        )
         await instance.update_times()
         await chat.rooms.add(room)
         return instance
 
     async def update_times(self):
+        """Update room metadata with video timing information."""
         watch_page = await self.youtube.extractor.get(
             f"{YOUTUBE_URL}/watch",
             params={"v": self.youtube_chat.video_id},
@@ -294,18 +313,19 @@ class YoutubeChat(ChatService):
                 self.room.metadata["ended_at"] = ended_at.isoformat()
 
     async def run(self):
+        """Main loop for processing chat data."""
         count = 0
         self.tasks.create_task(self.fetch_authors_task())
         try:
-            self._room.connected = True
-            await self.chat.rooms.update(self._room)
+            self.room.connected = True
+            await self.chat.rooms.update(self.room)
             while not self._closed:
                 chat_data = await self.youtube_chat.next()
                 if chat_data is None:
                     break
                 await self.process_chat_data(chat_data)
                 await asyncio.sleep(1 / 3)
-                if count % 10 == 0:
+                if count % METADATA_UPDATE_INTERVAL == 0:
                     self.room.metadata |= await self.youtube_chat.fetch_metadata()
                     await self.chat.rooms.update(self.room)
                 count += 1
@@ -313,6 +333,7 @@ class YoutubeChat(ChatService):
             await self.stop()
 
     async def process_chat_data(self, chat_data: ChatData):
+        """Process a batch of chat data including messages, deletions, and polls."""
         messages: list[Message] = []
         authors: list[Author] = []
         for action in chat_data.chat_actions:
@@ -345,10 +366,10 @@ class YoutubeChat(ChatService):
         await self.process_reactions(chat_data)
 
     async def update_message_ids(self, messages):
-        if not self._room.metadata.get("first_message_id"):
-            self._room.metadata["first_message_id"] = messages[0].id.key()
-        self._room.metadata["last_message_id"] = messages[-1].id.key()
-        await self.chat.rooms.update(self._room)
+        if not self.room.metadata.get("first_message_id"):
+            self.room.metadata["first_message_id"] = messages[0].id.key()
+        self.room.metadata["last_message_id"] = messages[-1].id.key()
+        await self.chat.rooms.update(self.room)
 
     async def fetch_authors_task(self):
         try:
@@ -356,17 +377,19 @@ class YoutubeChat(ChatService):
                 if len(self.author_fetch_queue) == 0:
                     await asyncio.sleep(1)
                     continue
-                for author in self.author_fetch_queue:
-                    await asyncio.sleep(3)
-                    new_metadata = await self.fetch_author_metadata(author)
-                    metadata = author.metadata or {}
-                    metadata |= new_metadata
-                    author.metadata = metadata
-                    await self.chat.authors.update(author)
+                to_fetch = list(self.author_fetch_queue)
+                self.author_fetch_queue.clear()
+                for author in to_fetch:
+                    try:
+                        await self.fetch_and_merge_author_metadata(author)
+                        await self.chat.authors.update(author)
+                        await asyncio.sleep(3)
+                    except Exception as e:
+                        logger.error(f"Error fetching metadata for author {author.id}: {e}")
         except asyncio.CancelledError:
             return
 
-    async def fetch_author_metadata(self, author: Author) -> AuthorMetadata:
+    async def fetch_and_merge_author_metadata(self, author: Author) -> AuthorMetadata:
         try:
             author_channel = await YOUTUBE_VISITOR.visit_url(
                 self.youtube.session,
@@ -381,7 +404,12 @@ class YoutubeChat(ChatService):
         new_metadata["avatar_url"] = author_channel.profile_picture
         new_metadata["url"] = author_channel.url
         new_metadata["links"] = list(author_channel.links)
-        new_metadata["screen_id"] = author_channel.id
+        new_metadata["screen_id"] = author_channel.screen_id or author_channel.id
+        author.name = author_channel.name
+
+        metadata = author.metadata or {}
+        metadata |= new_metadata
+        author.metadata = metadata
         return new_metadata
 
     async def process_message_item(
@@ -390,123 +418,16 @@ class YoutubeChat(ChatService):
         messages: list[Message],
         authors: list[Author],
     ) -> None:
-        if "liveChatTextMessageRenderer" in item:
-            data = item["liveChatTextMessageRenderer"]
-            author = self._parse_author(data)
-            message = _parse_runs(data["message"])
-            created_at = self._parse_created_at(data)
-            message = Message(
-                id=self.room.id / data["id"],
-                room_id=self._room.id,
-                author_id=author.id,
-                content=message,
-                created_at=created_at,
-            )
-            messages.append(message)
-            authors.append(author)
-        elif "liveChatPaidMessageRenderer" in item:
-            data = item["liveChatPaidMessageRenderer"]
-            author = self._parse_author(data)
-            message = map_optional(data.get("message"), _parse_runs)
-            paid = self._parse_paid(data)
-            created_at = self._parse_created_at(data)
-            message = Message(
-                id=self.room.id / data["id"],
-                room_id=self._room.id,
-                author_id=author.id,
-                content=message,
-                paid=paid,
-                created_at=created_at,
-            )
-            messages.append(message)
-            authors.append(author)
-        elif "liveChatMembershipItemRenderer" in item:
-            data = item["liveChatMembershipItemRenderer"]
-            author = self._parse_author(data)
-            created_at = self._parse_created_at(data)
-            component = content.System.of(_parse_runs(data["headerSubtext"]))
-            message = Message(
-                id=self.room.id / data["id"],
-                room_id=self._room.id,
-                author_id=author.id,
-                content=component,
-                created_at=created_at,
-            )
-            messages.append(message)
-            authors.append(author)
-        elif "liveChatSponsorshipsGiftRedemptionAnnouncementRenderer" in item:
-            data = item["liveChatSponsorshipsGiftRedemptionAnnouncementRenderer"]
-            author = self._parse_author(data)
-            created_at = self._parse_created_at(data)
-            component = content.System.of(_parse_runs(data["message"]))
-            message = Message(
-                id=self.room.id / data["id"],
-                room_id=self._room.id,
-                author_id=author.id,
-                content=component,
-                created_at=created_at,
-            )
-            messages.append(message)
-            authors.append(author)
-        elif "liveChatSponsorshipsGiftPurchaseAnnouncementRenderer" in item:
-            data = item["liveChatSponsorshipsGiftPurchaseAnnouncementRenderer"]
-            created_at = self._parse_created_at(data)
-            header = data["header"]["liveChatSponsorshipsHeaderRenderer"]
-            author = self._parse_author(header, id=data["authorExternalChannelId"])
-            component = content.System.of(_parse_runs(header["primaryText"]))
-
-            gift_image = header["image"]
-            gift_name = _get_accessibility_label(gift_image.get("accessibility"))
-            image_url = _get_best_thumbnail(gift_image["thumbnails"])
-            gift = Gift(
-                id="liveChatSponsorshipsGiftPurchaseAnnouncement",
-                name=gift_name,
-                amount=1,
-                is_paid=True,
-                image_url=image_url,
-            )
-            message = Message(
-                id=self.room.id / data["id"],
-                room_id=self._room.id,
-                author_id=author.id,
-                content=component,
-                created_at=created_at,
-                gifts=[gift],
-            )
-            messages.append(message)
-            authors.append(author)
-        elif "liveChatPlaceholderItemRenderer" in item:
-            """
-            item["liveChatPlaceholderItemRenderer"] = {'id': 'ChwKGkNJdml3ZUg0aDRRREZSTEV3Z1FkWUlJTkNR', 'timestampUsec': '1706714981296711'}}
-            """
-        elif "liveChatPaidStickerRenderer" in item:
-            data = item["liveChatPaidStickerRenderer"]
-            author = self._parse_author(data)
-            created_at = self._parse_created_at(data)
-            sticker = data["sticker"]
-            sticker_image = _get_best_thumbnail(sticker["thumbnails"])
-            sticker_name = _get_accessibility_label(sticker.get("accessibility"))
-            sticker = Gift(
-                id="liveChatPaidSticker",
-                name=sticker_name,
-                amount=1,
-                is_paid=True,
-                image_url=sticker_image,
-            )
-            message = Message(
-                id=self.room.id / data["id"],
-                room_id=self._room.id,
-                author_id=author.id,
-                gifts=[sticker],
-                created_at=created_at,
-            )
-            messages.append(message)
-            authors.append(author)
-        else:
-            raise ProviderError(f"Unknown message type: {list(item.keys())} {item=}")
+        """Process a single chat message item using appropriate handler."""
+        for renderer_type in item.keys():
+            handler = get_message_handler(renderer_type, self)
+            if handler:
+                await handler.handle(item, messages, authors)
+                return
+        raise ProviderError(f"Unknown message type: {list(item.keys())} {item=}")
 
     async def process_deleted_item(self, item: MarkChatItemAsDeletedAction):
-        id = self._room.id / item["targetItemId"]
+        id = self.room.id / item["targetItemId"]
         message = await self.chat.messages.get(id.key())
         if message:
             message.deleted = True
@@ -516,13 +437,13 @@ class YoutubeChat(ChatService):
         poll_renderer = action["pollToUpdate"]["pollRenderer"]
         id = poll_renderer["liveChatPollId"]
         header = poll_renderer["header"]["pollHeaderRenderer"]
-        title = _parse_runs(header["pollQuestion"])
+        title = parse_runs(header["pollQuestion"])
         choices = self.parse_poll_choices(poll_renderer)
         total = self.parse_total_vote_count(header["metadataText"])
 
         vote = Vote(
             id=self.room.id / id,
-            room_id=self._room.id,
+            room_id=self.room.id,
             title=str(title),
             choices=choices,
             total=total,
@@ -533,7 +454,7 @@ class YoutubeChat(ChatService):
     def parse_poll_choices(self, poll_renderer):
         choices: list[Choice] = []
         for choice in poll_renderer["choices"]:
-            text = _parse_runs(choice["text"])
+            text = parse_runs(choice["text"])
             vote_ratio = choice.get("voteRatio", 0.0)
             choice = Choice(
                 text=str(text),
@@ -577,13 +498,33 @@ class YoutubeChat(ChatService):
         if not reaction_counts:
             return
         reaction = Reaction(
-            room_id=self._room.id,
+            room_id=self.room.id,
             reactions=reaction_counts,
         )
         await self.chat.reaction_signal.notify(reaction)
 
+    def _create_message(
+        self,
+        data: LiveChatRenderer,
+        author: Author,
+        content: content.Component | None,
+        created_at: datetime,
+        paid: Paid | None = None,
+        gifts: list[Gift] | None = None,
+    ) -> Message:
+        """Create a Message object with common parameters."""
+        return Message(
+            id=self.room.id / data["id"],
+            room_id=self.room.id,
+            author_id=author.id,
+            content=content,
+            paid=paid,
+            created_at=created_at,
+            gifts=gifts or [],
+        )
+
     def _parse_author(self, message: AuthorInfo, id: str | None = None) -> Author:
-        name = traverse(message).map(lambda x: x.get("authorName")).map(lambda x: x.get("simpleText")).get()
+        screen_id = traverse(message).map(lambda x: x.get("authorName")).map(lambda x: x.get("simpleText")).get()
         id = message.get("authorExternalChannelId") or id
         if id is None:
             raise ProviderError("Could not find author id")
@@ -619,18 +560,21 @@ class YoutubeChat(ChatService):
                     )
                 )
 
+        author_id = self.room.id / id
+        existing = self.chat.authors.cache.get(author_id.key())
         return Author(
             provider_id=self.youtube.provider.id,
-            id=self.room.id / id,
-            name=name,
+            id=author_id,
+            name=existing.name if existing else None,
             avatar_url=avatar_url,
             roles=roles,
+            metadata={"screen_id": screen_id},
         )
 
     def _parse_paid(self, message: LiveChatPaidMessageRenderer) -> Paid:
         currency_match = re.search(r"[^0-9]+", message["purchaseAmountText"]["simpleText"])
         if currency_match is None:
-            raise ProviderError("Could not parse currency: " f"{message['purchaseAmountText']['simpleText']}")
+            raise ProviderError(f"Could not parse currency: {message['purchaseAmountText']['simpleText']}")
         currency = currency_match.group(0)
         amount_match = re.search(r"[\d,\.]+", message["purchaseAmountText"]["simpleText"])
         if amount_match is None:
@@ -654,62 +598,6 @@ class YoutubeChat(ChatService):
             return
         self._closed = True
         self.tasks.terminate()
-        self._room.connected = False
+        self.room.connected = False
         await self.update_times()
-        await self.chat.rooms.update(self._room)
-
-
-def _get_accessibility_label(data: Accessibility | None) -> str | None:
-    if data is None:
-        return None
-    return data.get("accessibilityData", {}).get("label", None)
-
-
-def _get_best_thumbnail(thumbnails: list[Thumbnail]) -> str:
-    if len(thumbnails) == 0:
-        raise ProviderError("No thumbnails found")
-    best = max(thumbnails, key=lambda x: x.get("width", 0) * x.get("height", 0))
-    return normalize_yt_url(best["url"])
-
-
-def _parse_runs(runs: Runs | None) -> content.Component:
-    root = content.Root()
-    if runs is None:
-        return root
-    for run in runs.get("runs", []):
-        if "text" in run:
-            if "navigationEndpoint" in run:
-                endpoint = run.get("navigationEndpoint")
-                if endpoint is None:
-                    root.add(content.Text.of(run["text"]))
-                elif "urlEndpoint" in endpoint:
-                    url = endpoint["urlEndpoint"]["url"]
-                    root.add(content.Link.of(url, content.Text.of(run["text"])))
-            else:
-                root.add(content.Text.of(run["text"]))
-        elif "emoji" in run:
-            emoji = run["emoji"]
-            image_url = _get_best_thumbnail(emoji["image"]["thumbnails"])
-            emoji_id = emoji["emojiId"]
-            name = emoji["shortcuts"][0] if emoji.get("shortcuts") else None
-            root.add(
-                content.Image.of(
-                    url=image_url,
-                    id=emoji_id,
-                    name=name,
-                )
-            )
-        else:
-            raise ProviderError(f"Unknown run: {run}")
-    return root
-
-
-def normalize_yt_url(url: str) -> str:
-    parsed = urllib.parse.urlparse(url)
-    scheme = parsed.scheme or "https"
-    host = parsed.netloc or parsed.hostname or "youtube.com"
-    path = parsed.path or ""
-    query = parsed.query or ""
-    if query:
-        return f"{scheme}://{host}{path}?{query}"
-    return f"{scheme}://{host}{path}"
+        await self.chat.rooms.update(self.room)

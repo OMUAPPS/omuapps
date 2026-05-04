@@ -1,23 +1,26 @@
 import type { InputEvent } from '$lib/components/canvas/pipeline';
 import { AABB2, type AABB2Like } from '$lib/math/aabb2';
+import { lerp } from '$lib/math/math';
 import type { Transform2D } from '$lib/math/transform2d';
-import { PALETTE_RGB } from '../colors';
-import type { Game } from '../core/game';
+import { Vec2, type Vec2Like } from '$lib/math/vec2';
+import { Timer } from '$lib/timer';
+import { Game } from '../core/game';
 import type { BufferedMap } from '../core/game-state';
-import { clone } from '../core/helper';
+import { clone, generateUid, type ValidateResult } from '../core/helper';
 import type { Action } from '../core/input-system';
-import { getTransform, type Transform } from '../core/transform';
-import type { Attributes } from './attribute';
-import type { ActionContext, CollideContext, ItemMouseEvent, ItemRender, ItemRenderState, LoadTask } from './attribute-handler';
-import { AttributeRegistry } from './attribute-registry';
+import { getTransform, validateTransform, type Transform } from '../core/transform';
+import type { AttributeKey, Attributes } from './attribute';
+import type { ActionContext, CollideContext, ItemMouseEvent, ItemRender, LoadTask } from './attribute-handler';
 
 // --- Interfaces ---
-
+// (インターフェースの変更はありません)
 export interface Item {
     readonly id: string;
-    readonly attrs: Attributes;
+    attrs: Attributes;
+    name: string;
     transform: Transform;
     children: string[];
+    tags: string[];
     update: number;
     parent?: string;
     pool: string;
@@ -30,7 +33,8 @@ export interface ItemRef {
 export interface ItemPool {
     id: string;
     items: Record<string, ItemRef>;
-    bounds: AABB2Like;
+    // Sound Effects
+    soundEffects?: Record<string, string>;
 }
 
 export interface ItemSystemState {
@@ -40,7 +44,11 @@ export interface ItemSystemState {
 
 export interface PoolOptions {
     pool: ItemPool;
+    name: string;
     transform: Transform;
+    bounds: AABB2Like;
+    align?: Vec2Like;
+    ordering: 'upper' | 'lower' | 'latest';
 }
 
 export interface PoolInputPass {
@@ -48,85 +56,123 @@ export interface PoolInputPass {
     actions: Action[];
 }
 
-export interface PoolRenderPass {
-    pools: Record<string, PoolOptions>;
+export function validateItem(item: Item): ValidateResult<Item> {
+    const game = Game.getInstance();
+    const attributeMap = game.attribute.values;
+    if (typeof item.name !== 'string') {
+        return { type: 'invalid', message: 'nameは文字列でなければなりません' };
+    }
+    const transformResult = validateTransform(item.transform);
+    if (transformResult.type === 'invalid') {
+        return { type: 'invalid', message: `transformが無効: ${transformResult.message}` };
+    }
+    if (!Array.isArray(item.children)) {
+        return { type: 'invalid', message: 'childrenは配列でなければなりません' };
+    }
+    if (item.children.some(childId => typeof childId !== 'string')) {
+        return { type: 'invalid', message: 'childrenの要素はすべて文字列でなければなりません' };
+    }
+    if (item.tags === undefined) {
+        item.tags = [];
+    }
+    if (!Array.isArray(item.tags)) {
+        return { type: 'invalid', message: 'tagsは配列でなければなりません' };
+    }
+    if (item.tags.some(tag => typeof tag !== 'string')) {
+        return { type: 'invalid', message: 'tagsの要素はすべて文字列でなければなりません' };
+    }
+    if (typeof item.pool !== 'string') {
+        return { type: 'invalid', message: 'poolは文字列でなければなりません' };
+    }
+    if (typeof item.update !== 'number') {
+        return { type: 'invalid', message: 'updateは数値でなければなりません' };
+    }
+    // Attributeのバリデーション
+    for (const [attrName, attrValue] of Object.entries(item.attrs)) {
+        const handler = attributeMap[attrName as AttributeKey];
+        if (!handler) {
+            return { type: 'invalid', message: `不明な属性: ${attrName}` };
+        }
+        // @ts-expect-error Union vs Intersection
+        const handlerResult = handler.validate(attrValue);
+        if (handlerResult.type === 'invalid') {
+            return { type: 'invalid', message: `属性${attrName}が無効: ${handlerResult.message}` };
+        }
+    }
+    return { type: 'valid', value: item };
 }
 
-// --- Constants ---
-
-const EPOCH_OFFSET = 946684800000;
-
 // --- System ---
-
 export class ItemSystem {
     public readonly name = 'ItemSystem';
 
-    public readonly attributeRegistry: AttributeRegistry;
     public readonly items: BufferedMap<Item>;
-    public readonly states: ItemSystemState;
 
-    private itemCounter = 0;
-    private itemRender: Map<string, ItemRenderState> = new Map();
     private loadingItems: Map<string, LoadTask> = new Map();
     private inputPass: PoolInputPass | undefined;
-    private renderPass: PoolRenderPass | undefined;
 
     constructor(private readonly game: Game) {
         this.items = game.states.items;
-        this.states = game.states.itemStates.value;
-        this.attributeRegistry = AttributeRegistry.new(game);
-        this.garbageCollection();
+        if (game.side === 'client') {
+            this.garbageCollection();
+        }
+    }
+
+    private get renderPass() {
+        const pass = this.game.itemRenderer.renderPass;
+        if (!pass) throw new Error('Render pass is not set.');
+        return pass;
+    }
+
+    public get states() {
+        return this.game.states.itemStates.value;
     }
 
     private garbageCollection() {
-        const registryString = [
-            JSON.stringify(this.game.states.kitchen.value),
-            JSON.stringify(this.game.states.scene.value),
-        ].join('');
+        const registryString = this.game.states.getAllJsonStringified(this.game.states.items);
+
         const activeItems: Item[] = [];
         for (const [id, item] of this.items.entries()) {
-            const contained = registryString.includes(id);
-            if (!contained) continue;
-            activeItems.push(item);
+            if (registryString.includes(id)) {
+                activeItems.push(item);
+            }
         }
+
         const toKeep: Map<string, Item> = new Map();
+        const deletedItems: string[] = [];
         while (activeItems.length > 0) {
             const item = activeItems.pop();
             if (!item) continue;
+
             const toRemove: string[] = [];
             for (const childId of item.children) {
                 const child = this.items.get(childId);
-                if (!child) {
-                    toRemove.push(childId);
-                    continue;
-                }
-                if (child.parent !== item.id) {
-                    // Inconsistent parent-child relationship, break it by detaching the child
-                    toRemove.push(childId);
-                    continue;
-                }
-                if (toKeep.has(childId)) {
-                    // Recursive loop detected, break it by detaching the child
+                if (toKeep.has(childId)) continue;
+                if (!child || child.parent !== item.id) {
                     toRemove.push(childId);
                     continue;
                 }
                 activeItems.push(child);
             }
+
             for (const id of toRemove) {
                 const idx = item.children.indexOf(id);
                 if (idx !== -1) item.children.splice(idx, 1);
                 this.items.delete(id);
+                deletedItems.push(id);
             }
             toKeep.set(item.id, item);
         }
-        const toRemove = [];
+
         for (const id of this.items.keys()) {
             if (!toKeep.has(id)) {
-                toRemove.push(id);
+                this.items.delete(id);
+                deletedItems.push(id);
             }
         }
-        for (const id of toRemove) {
-            this.items.delete(id);
+
+        if (deletedItems.length > 0) {
+            console.log(`Garbage collected ${deletedItems.length} items:`, deletedItems);
         }
     }
 
@@ -134,14 +180,8 @@ export class ItemSystem {
     // Lifecycle & Allocation
     // =========================================================================================
 
-    private generateUid(): string {
-        const count = this.itemCounter++;
-        const timestamp = Date.now() - EPOCH_OFFSET;
-        return (timestamp + count).toString(36);
-    }
-
     public allocateItem(item: Omit<Item, 'id' | 'update'>): Item {
-        const id = this.generateUid();
+        const id = generateUid();
         const allocItem: Item = {
             ...clone(item),
             id,
@@ -151,98 +191,44 @@ export class ItemSystem {
         return allocItem;
     }
 
-    public initRenderPass() {
-        this.renderPass = undefined;
+    public clone(item: Item): Item {
+        const poolOptions = this.renderPass.pools[item.pool];
+        const clonedItem = this.allocateItem({
+            ...item,
+            children: [],
+        });
+        poolOptions.pool.items[clonedItem.id] = { id: clonedItem.id };
+
+        for (const childId of item.children) {
+            const data = this.get(childId);
+            if (!data) continue;
+            const childClone = this.clone(data);
+            childClone.parent = clonedItem.id;
+            clonedItem.children.push(childClone.id);
+        }
+
+        this.setPool(clonedItem, poolOptions.pool);
+        return clonedItem;
+    }
+
+    public remove(item: Item): void {
+        const pool = this.renderPass.pools[item.pool];
+        for (const childId of item.children) {
+            const child = this.get(childId);
+            if (!child) continue;
+            this.remove(child);
+        }
+        delete pool.pool.items[item.id];
+        this.game.itemRenderer.deleteItemRender(item.id);
+    }
+
+    public get(id: string) {
+        return this.items.get(id);
     }
 
     // =========================================================================================
     // Rendering
     // =========================================================================================
-
-    public async renderPool(pool: ItemPool, options: PoolOptions): Promise<void> {
-        const { draw, matrices } = this.game.pipeline;
-        const poolItems = Object.values(pool.items);
-        matrices.view.push();
-        matrices.view.multiply(getTransform(options.transform).getMat4());
-        this.renderPass ??= { pools: {} };
-        if (this.renderPass.pools[options.pool.id]) {
-            throw new Error(`Pool with id ${options.pool.id} already exists.`);
-        }
-        this.renderPass.pools[options.pool.id] = options;
-
-        // Render Items
-        for (const { id } of poolItems) {
-            const item = this.items.get(id);
-            if (!item) {
-                // Garbage collection: Remove reference if item no longer exists
-                delete pool.items[id];
-                continue;
-            }
-            // Skip if child (children are rendered by parents)
-            if (item.parent) continue;
-            if (this.states.held === item.id) continue;
-
-            const renderState = await this.getItemRender(item);
-            if (renderState.type === 'rendered') {
-                const { bounds, texture } = renderState.render;
-                matrices.model.push();
-                matrices.model.multiply(getTransform(item.transform).getMat4());
-                draw.textureColor(bounds.min.x, bounds.min.y + 20, bounds.max.x, bounds.max.y + 15, texture, PALETTE_RGB.ITEM_SHADOW);
-                draw.texture(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, texture);
-                matrices.model.pop();
-            }
-        }
-
-        // overlay
-        for (const { id } of poolItems) {
-            const item = this.items.get(id);
-            if (!item) {
-                // Garbage collection: Remove reference if item no longer exists
-                delete pool.items[id];
-                continue;
-            }
-            if (this.states.held === item.id) continue;
-
-            const renderState = await this.getItemRender(item);
-            const childrenRender = await this.gatherChildrenItemRender(item);
-            if (renderState.type === 'rendered' && childrenRender) {
-                matrices.model.push();
-                matrices.model.multiply(this.getWorldTransform(item).getMat4());
-                await this.attributeRegistry.emit('renderOverlay', item, pool, renderState.render, childrenRender);
-                matrices.model.pop();
-            }
-        }
-
-        matrices.view.pop();
-    }
-
-    public async renderHeld() {
-        const { held } = this.states;
-        if (!held) return;
-        if (!this.renderPass) return;
-        const item = this.items.get(held);
-        if (!item) {
-            this.states.held = undefined;
-            return;
-        }
-        const pool = this.renderPass.pools[item.pool];
-        if (!pool) {
-            throw new Error(`Pool with id ${item.pool} not found.`);
-        }
-        const { matrices, draw } = this.game.pipeline;
-        const renderState = await this.getItemRender(item);
-        if (renderState.type === 'rendered') {
-            matrices.view.push();
-            matrices.view.multiply(getTransform(pool.transform).getMat4());
-            const { bounds, texture } = renderState.render;
-            matrices.model.push();
-            matrices.model.multiply(getTransform(item.transform).getMat4());
-            draw.textureColor(bounds.min.x, bounds.min.y + 20, bounds.max.x, bounds.max.y + 15, texture, PALETTE_RGB.ITEM_SHADOW);
-            draw.texture(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, texture);
-            matrices.model.pop();
-            matrices.view.pop();
-        }
-    }
 
     public getWorldTransform(item: Item): Transform2D {
         let transform = getTransform(item.transform);
@@ -257,7 +243,7 @@ export class ItemSystem {
     }
 
     public updateItem(item: Item) {
-        item.update ++;
+        item.update++;
         if (item.parent) {
             const parent = this.items.get(item.parent);
             if (!parent) {
@@ -268,7 +254,7 @@ export class ItemSystem {
         }
     }
 
-    private getParents(item: Item): Item[] {
+    public getParents(item: Item): Item[] {
         const parents: Item[] = [];
         let current = item;
         while (current.parent) {
@@ -280,178 +266,60 @@ export class ItemSystem {
         return parents;
     }
 
-    public dettachItem(item: Item) {
-        if (item.parent) {
-            const parent = this.items.get(item.parent);
-            if (parent) {
-                const containerTransform = this.getWorldTransform(parent);
-                const itemTransform = getTransform(item.transform);
-                const transformInContainer = containerTransform.multiply(itemTransform);
-                item.transform = transformInContainer.toJSON();
+    public isItemGrandchildOf(item: Item, ancestorId: string): boolean {
+        const parents = this.getParents(item);
+        return parents.some(parent => parent.id === ancestorId);
+    }
 
-                parent.children = parent.children.filter(id => id !== item.id);
-                this.updateItem(parent);
-            }
-            item.parent = undefined;
-            this.updateItem(item);
+    public dettachItem(item: Item) {
+        if (!item.parent) return;
+
+        const parent = this.items.get(item.parent);
+        if (parent) {
+            const containerTransform = this.getWorldTransform(parent);
+            const itemTransform = getTransform(item.transform);
+            const transformInContainer = containerTransform.multiply(itemTransform);
+
+            item.transform = transformInContainer.toJSON();
+            parent.children = parent.children.filter(id => id !== item.id);
+            this.updateItem(parent);
         }
+        item.parent = undefined;
+        this.updateItem(item);
     }
 
     public attachItem(parent: Item, child: Item) {
-        if (parent.id === child.id) {
-            throw new Error('Cannot attach item to itself');
-        }
+        if (parent.id === child.id) throw new Error('Cannot attach item to itself');
+
         const parents = this.getParents(parent);
         if (parents.some(p => p.id === child.id)) {
             throw new Error('Cannot attach item to its descendant');
         }
-        const containerTransform = this.game.itemSystem.getWorldTransform(parent);
-        const itemTransform = this.game.itemSystem.getWorldTransform(child);
+
+        const oldPool = this.renderPass.pools[parent.pool];
+        if (!oldPool) throw new Error(`Pool ${parent.pool} not found.`);
+
+        this.setPool(child, oldPool.pool);
+
+        const containerTransform = this.game.item.getWorldTransform(parent);
+        const itemTransform = this.game.item.getWorldTransform(child);
         const worldToContainerTransform = containerTransform.affineInverse();
         const transformInContainer = worldToContainerTransform.multiply(itemTransform);
-        child.transform = transformInContainer.toJSON();
 
+        child.transform = transformInContainer.toJSON();
         child.parent = parent.id;
         parent.children = [...parent.children, child.id];
+
         this.updateItem(child);
-    }
-
-    public async getItemRender(item: Item): Promise<ItemRenderState> {
-        // 1. Loading Check
-        const tasks = await this.loadItem(item);
-        if (tasks.length > 0) {
-            return { type: 'loading', tasks, update: item.update };
-        }
-
-        // 2. Cache Check
-        const existing = this.itemRender.get(item.id);
-        if (existing && existing.update === item.update) {
-            return existing;
-        }
-
-        // Pass 2: Render Children first
-        const childrenRender = await this.gatherChildrenItemRender(item);
-        if (!childrenRender) {
-            throw new Error('Failed to gather children renders');
-        }
-
-        // 3. Render Fresh
-        const render = existing?.type !== 'loading' && existing?.render || await this.createItemRender(item, childrenRender);
-
-        render.bounds = await this.getItemRenderBounds(item, childrenRender);
-        render.texture.use(() => {
-            const dimensions = render.bounds.dimensions();
-            render.texture.ensureSize(dimensions.x, dimensions.y);
-        });
-
-        // Mark as rendering (optimistic)
-        const renderingState: ItemRenderState = { type: 'rendering', render, update: item.update };
-        this.itemRender.set(item.id, renderingState);
-
-        await this.renderItemToTarget(render, item, childrenRender);
-
-        // Mark as rendered
-        const renderedState: ItemRenderState = { type: 'rendered', render, update: item.update };
-        this.itemRender.set(item.id, renderedState);
-
-        return renderedState;
-    }
-
-    private async gatherChildrenItemRender(item: Item) {
-        const childrenRender: Record<string, ItemRender> = {};
-        for (const id of item.children) {
-            const data = this.items.get(id);
-            if (!data) continue;
-
-            const status = await this.getItemRender(data);
-            if (status.type === 'rendered') {
-                childrenRender[id] = status.render;
-            } else {
-                // If a child is not ready, we might want to abort or skip.
-                // Current logic aborts the rest of the render.
-                return;
-            }
-        }
-        return childrenRender;
-    }
-
-    private async renderItemToTarget(render: ItemRender, item: Item, childrenRender: Record<string, ItemRender>): Promise<void> {
-        const { bounds, target } = render;
-        const { context, matrices } = this.game.pipeline;
-        const dims = bounds.dimensions();
-
-        // Pass 1: Pre-render
-        await target.useAsync(async () => {
-            context.stateManager.pushViewport(dims);
-            await matrices.scopeAsync(async () => {
-                matrices.identity();
-                matrices.projection.orthographic(bounds.min.x, bounds.max.y, bounds.max.x, bounds.min.y, -1, 1);
-                context.gl.clearColor(0, 0, 0, 0);
-                context.gl.clear(context.gl.COLOR_BUFFER_BIT);
-                await this.attributeRegistry.emit('renderPre', item, render);
-            });
-            context.stateManager.popViewport();
-        });
-
-        // Pass 3: Post-render (Composite)
-        await target.useAsync(async () => {
-            context.stateManager.pushViewport(dims);
-            await matrices.scopeAsync(async () => {
-                matrices.identity();
-                matrices.view.identity();
-                matrices.projection.orthographic(bounds.min.x, bounds.max.y, bounds.max.x, bounds.min.y, -1, 1);
-                await this.attributeRegistry.emit('renderChildren', item, render, childrenRender);
-                await this.attributeRegistry.emit('renderPost', item, render, childrenRender);
-            });
-            context.stateManager.popViewport();
-        });
-    }
-
-    private async createItemRender(item: Item, childrenRender: Record<string, ItemRender>): Promise<ItemRender> {
-        const { context } = this.game.pipeline;
-        const bounds = await this.getItemRenderBounds(item, childrenRender);
-        const dimensions = bounds.dimensions();
-
-        const texture = context.createTexture();
-        texture.use(() => {
-            texture.setImage(null, { width: dimensions.x, height: dimensions.y, internalFormat: 'rgba', format: 'rgba' });
-            texture.setParams({
-                magFilter: 'linear',
-                minFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
-            });
-            texture.ensureSize(dimensions.x, dimensions.y);
-        });
-
-        const target = context.createFramebuffer();
-        target.use(() => {
-            target.attachTexture(texture);
-        });
-
-        return {
-            bounds,
-            target,
-            texture,
-            update: item.update,
-        };
-    }
-
-    private async getItemRenderBounds(item: Item, childrenRender: Record<string, ItemRender>): Promise<AABB2> {
-        const result = { render: AABB2.ZEROONE };
-        await this.attributeRegistry.emit('bounds', item, result, childrenRender);
-        return result.render;
     }
 
     // =========================================================================================
     // Loading
     // =========================================================================================
 
-    private async loadItem(item: Item): Promise<LoadTask[]> {
-        // Recursively gather loading tasks
+    public async loadItem(item: Item): Promise<LoadTask[]> {
         const existing = this.loadingItems.get(item.id);
         if (existing && existing.update === item.update) {
-            // Check children even if parent is loading
             for (const id of item.children) {
                 const data = this.items.get(id);
                 if (!data) continue;
@@ -471,24 +339,22 @@ export class ItemSystem {
         };
         this.loadingItems.set(item.id, task);
 
-        await this.attributeRegistry.emit('load', item, {
+        await this.game.attribute.emit('load', item, {
             create: (options) => {
-                const task: LoadTask = {
+                const subTask: LoadTask = {
                     ...options,
                     done: false,
                     update: item.update,
                     dependencies: [],
                     resolve: () => {
-                        task.done = true;
-                        const idx = dependencies.indexOf(task);
+                        subTask.done = true;
+                        const idx = dependencies.indexOf(subTask);
                         if (idx !== -1) dependencies.splice(idx, 1);
-                        if (dependencies.length === 0) {
-                            task.done = true;
-                        }
+                        if (dependencies.length === 0) task.done = true;
                     },
                 };
-                dependencies.push(task);
-                return task;
+                dependencies.push(subTask);
+                return subTask;
             },
         });
 
@@ -502,6 +368,54 @@ export class ItemSystem {
         return dependencies;
     }
 
+    public async raycast(pool: ItemPool, point: Vec2Like, ignoreList: string[]) {
+        const { renderPass } = this.game.itemRenderer;
+        if (!renderPass) return;
+        const rootPool = renderPass.pools[pool.id];
+        if (!rootPool) {
+            throw new Error(`Pool ${pool.id} not found.`);
+        }
+        const rootTransform = getTransform(rootPool.transform);
+        const viewPoint = rootTransform.xform(point);
+
+        const ctx: CollideContext = {
+            ignoreList,
+        };
+
+        for (const key of Object.keys(renderPass.pools).reverse()) {
+            const { pool, transform } = renderPass.pools[key];
+
+            const viewTransform = getTransform(transform);
+            const view = viewTransform.affineInverse().getMat4();
+            const localPos = view.transform2(viewPoint);
+            const localPrev = view.transform2(viewPoint);
+            const localDelta = view.basisTransform2(Vec2.ZERO);
+
+            const rootEvent: ItemMouseEvent = {
+                kind: 'mouse-move',
+                mouse: this.game.pipeline.input.mouse,
+                timestamp: Timer.now(),
+                localPos,
+                localPrev,
+                localDelta,
+                poolPos: localPos,
+                poolPrev: localPrev,
+                poolDelta: localDelta,
+            };
+
+            const rootItems = Object.values(pool.items);
+            for (let i = rootItems.length - 1; i >= 0; i--) {
+                const item = rootItems[i];
+                const data = this.items.get(item.id);
+                if (ignoreList.includes(item.id)) continue;
+                if (data && !data.parent) {
+                    await this.traverseCollision(data, pool, rootEvent, ctx);
+                }
+            }
+        }
+        return ctx.hovered;
+    }
+
     // =========================================================================================
     // Input Handling
     // =========================================================================================
@@ -512,15 +426,14 @@ export class ItemSystem {
 
     public endInput() {
         if (!this.inputPass) return;
-        this.game.inputSystem.add(...this.inputPass.actions);
+        this.game.input.add(...this.inputPass.actions);
+
         if (!this.inputPass.hovered) {
             this.states.hovered = undefined;
         }
-        if (this.states.held) {
-            const heldItem = this.items.get(this.states.held);
-            if (!heldItem) {
-                this.states.held = undefined;
-            }
+
+        if (this.states.held && !this.items.has(this.states.held)) {
+            this.states.held = undefined;
         }
     }
 
@@ -534,21 +447,29 @@ export class ItemSystem {
             event.kind === 'mouse-wheel';
 
         if (!isMouse) return;
+        if (!event.mouse.entered) return;
+
         const { matrices } = this.game.pipeline;
-        const view = matrices.getViewToWorld().multiply(getTransform(options.transform).getMat4().inverse());
+        const view = getTransform(options.transform).getMat4().inverse().multiply(matrices.getViewToWorld());
+
+        const localPos = view.transform2(event.mouse.pos);
+        const localPrev = view.transform2(event.mouse.pos.sub(event.mouse.delta));
+        const localDelta = view.basisTransform2(event.mouse.delta);
+
         const rootEvent: ItemMouseEvent = {
             ...event,
-            offset: view.transform2(event.mouse.pos),
-            offsetPrev: view.transform2(event.mouse.pos.sub(event.mouse.delta)),
-            offsetDelta: view.basisTransform2(event.mouse.delta),
+            localPos,
+            localPrev,
+            localDelta,
+            poolPos: localPos,
+            poolPrev: localPrev,
+            poolDelta: localDelta,
         };
 
-        // Use array copy + reverse iterate to handle Z-order (top items first)
-        // Optimization: Use reverse for-loop to avoid allocating .toReversed() array
         const rootItems = Object.values(pool.items);
-
-        // 1. Collision Pass (Mouse Move Only)
         this.inputPass ??= { actions: [] };
+
+        // 1. Collision Pass
         const ctx: CollideContext = {};
         for (let i = rootItems.length - 1; i >= 0; i--) {
             const data = this.items.get(rootItems[i].id);
@@ -556,6 +477,7 @@ export class ItemSystem {
                 await this.traverseCollision(data, pool, rootEvent, ctx);
             }
         }
+
         if (ctx.hovered) {
             this.states.hovered = ctx.hovered;
             this.inputPass.hovered = ctx.hovered;
@@ -582,58 +504,174 @@ export class ItemSystem {
             }
         }
 
-        const isInBound = AABB2.from(pool.bounds).contains(rootEvent.offset);
-        if (isInBound && this.states.held && this.renderPass) {
-            const held = this.items.get(this.states.held);
-            if (!held) return;
-            const oldPool = this.renderPass.pools[held.pool];
-            this.inputPass.actions.push({
-                title: `離す ${pool.id}`,
-                invoke: async () => {
-                    const poolToGlobalTransform = getTransform(oldPool.transform);
-                    const globalToNewTransform = getTransform(options.transform).affineInverse();
-                    const oldTransform = getTransform(held.transform);
-                    const newTransform = globalToNewTransform.multiply(poolToGlobalTransform.multiply(oldTransform));
-                    held.transform = newTransform.toJSON();
+        this.processHeldItemBounds(pool, options, rootEvent.localPos);
+    }
 
-                    this.states.held = undefined;
-                    delete oldPool.pool.items[held.id];
-                    pool.items[held.id] = { id: held.id };
-                    held.pool = pool.id;
+    /**
+     * heldアイテムに対する境界計算アクションを構築・登録します。
+     * handleMouseが肥大化しないように分離しました。
+     */
+    private processHeldItemBounds(pool: ItemPool, options: PoolOptions, localPos: Vec2Like) {
+        const isInBound = AABB2.from(options.bounds).contains(localPos);
+        if (!isInBound || !this.states.held || !this.game.itemRenderer.renderPass) return;
+        if (pool.id !== 'fridge' && this.game.fridge.hovered) return;
+
+        const scene = this.game.states.scene.value;
+        const held = this.items.get(this.states.held);
+        if (!held) return;
+
+        if (scene.type !== 'factory' && pool.id === 'fridge') {
+            this.inputPass!.actions.push({
+                title: '戻す',
+                id: `return-${held.id}-to-fridge`,
+                priority: 2000,
+                invoke: async () => {
+                    await this.dropItem();
+                    this.remove(held);
                 },
             });
+            return;
+        }
+        const hoveredItem = this.states.hovered ? this.get(this.states.hovered) : undefined;
+        if (hoveredItem?.pool === 'fridge') {
+            return;
+        }
+        this.inputPass!.actions.push({
+            title: `${options.name}に置く`,
+            id: `drop-${held.id}-into-${pool.id}`,
+            priority: pool.id === 'export'
+                ? 1000
+                : pool.id === 'fridge'
+                    ? 300
+                    : 200,
+            invoke: async () => {
+                await this.dropItem();
+                this.setPool(held, pool);
+                const render = await this.game.itemRenderer.getItemRender(held);
+                const transform = getTransform(held.transform);
+                if (render.type === 'rendered') {
+                    this.constrainItemToBounds(held, options, transform.getMat4().basisTransformAABB2(render.render.bounds));
+                }
+                await this.reorderItems(pool, options.ordering);
+            },
+        });
+    }
+
+    public async holdItem(item: Item) {
+        this.states.held = item.id;
+        const poolOptions = this.renderPass.pools[item.pool];
+        for (const entry of this.traverseHierarchy(item)) {
+            await this.game.attribute.emit('drag', entry, poolOptions.pool);
         }
     }
 
-    public async handleInput(pool: ItemPool, options: PoolOptions, event: InputEvent): Promise<void> {
-        const isMouse =
-            event.kind === 'mouse-move' ||
-            event.kind === 'mouse-down' ||
-            event.kind === 'mouse-up' ||
-            event.kind === 'mouse-enter' ||
-            event.kind === 'mouse-leave' ||
-            event.kind === 'mouse-wheel';
+    public async dropItem() {
+        const heldId = this.states.held;
+        if (!heldId) return;
+        const held = this.get(heldId);
+        if (!held) return;
+        const poolOptions = this.renderPass.pools[held.pool];
+        this.states.held = undefined;
+        for (const entry of this.traverseHierarchy(held)) {
+            await this.game.attribute.emit('drop', entry, poolOptions.pool);
+        }
+    }
 
-        if (!isMouse) return;
+    private async reorderItems(pool: ItemPool, ordering: PoolOptions['ordering']) {
+        if (!ordering) return;
+        if (ordering === 'latest') return;
+        const items = Object.values(pool.items)
+            .map(({ id }) => this.game.item.items.get(id))
+            .filter((child): child is Item => !!child);
 
-        const { matrices } = this.game.pipeline;
-        const view = matrices.getViewToWorld().multiply(getTransform(options.transform).getMat4().inverse());
-        const rootEvent: ItemMouseEvent = {
-            ...event,
-            offset: view.transform2(event.mouse.pos),
-            offsetPrev: view.transform2(event.mouse.pos.sub(event.mouse.delta)),
-            offsetDelta: view.basisTransform2(event.mouse.delta),
-        };
+        const renderData: Record<string, ItemRender> = {};
+        for (const child of items) {
+            const renderState = await this.game.itemRenderer.getItemRender(child);
+            if (renderState.type === 'rendered') {
+                renderData[child.id] = renderState.render;
+            }
+        }
 
-        // Use array copy + reverse iterate to handle Z-order (top items first)
-        // Optimization: Use reverse for-loop to avoid allocating .toReversed() array
-        const rootItems = Object.values(pool.items);
+        items.sort((a, b) => {
+            const aBounds = renderData[a.id]?.bounds;
+            const bBounds = renderData[b.id]?.bounds;
 
-        // 2. Event Dispatch Pass
-        for (let i = rootItems.length - 1; i >= 0; i--) {
-            const data = this.items.get(rootItems[i].id);
-            if (data && !data.parent) {
-                await this.traverseDispatch(data, pool, rootEvent);
+            if (!aBounds || !bBounds) return 0; // 描画データがない場合は順序を変えない
+
+            const aCenterY = a.transform.offset.y + aBounds.max.y;
+            const bCenterY = b.transform.offset.y + bBounds.max.y;
+
+            const delta = (bCenterY - aCenterY);
+            return ordering === 'lower' ? -delta : delta;
+        });
+
+        pool.items = {};
+        for (const item of items) {
+            pool.items[item.id] = { id: item.id };
+        }
+    }
+
+    /**
+     * アイテムをプールの境界内に収めるための座標計算を行います。
+     */
+    private constrainItemToBounds(item: Item, options: PoolOptions, itemBounds: AABB2) {
+        if (!options.align) return;
+        const poolAABB = AABB2.from(options.bounds);
+        const dimensions = poolAABB.size;
+        const size = itemBounds.size;
+
+        const exceededLeft = poolAABB.min.x - itemBounds.min.x - item.transform.offset.x;
+        const exceededRight = itemBounds.max.x + item.transform.offset.x - poolAABB.max.x;
+        const exceededTop = poolAABB.min.y - itemBounds.min.y - item.transform.offset.y;
+        const exceededBottom = itemBounds.max.y + item.transform.offset.y - poolAABB.max.y;
+
+        if (dimensions.x < size.x) {
+            item.transform.offset.x = lerp(poolAABB.min.x - itemBounds.min.x, poolAABB.max.x - itemBounds.max.x, options.align.x);
+        } else {
+            if (exceededLeft > 0 && options.align.x <= 0.5) item.transform.offset.x += exceededLeft;
+            if (exceededRight > 0 && options.align.x >= 0.5) item.transform.offset.x -= exceededRight;
+        }
+
+        if (dimensions.y < size.y) {
+            item.transform.offset.y = lerp(poolAABB.min.y - itemBounds.min.y, poolAABB.max.y - itemBounds.max.y, options.align.y);
+        } else {
+            if (exceededTop > 0 && options.align.y <= 0.5) item.transform.offset.y += exceededTop;
+            if (exceededBottom > 0 && options.align.y >= 0.5) item.transform.offset.y -= exceededBottom;
+        }
+    }
+
+    public setPool(item: Item, pool: ItemPool) {
+        const oldPool = this.renderPass.pools[item.pool];
+        const newPool = this.renderPass.pools[pool.id];
+
+        if (!oldPool) throw new Error(`Pool ${item.pool} not found.`);
+        if (!newPool) throw new Error(`Pool ${pool.id} not found.`);
+
+        if (!item.parent) {
+            const poolToGlobalTransform = getTransform(oldPool.transform);
+            const globalToNewTransform = getTransform(newPool.transform).affineInverse();
+            const oldTransform = getTransform(item.transform);
+            const newTransform = globalToNewTransform.multiply(poolToGlobalTransform.multiply(oldTransform));
+            item.transform = newTransform.toJSON();
+        }
+
+        delete oldPool.pool.items[item.id];
+        pool.items[item.id] = { id: item.id };
+        item.pool = pool.id;
+
+        for (const child of item.children) {
+            const data = this.items.get(child);
+            if (!data) continue;
+            this.setPool(data, pool);
+        }
+    }
+
+    public *traverseHierarchy(item: Item): Generator<Item> {
+        yield item;
+        for (const childId of item.children) {
+            const child = this.items.get(childId);
+            if (child) {
+                yield* this.traverseHierarchy(child);
             }
         }
     }
@@ -641,59 +679,47 @@ export class ItemSystem {
     private async traverseDispatch(item: Item, pool: ItemPool, event: ItemMouseEvent): Promise<void> {
         const localEvent = this.toLocalEvent(item, event);
 
-        // Iterate children in reverse Z-order
-        const children = item.children;
-        for (let i = children.length - 1; i >= 0; i--) {
-            const child = this.items.get(children[i]);
-            if (child) {
-                this.traverseDispatch(child, pool, localEvent);
-            }
+        for (let i = item.children.length - 1; i >= 0; i--) {
+            const child = this.items.get(item.children[i]);
+            if (child) await this.traverseDispatch(child, pool, localEvent);
         }
 
-        await this.attributeRegistry.emit('mouse', item, pool, localEvent);
+        await this.game.attribute.emit('mouse', item, pool, localEvent);
     }
 
     private async traverseCollision(item: Item, pool: ItemPool, event: ItemMouseEvent, ctx: CollideContext): Promise<void> {
         const localEvent = this.toLocalEvent(item, event);
 
-        const children = item.children;
-        for (let i = children.length - 1; i >= 0; i--) {
-            const child = this.items.get(children[i]);
-            if (child) {
-                this.traverseCollision(child, pool, localEvent, ctx);
-            }
+        for (let i = item.children.length - 1; i >= 0; i--) {
+            const child = this.items.get(item.children[i]);
+            if (!child) continue;
+            if (ctx.ignoreList?.includes(child.id)) continue;
+            await this.traverseCollision(child, pool, localEvent, ctx);
         }
 
-        await this.attributeRegistry.emit('collide', item, pool, localEvent, ctx);
+        await this.game.attribute.emit('collide', item, pool, localEvent, ctx);
     }
 
     private async traverseActions(item: Item, pool: ItemPool, event: ItemMouseEvent, ctx: ActionContext): Promise<void> {
         const localEvent = this.toLocalEvent(item, event);
 
-        const children = item.children;
-        for (let i = children.length - 1; i >= 0; i--) {
-            const child = this.items.get(children[i]);
-            if (child) {
-                this.traverseActions(child, pool, localEvent, ctx);
-            }
+        for (let i = item.children.length - 1; i >= 0; i--) {
+            const child = this.items.get(item.children[i]);
+            if (child) await this.traverseActions(child, pool, localEvent, ctx);
         }
 
-        await this.attributeRegistry.emit('actions', item, pool, localEvent, ctx);
+        await this.game.attribute.emit('actions', item, pool, localEvent, ctx);
     }
 
-    /**
-     * Calculates the event coordinates relative to the current item's transform.
-     */
     private toLocalEvent(item: Item, parentEvent: ItemMouseEvent): ItemMouseEvent {
         const transform = getTransform(item.transform);
-        // Optimize: Compute inverse once if possible, but affineInverse is usually fast enough
         const inverse = transform.affineInverse();
 
         return {
             ...parentEvent,
-            offset: inverse.xform(parentEvent.offset),
-            offsetPrev: inverse.xform(parentEvent.offsetPrev),
-            offsetDelta: transform.basisXForm(parentEvent.offsetDelta),
+            localPos: inverse.xform(parentEvent.localPos),
+            localPrev: inverse.xform(parentEvent.localPrev),
+            localDelta: transform.basisXForm(parentEvent.localDelta),
         };
     }
 }

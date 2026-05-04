@@ -3,11 +3,12 @@ import time
 
 from loguru import logger
 from omu import App, Identifier, Omu
+from omu.api.endpoint.endpoint import EndpointType
 from omu.app import AppType
 from omu_chat import Channel, Chat, Message, Room, events
 
 from .errors import ProviderError
-from .service import ChatService, ProviderContext, ProviderService, retrieve_services
+from .service import ProviderContext, ProviderService, retrieve_services
 from .version import VERSION
 
 BASE_PROVIDER_IDENTIFIER = Identifier("com.omuapps", "chatprovider")
@@ -17,13 +18,22 @@ APP = App(
     type=AppType.PLUGIN,
 )
 
+START_FROM_URL = EndpointType[str, None].create_json(
+    BASE_PROVIDER_IDENTIFIER,
+    "start_from_url",
+    permission_id=BASE_PROVIDER_IDENTIFIER,
+)
+STOP_ROOM = EndpointType[str, None].create_json(
+    BASE_PROVIDER_IDENTIFIER,
+    "stop_room",
+    permission_id=BASE_PROVIDER_IDENTIFIER,
+)
 
 omu = Omu(APP)
 chat = Chat(omu)
 
 provider_services: dict[Identifier, ProviderService] = {}
 provider_channels: dict[Identifier, list[Identifier]] = {}
-chat_services: dict[Identifier, ChatService] = {}
 ctx = ProviderContext()
 
 
@@ -46,21 +56,8 @@ async def update_channel(channel: Channel, service: ProviderService):
     try:
         if not channel.active:
             await stop_channel(channel, service)
-            for key, chat_service in tuple(chat_services.items()):
-                if chat_service.room.channel_id == channel.id:
-                    await chat_service.stop()
-                    del chat_services[key]
-                    logger.info(f"Stopped chat for {chat_service.room.key()}")
             return
         await start_channel(channel, service)
-        fetched_rooms = await service.fetch_rooms(channel)
-        for item in fetched_rooms:
-            if item.room.id in chat_services:
-                continue
-            chat = await item.create()
-            chat_services[item.room.id] = chat
-            asyncio.create_task(chat.start())
-            logger.info(f"Started chat for {item.room.key()}")
     except ProviderError as e:
         logger.opt(exception=e).error(f"Error updating channel {channel.key()}")
     except Exception as e:
@@ -111,6 +108,11 @@ async def on_channel_update(channel: Channel):
         await update_channel(channel, provider)
 
 
+@chat.on(events.room.remove)
+async def on_room_removed(room: Room):
+    await stop_room(room)
+
+
 async def add_channels():
     all_channels = await chat.channels.fetch_all()
     for channel in all_channels.values():
@@ -149,16 +151,12 @@ async def stop_room(room: Room):
     room.status = "offline"
     room.connected = False
     await chat.rooms.update(room)
-    for key, service in tuple(chat_services.items()):
-        if service.room.key() == room.key():
-            await service.stop()
-            del chat_services[key]
+    if room.provider_id in provider_services:
+        service = provider_services[room.provider_id]
+        await service.stop_room(ctx, room)
 
 
 async def check_rooms():
-    for service in tuple(chat_services.values()):
-        if service.closed:
-            del chat_services[service.room.id]
     rooms = await chat.rooms.fetch_all()
     for room in filter(lambda r: r.connected, rooms.values()):
         provider = provider_services.get(room.provider_id)
@@ -194,3 +192,17 @@ async def on_ready():
     await check_channels()
     asyncio.create_task(recheck_task())
     logger.info("Chat provider is ready")
+
+
+@omu.endpoints.bind(endpoint_type=START_FROM_URL)
+async def api_start_by_url(url: str):
+    for service in provider_services.values():
+        await service.start_url(ctx, url)
+
+
+@omu.endpoints.bind(endpoint_type=STOP_ROOM)
+async def api_stop_room(id: str):
+    room = await chat.rooms.get(id)
+    if room is None:
+        return
+    await stop_room(room)

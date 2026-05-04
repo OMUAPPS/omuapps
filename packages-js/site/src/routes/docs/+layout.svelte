@@ -115,39 +115,41 @@
                         </div>
                     {/if}
                 {/each}
-                <div class="config">
-                    使用するパッケージマネージャー
-                    <div class="package-manager">
-                        <button
-                            onclick={() => ($config.PACKAGE_MANAGER = 'npm')}
-                            class:selected={$config.PACKAGE_MANAGER === 'npm'}
-                        >
-                            npm
-                            <i class="ti ti-brand-npm"></i>
-                        </button>
-                        <button
-                            onclick={() => ($config.PACKAGE_MANAGER = 'yarn')}
-                            class:selected={$config.PACKAGE_MANAGER === 'yarn'}
-                        >
-                            yarn
-                            <i class="ti ti-brand-yarn"></i>
-                        </button>
-                        <button
-                            onclick={() => ($config.PACKAGE_MANAGER = 'pnpm')}
-                            class:selected={$config.PACKAGE_MANAGER === 'pnpm'}
-                        >
-                            pnpm
-                            <i class="ti ti-brand-pnpm"></i>
-                        </button>
-                        <button
-                            onclick={() => ($config.PACKAGE_MANAGER = 'bun')}
-                            class:selected={$config.PACKAGE_MANAGER === 'bun'}
-                        >
-                            bun
-                            <i class="ti ti-package"></i>
-                        </button>
+                {#if $docs?.slug.includes('api')}
+                    <div class="config">
+                        使用するパッケージマネージャー
+                        <div class="package-manager">
+                            <button
+                                onclick={() => ($config.PACKAGE_MANAGER = 'npm')}
+                                class:selected={$config.PACKAGE_MANAGER === 'npm'}
+                            >
+                                npm
+                                <i class="ti ti-brand-npm"></i>
+                            </button>
+                            <button
+                                onclick={() => ($config.PACKAGE_MANAGER = 'yarn')}
+                                class:selected={$config.PACKAGE_MANAGER === 'yarn'}
+                            >
+                                yarn
+                                <i class="ti ti-brand-yarn"></i>
+                            </button>
+                            <button
+                                onclick={() => ($config.PACKAGE_MANAGER = 'pnpm')}
+                                class:selected={$config.PACKAGE_MANAGER === 'pnpm'}
+                            >
+                                pnpm
+                                <i class="ti ti-brand-pnpm"></i>
+                            </button>
+                            <button
+                                onclick={() => ($config.PACKAGE_MANAGER = 'bun')}
+                                class:selected={$config.PACKAGE_MANAGER === 'bun'}
+                            >
+                                bun
+                                <i class="ti ti-package"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                {/if}
             </div>
         </main>
     {/snippet}

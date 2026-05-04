@@ -9,7 +9,7 @@
     import DevSettings from './SettingDev.svelte';
     import SettingGenerals from './SettingGenerals.svelte';
 
-    let { data }: { data: unknown } = $props();
+    let { data: _data }: { data: unknown } = $props();
 </script>
 
 <div class="container">

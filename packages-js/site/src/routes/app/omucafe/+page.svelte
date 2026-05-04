@@ -23,7 +23,12 @@
             OmuPermissions.REGISTRY_PERMISSION_ID,
             OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
             OmuPermissions.ASSET_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_DRAG_DROP_PERMISSION_ID,
+            OmuPermissions.HTTP_REQUEST_PERMISSION_ID,
+            OBSPermissions.OBS_SCENE_CREATE_PERMISSION_ID,
+            OBSPermissions.OBS_SCENE_READ_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_READ_PERMISSION_ID,
             ChatPermissions.CHAT_REACTION_PERMISSION_ID,
         );
         omu.start();

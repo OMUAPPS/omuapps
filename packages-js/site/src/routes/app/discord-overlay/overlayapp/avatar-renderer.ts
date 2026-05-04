@@ -102,7 +102,7 @@ export class AvatarRenderer {
         matrices.model.pop();
         if (align && userConfig.align && get(dragState)?.id === id) {
             const { min, max } = alignedWorldBounds;
-            const center = alignedWorldBounds.center();
+            const center = alignedWorldBounds.center;
             draw.roundedRect(min, max, 40, PALETTE_RGB.BACKGROUND_3, 1);
             draw.roundedRect(min, max, 40, PALETTE_RGB.ACCENT, 5);
             draw.fontSize = 24;

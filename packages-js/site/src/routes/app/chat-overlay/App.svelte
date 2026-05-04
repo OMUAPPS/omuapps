@@ -143,11 +143,6 @@
         color: var(--color-text);
     }
 
-    section {
-        background: var(--color-bg-2);
-        padding: 1rem;
-    }
-
     .setting {
         display: flex;
         justify-content: space-between;

@@ -27,11 +27,6 @@
     let context: GlContext;
 
     let effectManager: EffectManager;
-    let fps = $state(0);
-    const fpsCounter = {
-        count: 0,
-        fps: 0,
-    };
 
     async function setPipeline(newPipeline: RenderPipeline) {
         pipeline = newPipeline;
@@ -50,28 +45,14 @@
             await appRenderer.screenshotSystem.takeScreenshot();
         };
 
-        for await (const frame of pipeline) {
-            const start = frame.time.stamp;
-            if (fpsCounter.count > 60) {
-                fps = fpsCounter.fps / fpsCounter.count;
-                fpsCounter.count = 0;
-                fpsCounter.fps = 0;
-            }
+        for await (const _frame of pipeline) {
             await appRenderer.handleFrame(pipeline.input);
-            const end = performance.now();
-            const renderTime = end - start;
-            fpsCounter.fps += 1000 / renderTime;
-            fpsCounter.count ++;
         }
     }
 </script>
 
 <div class="canvas">
-    <div class="debug">
-        {fps.toFixed(0)}
-        <small>FPS</small>
-    </div>
-    <Canvas {setPipeline} />
+    <Canvas {setPipeline} fps={60} />
 </div>
 
 <style lang="scss">
