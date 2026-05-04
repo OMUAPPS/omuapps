@@ -473,7 +473,7 @@ wheels = [
 
 [[package]]
 name = "iwashi"
-version = "3.2.3"
+version = "3.2.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -481,9 +481,9 @@ dependencies = [
     { name = "click" },
     { name = "loguru" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b8/97/1dc0769810f498661d713cf84a6967b5709ef3f2f8b81a3102f7077db3cf/iwashi-3.2.3.tar.gz", hash = "sha256:7ade4d3a131276666cd907817c21e1d357f3930e9ff74f1d8f8bba762e9a7d79", size = 127422, upload-time = "2026-05-02T09:39:22.676Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/76/b9/806243ede5e80ce6d753da3f911e4aee163bd3df3521ac42455ddfb20604/iwashi-3.2.4.tar.gz", hash = "sha256:f468e17d981573edced36af9ab736399e3a83fa1f157e956617c28d225f19ef7", size = 128875, upload-time = "2026-05-04T06:20:42.022Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c8/cf/045dcc582c735306a2f1747a9eb8050da3fb6936826f6122fe47b86655df/iwashi-3.2.3-py3-none-any.whl", hash = "sha256:cc7d50df531fd1b880f2d886d3092480e5729c4e7e18543c8933b86734b1c2ee", size = 71700, upload-time = "2026-05-02T09:39:21.371Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/cf/e17854e01a00c0a92c91e7f8c9ea577e0e73d0709bc3cfc905df35b74910/iwashi-3.2.4-py3-none-any.whl", hash = "sha256:fd4a3323825e010a9582ac47c59d16130316b1c79025621e2ff45a2475f57f8f", size = 72923, upload-time = "2026-05-04T06:20:40.807Z" },
 ]
 
 [[package]]
@@ -779,7 +779,7 @@ dependencies = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.10.6" },
     { name = "beautifulsoup4", specifier = ">=4.12.3" },
-    { name = "iwashi", specifier = ">=3.2.3" },
+    { name = "iwashi", specifier = ">=3.2.4" },
     { name = "loguru", specifier = ">=0.7.2" },
     { name = "lxml", specifier = ">=5.0.0" },
     { name = "omu-chat", editable = "packages-py/chat" },

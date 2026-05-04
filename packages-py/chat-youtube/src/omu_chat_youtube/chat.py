@@ -368,14 +368,15 @@ class YoutubeChat(ChatService):
                 if len(self.author_fetch_queue) == 0:
                     await asyncio.sleep(1)
                     continue
-                for author in self.author_fetch_queue:
+                to_fetch = list(self.author_fetch_queue)
+                self.author_fetch_queue.clear()
+                for author in to_fetch:
                     try:
                         await self.fetch_and_merge_author_metadata(author)
                         await self.chat.authors.update(author)
                         await asyncio.sleep(3)
                     except Exception as e:
                         logger.error(f"Error fetching metadata for author {author.id}: {e}")
-                self.author_fetch_queue.clear()
         except asyncio.CancelledError:
             return
 
@@ -394,7 +395,7 @@ class YoutubeChat(ChatService):
         new_metadata["avatar_url"] = author_channel.profile_picture
         new_metadata["url"] = author_channel.url
         new_metadata["links"] = list(author_channel.links)
-        new_metadata["screen_id"] = author_channel.id
+        new_metadata["screen_id"] = author_channel.screen_id or author_channel.id
         author.name = author_channel.name
 
         metadata = author.metadata or {}
