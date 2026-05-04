@@ -307,9 +307,10 @@
     }
 
     main {
+        position: absolute;
+        inset: 0;
         display: flex;
         flex-direction: row;
-        height: 100%;
         background: var(--color-bg-1);
         font-weight: 600;
     }

@@ -28,10 +28,10 @@ from omu_chat.model import (
     Vote,
     content,
 )
+from omu_chat.model.channel import Channel
 from omu_chat.model.vote import Choice
 from omu_chatprovider.errors import ProviderError
 from omu_chatprovider.helper import traverse
-from omu_chatprovider.service import ChatService
 from omu_chatprovider.tasks import Tasks
 
 from omu_chat_youtube.ythelper import parse_runs
@@ -224,27 +224,25 @@ class ChatData:
     mutations: Mutations
 
 
-class YoutubeChat(ChatService):
+class YoutubeChat:
     """Service for handling YouTube live chat connections and message processing."""
 
     def __init__(
         self,
         youtube_service: YoutubeChatService,
         chat: Chat,
+        channel: Channel | None,
         room: Room,
         youtube_chat: YoutubeChatAPI,
     ):
         self.youtube = youtube_service
         self.chat = chat
-        self._room = room
+        self.room = room
+        self.channel = channel
         self.youtube_chat = youtube_chat
         self.tasks = Tasks(asyncio.get_running_loop())
         self.author_fetch_queue: list[Author] = []
         self._closed = False
-
-    @property
-    def room(self) -> Room:
-        return self._room
 
     @property
     def closed(self) -> bool:
@@ -256,6 +254,7 @@ class YoutubeChat(ChatService):
         youtube_service: YoutubeChatService,
         chat: Chat,
         room: Room,
+        channel: Channel | None,
     ):
         """Create a new YoutubeChat instance for the given room."""
         exist_room = await chat.rooms.get(room.id.key())
@@ -267,11 +266,19 @@ class YoutubeChat(ChatService):
             youtube_service.extractor,
             video_id,
         )
-        room.metadata |= {
-            "thumbnail": f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
-            "url": f"https://www.youtube.com/watch?v={video_id}",
-        }
-        instance = cls(youtube_service, chat, room, youtube_chat)
+        room.metadata |= RoomMetadata(
+            {
+                "thumbnail": f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+            }
+        )
+        instance = cls(
+            youtube_service,
+            chat,
+            channel,
+            room,
+            youtube_chat,
+        )
         await instance.update_times()
         await chat.rooms.add(room)
         return instance
@@ -308,8 +315,8 @@ class YoutubeChat(ChatService):
         count = 0
         self.tasks.create_task(self.fetch_authors_task())
         try:
-            self._room.connected = True
-            await self.chat.rooms.update(self._room)
+            self.room.connected = True
+            await self.chat.rooms.update(self.room)
             while not self._closed:
                 chat_data = await self.youtube_chat.next()
                 if chat_data is None:
@@ -357,10 +364,10 @@ class YoutubeChat(ChatService):
         await self.process_reactions(chat_data)
 
     async def update_message_ids(self, messages):
-        if not self._room.metadata.get("first_message_id"):
-            self._room.metadata["first_message_id"] = messages[0].id.key()
-        self._room.metadata["last_message_id"] = messages[-1].id.key()
-        await self.chat.rooms.update(self._room)
+        if not self.room.metadata.get("first_message_id"):
+            self.room.metadata["first_message_id"] = messages[0].id.key()
+        self.room.metadata["last_message_id"] = messages[-1].id.key()
+        await self.chat.rooms.update(self.room)
 
     async def fetch_authors_task(self):
         try:
@@ -418,7 +425,7 @@ class YoutubeChat(ChatService):
         raise ProviderError(f"Unknown message type: {list(item.keys())} {item=}")
 
     async def process_deleted_item(self, item: MarkChatItemAsDeletedAction):
-        id = self._room.id / item["targetItemId"]
+        id = self.room.id / item["targetItemId"]
         message = await self.chat.messages.get(id.key())
         if message:
             message.deleted = True
@@ -434,7 +441,7 @@ class YoutubeChat(ChatService):
 
         vote = Vote(
             id=self.room.id / id,
-            room_id=self._room.id,
+            room_id=self.room.id,
             title=str(title),
             choices=choices,
             total=total,
@@ -489,7 +496,7 @@ class YoutubeChat(ChatService):
         if not reaction_counts:
             return
         reaction = Reaction(
-            room_id=self._room.id,
+            room_id=self.room.id,
             reactions=reaction_counts,
         )
         await self.chat.reaction_signal.notify(reaction)
@@ -506,7 +513,7 @@ class YoutubeChat(ChatService):
         """Create a Message object with common parameters."""
         return Message(
             id=self.room.id / data["id"],
-            room_id=self._room.id,
+            room_id=self.room.id,
             author_id=author.id,
             content=content,
             paid=paid,
@@ -589,6 +596,6 @@ class YoutubeChat(ChatService):
             return
         self._closed = True
         self.tasks.terminate()
-        self._room.connected = False
+        self.room.connected = False
         await self.update_times()
-        await self.chat.rooms.update(self._room)
+        await self.chat.rooms.update(self.room)

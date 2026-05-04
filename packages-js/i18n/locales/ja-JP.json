@@ -89,7 +89,8 @@
             "not_found_rooms": "ルームが見つかりません！",
             "question_add_channel": "チャンネルを追加しますか？",
             "see_channel": "見る",
-            "viewers": "視聴者数（クリックでコピー）"
+            "viewers": "視聴者数（クリックでコピー）",
+            "diconnect": "切断する"
         },
         "messages": {
             "title": "コメント／メッセージ",
@@ -111,6 +112,7 @@
             "title": "チャンネル",
             "append_channel": "チャンネルを接続",
             "setup_channel": "チャンネルを追加",
+            "start_from_url": "URLから追加",
             "next_check": "再チェックまであと",
             "delete": "チャンネルを削除",
             "edit": "チャンネルを編集",
@@ -152,7 +154,7 @@
             "setup_no_results_tooltip": "URLが正しいか確認してください。",
             "search_back": "もう一度検索する",
             "select_submit_tooltip": "一つ以上選択してください。",
-            "input_cancel": "やめておく",
+            "input_cancel": "やめる",
             "selected_tooltip": "クリックで選択を解除",
             "select_tooltip": "クリックで選択"
         },

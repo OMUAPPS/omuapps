@@ -8,6 +8,7 @@ import { App, Identifier, Omu, OmuPermissions, type SessioTokenProvider } from '
 import type { Locale } from '@omujs/omu/localization';
 import { setGlobal } from '@omujs/ui';
 import { invoke } from '@tauri-apps/api/core';
+import { ChatProvider } from './pages/chatprovider.js';
 import { language } from './settings.js';
 import { VERSION } from './version.js';
 
@@ -37,9 +38,10 @@ export const omu = new Omu(DASHBOARD_APP, {
     token: new DashboardSession(),
 });
 
-export const chat: Chat = Chat.create(omu);
-export const obs: OBSPlugin = OBSPlugin.create(omu);
-export const dashboard: Dashboard = new Dashboard(omu);
+export const chat = Chat.create(omu);
+export const obs = OBSPlugin.create(omu);
+export const dashboard = new Dashboard(omu);
+export const provider = new ChatProvider(omu);
 
 setGlobal({ omu, chat, obs });
 

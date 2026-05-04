@@ -49,8 +49,7 @@
 
     .page {
         position: absolute;
-        width: 100%;
-        height: 100%;
+        inset: 0;
         display: none;
         background: var(--color-bg-1);
         z-index: 1;

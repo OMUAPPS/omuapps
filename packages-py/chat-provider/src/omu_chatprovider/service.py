@@ -34,14 +34,16 @@ class ProviderService(abc.ABC):
     @abc.abstractmethod
     def provider(self) -> Provider: ...
 
-    @deprecated("Legacy method, Left for future compatibility")
-    async def fetch_rooms(self, channel: Channel) -> list[FetchedRoom]:
-        return []
+    async def start_url(self, ctx: ProviderContext, url: str):
+        return
 
     async def start_channel(self, ctx: ProviderContext, channel: Channel):
         return
 
     async def stop_channel(self, ctx: ProviderContext, channel: Channel):
+        return
+
+    async def stop_room(self, ctx: ProviderContext, room: Room):
         return
 
     async def is_online(self, room: Room) -> bool:
@@ -67,14 +69,10 @@ class ChatService(abc.ABC):
         except Exception as e:
             logger.opt(exception=e).error(f"Error starting chat for {self.room.key()}")
         finally:
-            await self.stop()
+            await self.close()
 
     async def close(self):
         return
-
-    @deprecated("Use `close` instead")
-    async def stop(self):
-        await self.close()
 
 
 def retrieve_services():
