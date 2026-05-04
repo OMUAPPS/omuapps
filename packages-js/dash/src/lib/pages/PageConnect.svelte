@@ -51,7 +51,7 @@
                     <div class="actions">
                         <button onclick={() => screen = 'start_from_url'}>
                             {$t('panels.channels.start_from_url')}
-                            <i class="ti ti-user-share"></i>
+                            <i class="ti ti-link"></i>
                         </button>
                     </div>
                 </h3>
