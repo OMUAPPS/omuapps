@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.10.4 (2026-05-04)
+
+
+### Bug Fixes
+
+* **chat-youtube:** Vanity IDを表示IDとして設定するように ([033ab91](https://github.com/OMUAPPS/omuapps/commit/033ab91be9f848dfc94237d18995e790525b5e29))
+
+
+
+
+
 ## 0.10.3 (2026-04-30)
 
 **Note:** Version bump only for package @omujs/omu
