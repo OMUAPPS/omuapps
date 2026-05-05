@@ -12,9 +12,9 @@ class ChannelJson(TypedDict):
     id: str
     url: str
     name: str
-    description: str
+    description: str | None
     active: bool
-    icon_url: str
+    icon_url: str | None
 
 
 class Channel(Keyable, Model[ChannelJson]):
@@ -25,9 +25,9 @@ class Channel(Keyable, Model[ChannelJson]):
         id: Identifier,
         url: str,
         name: str,
-        description: str,
+        description: str | None,
         active: bool,
-        icon_url: str,
+        icon_url: str | None = None,
     ) -> None:
         self.provider_id = provider_id
         self.id = id

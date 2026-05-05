@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import re
+import urllib
+import urllib.parse
 import uuid
 from csv import Error
 from dataclasses import dataclass, field
@@ -292,15 +294,23 @@ class ChatInstance:
         for msg in initial_messages:
             await socket.send_json(msg)
 
+        now = datetime.now()
         room = Room(
             id=channel.id,
             provider_id=PROVIDER.id,
             connected=True,
-            status="offline",
-            metadata={},
+            status="online",
+            metadata={
+                "created_at": now.isoformat(),
+                "started_at": now.isoformat(),
+                "title": name,
+                "thumbnail": f"https://thumb-us-losangeles.picarto.tv/thumbnail/{name}.jpg",
+                "url": f"https://picarto.tv/{name}",
+            },
             channel_id=channel.id,
-            created_at=datetime.now(),
+            created_at=now,
         )
+        await chat.rooms.update(room)
         self = cls(
             api=api,
             chat=chat,
@@ -370,6 +380,9 @@ class ChatInstance:
                 return
             logger.warning(f"Unknown message type {command['t']}: {command}")
             return
+        elif "code" in command:
+            if command["code"] == "PONG":
+                return
         logger.warning(f"Unknown message scheme: {command}")
 
     async def update_message_ids(self, messages):
@@ -434,12 +447,12 @@ class ChatInstance:
         while current_index < len(raw_text):
             start_index = raw_text.find(":", current_index)
             if start_index == -1:
-                rest = raw_text[current_index:-1]
+                rest = raw_text[current_index:]
                 children.append(Text.of(rest))
                 break
             end_index = raw_text.find(":", start_index + 1)
             if end_index == -1:
-                rest = raw_text[current_index:-1]
+                rest = raw_text[current_index:]
                 children.append(Text.of(rest))
                 break
             alias = raw_text[start_index + 1 : end_index]
@@ -457,9 +470,7 @@ class ChatInstance:
             current_index = end_index + 1
         return Root(children)
 
-    async def reconnect(self): ...
-
-    async def disconnect(self):
+    async def stop(self):
         self.closed = True
         await self.socket.close()
 
@@ -489,20 +500,57 @@ class PicartoChatService(ProviderService):
     def provider(self) -> Provider:
         return PROVIDER
 
-    async def start_channel(self, ctx: ProviderContext, channel: Channel):
+    def _parse_id(self, url: str) -> str | None:
+        uri = urllib.parse.urlparse(url)
+        if uri.hostname != "picarto.tv":
+            return
+        path_parts = list(filter(None, uri.path.split("/")))
+        if not path_parts:
+            return None
+        return path_parts[0]
+
+    async def start_url(self, ctx: ProviderContext, url: str):
+        user_id = self._parse_id(url)
+        if user_id is None:
+            return
+        channel = Channel(
+            provider_id=PROVIDER.id,
+            id=PROVIDER.id / user_id,
+            url=url,
+            name=user_id,
+            active=True,
+            description=None,
+            icon_url=None,
+        )
+        return await self._connect(channel)
+
+    async def _connect(self, channel: Channel):
         if channel.id in self.instances:
-            instance = self.instances[channel.id]
-            await instance.reconnect()
             return
         instance = await ChatInstance.connect(self.api, self.session, self.chat, channel)
         self.instances[channel.id] = instance
+
+    async def start_channel(self, ctx: ProviderContext, channel: Channel):
+        await self._connect(channel)
 
     async def stop_channel(self, ctx: ProviderContext, channel: Channel):
         if channel.id not in self.instances:
             return
         existing = self.instances[channel.id]
-        await existing.disconnect()
+        await existing.stop()
         del self.instances[channel.id]
+
+    async def stop_room(self, ctx: ProviderContext, room: Room):
+        room.connected = False
+        room.status = "offline"
+        await self.chat.rooms.update(room)
+        if room.channel_id is None:
+            return
+        instance = self.instances.get(room.channel_id)
+        if instance is None:
+            return
+        del self.instances[room.channel_id]
+        await instance.stop()
 
     async def is_online(self, room: Room) -> bool:
         if room.channel_id is None:
