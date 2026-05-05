@@ -152,13 +152,14 @@
             cursor: pointer;
             width: 100%;
             height: 100%;
+        }
 
-            > img {
-                inset: 0;
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
+        img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         > a > .overlay {
