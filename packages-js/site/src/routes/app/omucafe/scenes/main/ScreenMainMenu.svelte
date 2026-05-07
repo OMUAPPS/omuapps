@@ -20,7 +20,7 @@
     let { scene = $bindable(), game }: Props = $props();
 
     if (!scene.task) {
-        scene.task = { type: 'setup' };
+        scene.task = { type: 'omucafe' };
     }
 
     const STEPS: typeof scene.task[] = [
@@ -189,11 +189,6 @@
                     </p>
                     <small>{STEP_NAMES[prev.type]}</small>
                 </button>
-            {:else}
-                <button onclick={() => {
-                }} disabled>
-                    前へ
-                </button>
             {/if}
             {#if next}
                 <button onclick={() => {
@@ -210,6 +205,7 @@
                 <button onclick={() => {
                     game.startTransition({
                         type: 'kitchen',
+                        tutorial: true,
                     });
                 }}>
                     <p>
@@ -378,7 +374,7 @@
         padding-top: 4rem;
         padding-bottom: 10rem;
         width: 30rem;
-        justify-content: space-between;
+        justify-content: space-around;
 
         > button {
             padding: 1rem 3rem;

@@ -7,6 +7,14 @@ description: すべてのアプリとその簡単な説明
 
 # アプリ一覧
 
+## 配信喫茶
+
+![Omucafe](/img/omucafe.png)
+
+雑談のお供にあなただけのカフェを開店しましょう！
+
+[配信喫茶](%DOCS_ROOT%/app/omucafe)
+
 ## Discordオーバーレイ
 
 ![Discord Overlay](/img/discord-overlay.png)

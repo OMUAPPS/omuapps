@@ -60,6 +60,9 @@
         if (game.side !== 'client') return;
         if (!photo) return;
         if (photo.type === 'started') {
+            if (!obsConnected) {
+                scene.photo = undefined;
+            }
             const elapsed = Timer.now() - photo.startTime;
             const remaining = photo.duration - elapsed;
             await new Promise((resolve) => setTimeout(resolve, remaining));

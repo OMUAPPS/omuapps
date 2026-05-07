@@ -1,6 +1,6 @@
 <script lang="ts">
     import { dev } from '$app/environment';
-    import { Button, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
+    import { Button, ExternalLink, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
     import type { Game } from '../../core/game';
     import { CafePack } from '../../core/game-state';
     import { testScripting } from '../../script/script';
@@ -129,6 +129,12 @@
                         設定
                         <i class="ti ti-chevron-right"></i>
                     </Button>
+                </label>
+                <label>
+                    <ExternalLink href="https://omuapps.com/docs/app/omucafe/" title="OMUAPPS">
+                        遊び方はこちら
+                        <i class="ti ti-external-link"></i>
+                    </ExternalLink>
                 </label>
                 {#if dev}
                     <label>
