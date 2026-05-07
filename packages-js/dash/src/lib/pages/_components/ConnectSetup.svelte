@@ -8,7 +8,7 @@
         cancel?: () => void;
     }
 
-    let { cancel = () => {} }: Props = $props();
+    let { cancel }: Props = $props();
 
     let stage: {
         type: 'input';
@@ -39,12 +39,14 @@
                 }
             }} placeholder="youtube.com/watch?v=..." class="input" />
             <div class="actions">
-                <button onclick={() => {
-                    cancel();
-                }} class="back">
-                    <i class="ti ti-chevron-left"></i>
-                    {$t('page.connect.input_cancel')}
-                </button>
+                {#if cancel}
+                    <button onclick={() => {
+                        cancel();
+                    }} class="back">
+                        <i class="ti ti-chevron-left"></i>
+                        {$t('page.connect.input_cancel')}
+                    </button>
+                {/if}
                 <button onclick={() => {
                     search(url);
                 }} disabled={!url}>

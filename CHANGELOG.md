@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.10.6 (2026-05-05)
+
+
+### Bug Fixes
+
+* **dash:** サムネイル画像がはみ出る場合を修正 ([3768d98](https://github.com/OMUAPPS/omuapps/commit/3768d9801e65d2c73d064cd51f1e6df778943680))
+
+
+
+
+
 ## 0.10.5 (2026-05-04)
 
 **Note:** Version bump only for package omuapps
