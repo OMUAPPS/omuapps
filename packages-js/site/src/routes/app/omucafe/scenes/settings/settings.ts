@@ -1,7 +1,7 @@
 import type { Game } from '../../core/game';
 import type { SceneData, SceneHandler } from '../scene';
-import ScreenSettings from './ScreenSettings.svelte';
 import background from './img/asset_vertical_background.png';
+import ScreenSettings from './ScreenSettings.svelte';
 
 export interface SceneSettingsData {
     type: 'settings';

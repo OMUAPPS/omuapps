@@ -9,6 +9,7 @@ export interface SceneKitchenData {
         type: 'kitchen';
         timestamp: number;
     };
+    tutorial?: boolean;
 }
 
 /** シーン全体の設定とマジックナンバーの集約 */

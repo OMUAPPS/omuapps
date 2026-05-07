@@ -78,5 +78,11 @@
             padding: 0 0.25rem;
             margin: 0 0.25rem;
         }
+
+        :global(iframe) {
+            width: 32rem;
+            height: calc(32rem * 9 / 16);
+            margin: 1rem 0;
+        }
     }
 </style>
