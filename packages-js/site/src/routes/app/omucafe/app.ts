@@ -19,7 +19,7 @@ export const OMUCAFE_APP = new App(APP_ID, {
             en: 'Create your own café',
         },
         icon: 'ti-coffee',
-        tags: ['underdevelopment', 'game'] as TagKey[],
+        tags: ['game'] as TagKey[],
     }),
 });
 
@@ -37,7 +37,7 @@ export const OMUCAFE_OVERLAY_APP = new App(OVERLAY_ID, {
             en: 'Create your own café',
         },
         icon: 'ti-coffee',
-        tags: ['underdevelopment', 'game'] as TagKey[],
+        tags: ['game'] as TagKey[],
     }),
 });
 

@@ -23,6 +23,7 @@ import { VIDEO_OVERLAY_APP } from './video-overlay/app.js';
 export const apps: App[] = [];
 
 apps.push(
+    OMUCAFE_APP,
     CHAT_OVERLAY_APP,
     OMIKUJI_APP,
     discordOverlay,
@@ -37,7 +38,6 @@ apps.push(
     clock,
     tester,
     TRANSLATOR_APP,
-    OMUCAFE_APP,
 );
 
 if (DEV) {
