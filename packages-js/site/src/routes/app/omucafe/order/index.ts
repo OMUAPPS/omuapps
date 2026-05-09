@@ -170,7 +170,9 @@ export class OrderSystem {
         return this.tokenizer.tokenize(text)
             .map((token) => token.reading ?? token.pronunciation ?? token.surface_form)
             .filter(Boolean)
-            .join('');
+            .join('')
+            .replace(' ', '')
+            .replace('　', '');
     }
 
     /**
