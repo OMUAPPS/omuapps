@@ -88,8 +88,8 @@ export class OrderSystem {
                 lastMessage: Message.serialize(message),
                 customer,
             };
-            this.game.states.orders.set(order.id, order);
         }
+        this.game.states.orders.set(order.id, order);
 
         this.game.audio.start({
             type: 'single',
@@ -172,7 +172,8 @@ export class OrderSystem {
             .filter(Boolean)
             .join('')
             .replace(' ', '')
-            .replace('　', '');
+            .replace('　', '')
+            .replace(/＃|♯|#️⃣/, '#');
     }
 
     /**

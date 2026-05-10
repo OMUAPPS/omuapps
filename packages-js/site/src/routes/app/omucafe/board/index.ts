@@ -9,7 +9,7 @@ import type { Product } from '../core/game-state';
 import board from './board.png';
 
 const CONFIG = {
-    DURATION_MS: 15000,
+    DURATION_MS: 10000,
     ITEMS_PER_PAGE: 2,
 };
 

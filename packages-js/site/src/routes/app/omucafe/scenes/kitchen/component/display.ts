@@ -120,7 +120,20 @@ export class Display {
         if (entries.length === 0) {
             draw.fontSize = 16;
             draw.fontWeight = '500';
-            await draw.textAlign(bounds.center, '注文はまだありません', Vec2.CENTER, PALETTE_RGB.ACCENT);
+            const [textBounds, photoButton] = bounds.shrink({ x: 50, y: 50 }).split({
+                direction: 'y',
+                ratio: 0.5,
+                gap: 10,
+            });
+            await draw.textAlign(textBounds.center, '注文はまだありません', Vec2.CENTER, PALETTE_RGB.ACCENT);
+            await this.renderButton('写真を取る', photoButton, {
+                title: '写真を取る',
+                id: 'photo-mode',
+                priority: 1,
+                invoke: async () => {
+                    this.game.scene.photo.openPhotoMode();
+                },
+            });
             return;
         }
 
@@ -131,7 +144,7 @@ export class Display {
 
         // 「注文リスト」のタイトルを描画
         await draw.textAlign(new Vec2(bounds.center.x, offsetY), '注文リスト', Vec2.CENTER, PALETTE_RGB.ACCENT);
-        offsetY += 50;
+        offsetY += 60;
 
         for (const order of entries) {
             const elapsed = Timer.now() - order.timestamp - 500;
@@ -185,7 +198,7 @@ export class Display {
                 await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY), `・ ${item.name}`, Vec2.ZERO, PALETTE_RGB.DISPLAY_TEXT.with({ w: animationT }));
                 offsetY += 30;
             }
-            offsetY += 48;
+            offsetY += 68;
 
             // インタラクション判定
             const orderBounds = new AABB2(new Vec2(bounds.min.x, minY), new Vec2(bounds.max.x, offsetY));
