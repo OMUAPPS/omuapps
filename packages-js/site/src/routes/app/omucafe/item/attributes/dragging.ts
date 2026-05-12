@@ -191,6 +191,25 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
                 };
             },
         });
+
+        ctx.actions.push({
+            title: `${item.name}を複製`,
+            id: `clone-${item.id}`,
+            priority: 100,
+            invoke: async () => {
+                item = this.game.item.clone(item);
+                if (states.scene.value.type === 'factory' && (!states.scene.value.selecting || states.scene.value.selecting.type === 'edit_item')) {
+                    states.scene.value.selecting = { type: 'edit_item', itemId: item.id };
+                }
+                await this.game.item.holdItem(item);
+                this.game.item.dettachItem(item);
+
+                item.attrs.dragging!.lastDrag = {
+                    timestamp: Date.now(),
+                    offset: event.poolPos.sub(item.transform.offset),
+                };
+            },
+        });
     }
 
     private isPickable(item: Item, attr: AttrDragging): boolean {
