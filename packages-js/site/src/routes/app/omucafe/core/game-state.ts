@@ -10,6 +10,7 @@ import type { Signal } from '@omujs/omu/api/signal';
 import type { Table } from '@omujs/omu/api/table';
 import { ByteReader, ByteWriter, Serializer, type JsonType } from '@omujs/omu/serialize';
 import { writable, type Writable } from 'svelte/store';
+import type { AudioPlayback } from '../audio';
 import { PALETTE_RGB } from '../colors';
 import type { Item } from '../item';
 import type { ItemPool, ItemSystemState } from '../item/item';
@@ -584,6 +585,8 @@ interface Config {
         masterVolume: number;
         musicVolume: number;
         sfxVolume: number;
+        overlay: boolean;
+        client: boolean;
     };
     photo: PhotoConfig;
     export?: ExportConfig;
@@ -665,6 +668,7 @@ export class GameState {
     public products: BufferedMap<Product>;
     public receipts: BufferedMap<Receipt>;
     public customers: BufferedMap<Customer>;
+    public audioSignal: Signal<AudioPlayback>;
 
     private register<T extends State>(state: T): T {
         this.states.push(state);
@@ -749,6 +753,8 @@ export class GameState {
                     masterVolume: 1,
                     musicVolume: 1,
                     sfxVolume: 1,
+                    client: true,
+                    overlay: true,
                 },
                 photo: {
                     frame: true,
@@ -786,8 +792,12 @@ export class GameState {
                         masterVolume: 1,
                         musicVolume: 1,
                         sfxVolume: 1,
+                        client: true,
+                        overlay: true,
                     };
                 }
+                config.audio.client ??= true;
+                config.audio.overlay ??= true;
                 return config;
             }),
         }), listen));
@@ -826,6 +836,7 @@ export class GameState {
         const customers = this.register(new BufferedMap(omu.tables.json<Customer>('customers', {
             key: (customer) => customer.id,
         }), listen));
+        const audioSignal = omu.signals.json<AudioPlayback>('audio_signal');
 
         this.items = items;
         this.assets = assets;
@@ -848,6 +859,7 @@ export class GameState {
         this.products = products;
         this.receipts = receipts;
         this.customers = customers;
+        this.audioSignal = audioSignal;
     }
 
     public async wait() {
