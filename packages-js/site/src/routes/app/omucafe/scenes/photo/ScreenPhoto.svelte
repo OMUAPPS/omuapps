@@ -405,8 +405,9 @@
     .screenshot {
         position: fixed;
         inset: 0;
-        width: 100%;
-        height: 100%;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
         transform-origin: center;
         animation: forwards 5s screenshot cubic-bezier(0, 1, 0, 1);
 
