@@ -405,6 +405,9 @@
     .screenshot {
         position: fixed;
         inset: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: center;
         animation: forwards 5s screenshot cubic-bezier(0, 1, 0, 1);
 
         &::after {
