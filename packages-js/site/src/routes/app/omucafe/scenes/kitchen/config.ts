@@ -26,7 +26,7 @@ export const SCENE_CONFIG = {
             MAX_SUB_2: { x: 310, y: 635 },
         },
         OVERLAY: {
-            KITCHEN_Y: -200,
+            KITCHEN_Y: 100,
             COUNTER_Y: 200,
             TRASHBIN_X: 400,
         },
