@@ -133,6 +133,13 @@ export class AudioSystem {
         this.sfx = this.ctx.createGain();
         this.sfx.connect(this.master);
         this.updateVolumes();
+        if (game.side === 'overlay') {
+            game.states.audioSignal.listen((playback) => {
+                if (game.states.config.value.audio.overlay) {
+                    this.update(playback);
+                }
+            });
+        }
     }
 
     private updateVolumes() {
@@ -146,11 +153,15 @@ export class AudioSystem {
     }
 
     public start(clip: AudioClip) {
-        this.update({
+        const playback = {
             id: generateUid(),
             clip,
             start: Timer.now(),
-        });
+        };
+        this.game.states.audioSignal.notify(playback);
+        if (this.game.states.config.value.audio.client) {
+            this.update(playback);
+        }
     }
 
     private async update(playback: AudioPlayback) {

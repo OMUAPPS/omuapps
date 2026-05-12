@@ -1,6 +1,6 @@
 <script lang="ts">
     import { dev } from '$app/environment';
-    import { Button, ExternalLink, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
+    import { Button, Checkbox, ExternalLink, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
     import type { Game } from '../../core/game';
     import { CafePack } from '../../core/game-state';
     import { testScripting } from '../../script/script';
@@ -42,6 +42,14 @@
                 <label>
                     効果音
                     <Slider bind:value={$config.audio.sfxVolume} min={0} max={1} step={0.01} type="percent" />
+                </label>
+                <label>
+                    アプリ側
+                    <Checkbox bind:value={$config.audio.client} />
+                </label>
+                <label>
+                    OBS側
+                    <Checkbox bind:value={$config.audio.overlay} />
                 </label>
             </div>
             <div class="panel data">
