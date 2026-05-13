@@ -35,6 +35,7 @@ export interface SceneFactoryData {
 export const preview = writable<Record<string, {
     itemId: string;
     update: number;
+    hash: string;
     url: string;
 }>>({});
 
@@ -282,6 +283,8 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         if (previewEntry && previewEntry.itemId === itemId && previewEntry.update === item.update) {
             return;
         }
+        const hash = await this.game.item.hash(item);
+        if (previewEntry?.hash === hash) return;
 
         const result = await this.game.itemRenderer.getItemRender(item);
         if (result.type !== 'rendered') return;
@@ -303,6 +306,7 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
                 [item.id]: {
                     itemId,
                     update: item.update,
+                    hash,
                     url,
                 },
             });

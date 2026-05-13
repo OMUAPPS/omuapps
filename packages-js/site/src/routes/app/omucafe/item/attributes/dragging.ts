@@ -171,7 +171,7 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
         }
 
         ctx.actions.push({
-            title: `${item.name}を持つ(マウスホイールで複製)`,
+            title: `${item.name}を持つ`,
             id: `pick-${item.id}`,
             priority: 100,
             invoke: async () => {
@@ -196,6 +196,7 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
             title: `${item.name}を複製`,
             id: `clone-${item.id}`,
             priority: 100,
+            reset: true,
             invoke: async () => {
                 item = this.game.item.clone(item);
                 if (states.scene.value.type === 'factory' && (!states.scene.value.selecting || states.scene.value.selecting.type === 'edit_item')) {

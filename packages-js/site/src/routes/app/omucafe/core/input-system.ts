@@ -10,6 +10,7 @@ export interface Action {
     title: string;
     id: string;
     priority: number;
+    reset?: boolean;
     invoke(): Promise<void>;
 }
 
@@ -43,16 +44,14 @@ export class InputSystem {
         }
         if (event.kind === 'mouse-down') {
             const index = this.actions.findIndex((action) => action.id === this.currentAction?.id);
-            if (index === -1) {
-                const action = this.actions[0];
-                this.lastAction = action;
-                await action?.invoke();
-                console.log(action?.title);
-            } else {
-                const action = this.actions[index];
-                this.lastAction = action;
-                await action?.invoke();
-                console.log(action?.title);
+            const action = index === -1 ? this.actions[0] : this.actions[index];
+            this.lastAction = action;
+            if (action) {
+                await action.invoke();
+                console.log(action.title);
+                if (action.reset) {
+                    this.currentAction = undefined;
+                }
             }
         } else if (event.kind === 'mouse-wheel') {
             const index = this.actions.findIndex((action) => action.id === this.currentAction?.id);

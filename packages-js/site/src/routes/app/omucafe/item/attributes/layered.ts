@@ -10,18 +10,23 @@ import type { Game } from '../../core/game';
 import type { AssetTransform } from '../../core/game-renderer';
 import { type ValidateResult } from '../../core/helper';
 import { getTransform } from '../../core/transform';
-import type { ActionContext, AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, ItemRender, RenderContext } from '../attribute-handler';
-import type { ItemPool } from '../item';
+import type {
+    ActionContext,
+    AttributeHandler,
+    AttributeInvoke,
+    CalculateBoundsContext,
+    HashContext,
+    ItemMouseEvent,
+    ItemRender,
+    ItemRenderContext,
+} from '../attribute-handler';
+import type { Item, ItemPool } from '../item';
 import LayeredEditor from './LayeredEditor.svelte';
 
 export interface LayerBase {
     name: string;
-    side: {
-        asset: Asset;
-    };
-    top: {
-        asset: Asset;
-    };
+    side: { asset: Asset };
+    top: { asset: Asset };
     volume: number;
     pourSound?: AudioClip;
 }
@@ -69,55 +74,35 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
 
     constructor(private readonly game: Game) {
         const { context } = game.pipeline;
+
+        // --- マスク用テクスチャ・バッファの初期化 ---
         this.maskBuffer = context.createFramebuffer();
         this.maskTexture = context.createTexture();
         this.maskTexture.use(() => {
-            this.maskTexture.setImage(null, {
-                width: 4,
-                height: 4,
-                internalFormat: 'rgba',
-                format: 'rgba',
-            });
+            this.maskTexture.setImage(null, { width: 4, height: 4, internalFormat: 'rgba', format: 'rgba' });
             this.maskTexture.setParams({
-                magFilter: 'linear',
-                minFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
+                magFilter: 'linear', minFilter: 'linear', wrapS: 'clamp-to-edge', wrapT: 'clamp-to-edge',
             });
         });
-        this.maskBuffer.use(() => {
-            this.maskBuffer.attachTexture(this.maskTexture);
-        });
+        this.maskBuffer.use(() => this.maskBuffer.attachTexture(this.maskTexture));
 
+        // --- レイヤー描画用テクスチャ・バッファの初期化 ---
         this.layerBuffer = context.createFramebuffer();
         this.layerTexture = context.createTexture();
         this.layerTexture.use(() => {
-            this.layerTexture.setImage(null, {
-                width: 4,
-                height: 4,
-                internalFormat: 'rgba',
-                format: 'rgba',
-            });
+            this.layerTexture.setImage(null, { width: 4, height: 4, internalFormat: 'rgba', format: 'rgba' });
             this.layerTexture.setParams({
-                magFilter: 'linear',
-                minFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
+                magFilter: 'linear', minFilter: 'linear', wrapS: 'clamp-to-edge', wrapT: 'clamp-to-edge',
             });
         });
-        this.layerBuffer.use(() => {
-            this.layerBuffer.attachTexture(this.layerTexture);
-        });
+        this.layerBuffer.use(() => this.layerBuffer.attachTexture(this.layerTexture));
     }
 
     create(): AttrLayered {
         return {
             positionX: 0,
             positionY: 0,
-            curvature: {
-                top: 1,
-                bottom: 1,
-            },
+            curvature: { top: 1, bottom: 1 },
             height: 100,
             width: 100,
             capacity: 400,
@@ -129,49 +114,70 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         return { type: 'valid', value };
     }
 
+    async hash(invoke: AttributeInvoke<AttrLayered>, ctx: HashContext): Promise<void> {
+        ctx.hash += `layered:${JSON.stringify(invoke.attr)}`;
+    }
+
+    // ==========================================
+    // アクション関連 (捨てる・注ぐ)
+    // ==========================================
+
     async actions({ item, attr }: AttributeInvoke<AttrLayered>, pool: ItemPool, event: ItemMouseEvent, ctx: ActionContext): Promise<void> {
         const { states } = this.game.item;
         if (states.held !== item.id) return;
+
         const last = attr.layers.at(-1);
-        const isInEdit = this.game.states.scene.value.type === 'factory' || this.game.states.scene.value.type === 'kitchen' && !!this.game.states.scene.value.editMode;
+        const scene = this.game.states.scene.value;
+        const isInEdit = scene.type === 'factory' || (scene.type === 'kitchen' && !!scene.editMode);
+
+        // 捨てるアクション
         if (last && (!attr.pour?.infinite || isInEdit)) {
             ctx.actions.push({
                 title: `${last.name}を捨てる`,
                 id: `layered-drop-${item.id}`,
-                priority: item.pool === 'fridge' ? 200 - 10 : 200 - 10,
+                priority: 190, // 200 - 10
                 invoke: async () => {
                     attr.layers.pop();
                     this.game.item.updateItem(item);
                 },
             });
         }
+
         if (!attr.pour) return;
         const { pour } = attr;
-        pour.target = undefined;
+
+        // 対象アイテムの探索
         const transform = this.game.item.getWorldTransform(item);
         const worldPoint = transform.xform(pour.point);
         const hitId = await this.game.item.raycast(pool, worldPoint, [item.id]);
-        if (!hitId) return;
-        const hitItem = this.game.item.get(hitId);
-        if (!hitItem) return;
-        if (!hitItem.attrs.layered) return;
-        console.log(hitItem);
-        const targetLayered = hitItem.attrs.layered;
-        if (targetLayered.pour?.infinite) return;
+
+        const hitItem = hitId ? this.game.item.get(hitId) : undefined;
+        const target = hitItem ? this.getTraverseLayered(hitItem) : undefined;
+
+        if (!target || target.targetLayered.pour?.infinite) {
+            pour.target = undefined;
+            return;
+        }
+
+        const { targetItem, targetLayered } = target;
+        pour.target = targetItem.id;
+        targetLayered.pourSource = item.id;
+
+        const targetCapacityLeft = targetLayered.capacity - this.getTotalVolume(targetLayered.layers);
+        const isFull = targetCapacityLeft <= 0;
         const sourceLayers = attr.layers;
         const pourVolume = pour.volume;
-        pour.target = hitId;
-        targetLayered.pourSource = item.id;
-        const targetCapacityLeft = targetLayered.capacity - targetLayered.layers.reduce((sum, layer) => sum += layer.volume, 0);
-        const isFull = targetCapacityLeft <= 0;
+
+        // 注ぐアクション
         ctx.actions.push({
-            title: isFull ? `${hitItem.name}はいっぱいです` : `${hitItem.name}に注ぐ`,
+            title: isFull ? `${targetItem.name}はいっぱいです` : `${targetItem.name}に注ぐ`,
             id: `layered-pour-${item.id}`,
-            priority: 100,
+            priority: 200,
             invoke: async () => {
-                this.pour(targetLayered, sourceLayers, pourVolume, pour.infinite);
+                this.executePour(targetLayered, sourceLayers, pourVolume, pour.infinite);
                 this.game.item.updateItem(item);
-                this.game.item.updateItem(hitItem);
+                this.game.item.updateItem(targetItem);
+
                 const lastLayer = sourceLayers.at(-1);
                 if (!isFull && lastLayer?.pourSound) {
                     this.game.audio.start(lastLayer.pourSound);
@@ -180,52 +186,19 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         });
     }
 
-    private pour(target: AttrLayered, source: Layer[], volume: number, infinite: boolean) {
-        const lastLayer = source.pop();
-        if (!lastLayer) return;
-        const targetLastLayer = target.layers.at(-1);
-        const add = targetLastLayer && this.isLayerKindEqual(targetLastLayer, lastLayer);
-        const targetCapacityLeft = target.capacity - target.layers.reduce((sum, layer) => sum += layer.volume, 0);
-        const subVolume = Math.min(lastLayer.volume, volume, targetCapacityLeft);
-        if (add) {
-            if (!infinite) {
-                lastLayer.volume -= subVolume;
-            }
-            targetLastLayer.volume += subVolume;
-        } else {
-            const clone = this.clone(lastLayer);
-            clone.volume = subVolume;
-            target.layers.push(clone);
-        }
-        if (infinite || lastLayer.volume >= volume) {
-            source.push(lastLayer);
-        }
-    }
-
-    private isLayerKindEqual(layerA: Layer, layerB: Layer): boolean {
-        if (layerA.type !== layerB.type) return false;
-        if (layerA.name !== layerB.name) return false;
-        if (getAssetKey(layerA.side.asset) !== getAssetKey(layerB.side.asset)) return false;
-        if (getAssetKey(layerA.top.asset) !== getAssetKey(layerB.top.asset)) return false;
-        return true;
-    }
-
-    private clone(layer: Layer): Layer {
-        return {
-            ...layer,
-        };
-    }
+    // ==========================================
+    // レンダリング・バウンズ計算
+    // ==========================================
 
     async renderOverlayPost({ item, attr }: AttributeInvoke<AttrLayered>, _pool: ItemPool, render: ItemRender): Promise<void> {
         const { matrices, draw } = this.game.pipeline;
         const { states } = this.game.item;
 
+        // 注ぎ元のハイライト
         const sourceItem = attr.pourSource && states.held === attr.pourSource ? this.game.item.get(attr.pourSource) : undefined;
-        if (sourceItem && sourceItem.attrs.layered?.pour?.target === item.id) {
-            const width = 6;
+        if (sourceItem?.attrs.layered?.pour?.target === item.id) {
             const { min, max } = render.renderBounds;
-            const { texture } = render;
-            draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.TOOLTIP_TEXT, width);
+            draw.textureOutline(min.x, min.y, max.x, max.y, render.texture, PALETTE_RGB.TOOLTIP_TEXT, 6);
         }
 
         const scene = this.game.states.scene.value;
@@ -237,7 +210,6 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
             if (textureState.type === 'ready') {
                 const tex = textureState.data.texture;
                 const halfSize = new Vec2(tex.width / 2, tex.height / 2);
-
                 const bounds = new AABB2(halfSize.scale(-1), halfSize);
                 const mat = getTransform(mask.transform).getMat4();
 
@@ -247,19 +219,17 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
                 });
             }
         }
+
         if (pour) {
-            const { point } = pour;
-            draw.circle(point.x, point.y, 0, 10, Vec4.ONE);
+            draw.circle(pour.point.x, pour.point.y, 0, 10, Vec4.ONE);
         }
     }
 
-    async getRenderPass({ attr }: AttributeInvoke<AttrLayered>, ctx: RenderContext): Promise<void> {
-        if (attr.layers.length) {
+    async getRenderPass({ attr }: AttributeInvoke<AttrLayered>, ctx: ItemRenderContext): Promise<void> {
+        if (attr.layers.length > 0) {
             ctx.passes.push({
                 order: 500,
-                render: async () => {
-                    await this.render(attr, ctx.render);
-                },
+                render: async () => await this.render(attr, ctx.render),
             });
         }
     }
@@ -270,21 +240,19 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
             await this.renderLayers(attr);
             return;
         }
+
         const { draw, context } = this.game.pipeline;
         const { gl } = context;
+        const { width, height } = render.renderBounds;
 
-        this.maskTexture.use(() => {
-            this.maskTexture.ensureSize(render.renderBounds.width, render.renderBounds.height);
-        });
+        this.maskTexture.use(() => this.maskTexture.ensureSize(width, height));
         await this.maskBuffer.useAsync(async () => {
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
             await this.game.renderer.drawAssetTransform(mask);
         });
 
-        this.layerTexture.use(() => {
-            this.layerTexture.ensureSize(render.renderBounds.width, render.renderBounds.height);
-        });
+        this.layerTexture.use(() => this.layerTexture.ensureSize(width, height));
         await this.layerBuffer.useAsync(async () => {
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
@@ -294,65 +262,100 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         draw.textureMask(...render.renderBounds.toArray(), this.layerTexture, this.maskTexture);
     }
 
-    private async renderLayers(attr: AttrLayered) {
+    async bounds({ attr }: AttributeInvoke<AttrLayered>, ctx: CalculateBoundsContext): Promise<void> {
+        const t = clamp(this.getTotalVolume(attr.layers) / attr.capacity, 0, 1);
+        const topC = lerp01(attr.curvature.bottom, attr.curvature.top, t);
+        const bounds = new AABB2(
+            new Vec2(-attr.width, lerp01(attr.positionY, attr.positionY - attr.height, t) - topC * 2),
+            new Vec2(attr.width, attr.positionY),
+        );
+        ctx.render = ctx.render.union(bounds);
+    }
+
+    // ==========================================
+    // プライベート・ヘルパーメソッド
+    // ==========================================
+
+    private async renderLayers(attr: AttrLayered): Promise<void> {
         const { draw } = this.game.pipeline;
-        const { capacity, width } = attr;
-        const left = width / -2 + attr.positionX;
-        const right = width / 2 + attr.positionX;
-        const getT = (volume: number) => {
-            return clamp(volume / capacity, 0, 1);
-        };
-        const getY = (t: number) => {
-            return lerp(attr.positionY, attr.positionY - attr.height, t);
-        };
-        const getCurvature = (t: number) => {
-            return lerp(attr.curvature.bottom, attr.curvature.top, t);
-        };
+        const { capacity, width, positionX, positionY, height, curvature, layers } = attr;
+
+        const left = positionX - width / 2;
+        const right = positionX + width / 2;
+
+        const getT = (volume: number) => clamp(volume / capacity, 0, 1);
+        const getY = (t: number) => lerp(positionY, positionY - height, t);
+        const getCurvature = (t: number) => lerp(curvature.bottom, curvature.top, t);
+
         let total = 0;
-        for (let index = 0; index < attr.layers.length; index++) {
-            const layer = attr.layers[index];
-            const last = index === attr.layers.length - 1;
+        for (let index = 0; index < layers.length; index++) {
+            const layer = layers[index];
+            const isLastLayer = index === layers.length - 1;
+
             const bottomT = getT(total);
             const bottomY = getY(bottomT);
             const bottomC = getCurvature(bottomT);
+
             total += layer.volume;
+
             const topT = getT(total);
             const topY = getY(topT);
             const topC = getCurvature(topT);
-            const side = await this.game.asset.getTexture(layer.side.asset).promise;
-            const top = await this.game.asset.getTexture(layer.top.asset).promise;
-            if (side.type === 'error') {
-                continue;
-            }
-            if (top.type === 'error') {
-                continue;
-            }
-            const sideTex = side.data.texture;
-            const topTex = top.data.texture;
-            const bounds = new AABB2(
-                new Vec2(left, topY - topC),
-                new Vec2(right, bottomY),
-            );
-            draw.textureCurved(bounds, sideTex, undefined, -topC, bottomC);
-            if (last || layer.type === 'solid') {
-                const topBounds = new AABB2(
-                    new Vec2(left, topY - topC * 2),
-                    new Vec2(right, topY),
-                );
-                draw.textureCurved(topBounds, topTex, undefined, topC, topC);
+
+            const [sideRes, topRes] = await Promise.all([
+                this.game.asset.getTexture(layer.side.asset).promise,
+                this.game.asset.getTexture(layer.top.asset).promise,
+            ]);
+
+            if (sideRes.type === 'error' || topRes.type === 'error') continue;
+
+            const bounds = new AABB2(new Vec2(left, topY - topC), new Vec2(right, bottomY));
+            draw.textureCurved(bounds, sideRes.data.texture, undefined, -topC, bottomC);
+
+            if (isLastLayer || layer.type === 'solid') {
+                const topBounds = new AABB2(new Vec2(left, topY - topC * 2), new Vec2(right, topY));
+                draw.textureCurved(topBounds, topRes.data.texture, undefined, topC, topC);
             }
         }
     }
 
-    async bounds({ attr }: AttributeInvoke<AttrLayered>, ctx: CalculateBoundsContext): Promise<void> {
-        const totalVolume = attr.layers.reduce((sum, layer) => sum += layer.volume, 0);
-        const t = totalVolume / attr.capacity;
-        const topC = lerp01(attr.curvature.bottom, attr.curvature.top, t);
-        const halfWidth = attr.width;
-        const bounds = new AABB2(
-            new Vec2(-halfWidth, lerp01(attr.positionY, attr.positionY - attr.height, t) - topC * 2),
-            new Vec2(halfWidth, attr.positionY),
-        );
-        ctx.render = ctx.render.union(bounds);
+    private executePour(target: AttrLayered, source: Layer[], volume: number, infinite: boolean): void {
+        const lastLayer = source.pop();
+        if (!lastLayer) return;
+
+        const targetLastLayer = target.layers.at(-1);
+        const canMerge = targetLastLayer && this.isLayerKindEqual(targetLastLayer, lastLayer);
+        const targetCapacityLeft = target.capacity - this.getTotalVolume(target.layers);
+        const subVolume = Math.min(lastLayer.volume, volume, targetCapacityLeft);
+
+        if (canMerge) {
+            if (!infinite) lastLayer.volume -= subVolume;
+            targetLastLayer.volume += subVolume;
+        } else {
+            target.layers.push({ ...lastLayer, volume: subVolume });
+        }
+
+        if (infinite || lastLayer.volume >= volume) {
+            source.push(lastLayer);
+        }
+    }
+
+    private getTraverseLayered(targetItem: Item): { targetItem: Item; targetLayered: AttrLayered } | undefined {
+        if (targetItem.attrs.layered) return { targetItem, targetLayered: targetItem.attrs.layered };
+        if (!targetItem.parent) return undefined;
+
+        const parent = this.game.item.get(targetItem.parent);
+        return parent ? this.getTraverseLayered(parent) : undefined;
+    }
+
+    private isLayerKindEqual(layerA: Layer, layerB: Layer): boolean {
+        return layerA.type === layerB.type &&
+               layerA.name === layerB.name &&
+               getAssetKey(layerA.side.asset) === getAssetKey(layerB.side.asset) &&
+               getAssetKey(layerA.top.asset) === getAssetKey(layerB.top.asset);
+    }
+
+    private getTotalVolume(layers: Layer[]): number {
+        return layers.reduce((sum, layer) => sum + layer.volume, 0);
     }
 }

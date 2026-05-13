@@ -10,7 +10,7 @@ import { clone, generateUid, type ValidateResult } from '../core/helper';
 import type { Action } from '../core/input-system';
 import { getTransform, validateTransform, type Transform } from '../core/transform';
 import type { AttributeKey, Attributes } from './attribute';
-import type { ActionContext, CollideContext, ItemMouseEvent, ItemRender, LoadTask } from './attribute-handler';
+import type { ActionContext, CollideContext, HashContext, ItemMouseEvent, ItemRender, LoadTask } from './attribute-handler';
 
 // --- Interfaces ---
 // (インターフェースの変更はありません)
@@ -414,6 +414,12 @@ export class ItemSystem {
             }
         }
         return ctx.hovered;
+    }
+
+    public async hash(item: Item) {
+        const ctx: HashContext = { hash: item.id };
+        await this.game.attribute.emit('hash', item, ctx);
+        return ctx.hash;
     }
 
     // =========================================================================================

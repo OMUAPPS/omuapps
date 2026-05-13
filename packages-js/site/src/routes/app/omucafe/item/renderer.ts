@@ -1,9 +1,11 @@
+import type { GlFramebuffer } from '$lib/components/canvas/glcontext';
 import { AABB2 } from '$lib/math/aabb2';
 import type { Transform2D } from '$lib/math/transform2d';
+import { Vec2 } from '$lib/math/vec2';
 import { PALETTE_RGB } from '../colors';
 import type { Game } from '../core/game';
 import { getTransform } from '../core/transform';
-import type { ItemRender, ItemRenderState, RenderContext } from './attribute-handler';
+import type { ItemRender, ItemRenderContext, ItemRenderState } from './attribute-handler';
 import type { Item, ItemPool, PoolOptions } from './item';
 
 export interface PoolRenderPass {
@@ -14,10 +16,13 @@ export class ItemRenderer {
     public renderPass: PoolRenderPass | undefined;
     public renderPassStack: PoolRenderPass[] = [];
     private itemRender: Map<string, ItemRenderState> = new Map();
+    private readonly target: GlFramebuffer;
 
     constructor(
         private readonly game: Game,
-    ) { }
+    ) {
+        this.target = game.pipeline.context.createFramebuffer();
+    }
 
     public initPass() {
         this.renderPass = undefined;
@@ -186,6 +191,36 @@ export class ItemRenderer {
     }
 
     public async getItemRender(item: Item): Promise<ItemRenderState> {
+        const attrs = item.attrs;
+        if (attrs.image && !attrs.layered && !attrs.container) {
+            const textureResult = this.game.asset.getTexture(attrs.image.asset);
+            if (textureResult.type === 'loading') {
+                return {
+                    type: 'loading',
+                    tasks: [],
+                    update: item.update,
+                };
+            }
+            if (textureResult.type === 'ready') {
+                const tex = textureResult.data.texture;
+
+                const bounds = new AABB2(
+                    new Vec2(-tex.width / 2, -tex.height / 2),
+                    new Vec2(tex.width / 2, tex.height / 2),
+                );
+                return {
+                    type: 'rendered',
+                    render: {
+                        bounds: bounds,
+                        renderBounds: bounds,
+                        texture: tex,
+                        update: item.update,
+                    },
+                    update: item.update,
+                };
+            }
+        }
+
         // 1. キャッシュチェック
         const existing = this.itemRender.get(item.id);
         if (existing && existing.update === item.update) return existing;
@@ -233,7 +268,6 @@ export class ItemRenderer {
         const renderState = this.itemRender.get(id);
         if (renderState?.type === 'rendered') {
             renderState.render.texture.delete();
-            renderState.render.target.delete();
         }
         this.itemRender.delete(id);
     }
@@ -259,13 +293,14 @@ export class ItemRenderer {
     }
 
     private async renderItemToTarget(render: ItemRender, item: Item, children: Record<string, ItemRender>): Promise<void> {
-        const { renderBounds, target } = render;
+        const { renderBounds } = render;
         const { context, matrices } = this.game.pipeline;
         const dims = renderBounds.dimensions();
         const { gl, stateManager } = context;
 
         // FBOのバインド回数を減らすため、パスを整理
-        await target.useAsync(async () => {
+        await this.target.useAsync(async () => {
+            this.target.attachTexture(render.texture);
             stateManager.pushViewport(dims);
 
             // Pass 1: Clear & Pre-render
@@ -276,8 +311,9 @@ export class ItemRenderer {
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
 
-                const ctx: RenderContext = {
+                const ctx: ItemRenderContext = {
                     render,
+                    target: this.target,
                     children,
                     passes: [],
                 };
@@ -310,15 +346,9 @@ export class ItemRenderer {
             texture.ensureSize(dimensions.x, dimensions.y);
         });
 
-        const target = context.createFramebuffer();
-        target.use(() => {
-            target.attachTexture(texture);
-        });
-
         return {
             bounds,
             renderBounds,
-            target,
             texture,
             update: item.update,
         };
