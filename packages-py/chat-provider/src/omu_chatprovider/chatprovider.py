@@ -134,11 +134,10 @@ async def check_channels():
 
 
 async def should_remove(room: Room, provider_service: ProviderService):
-    if room.channel_id is None:
-        return False
-    channel = await chat.channels.get(room.channel_id.key())
-    if channel and not channel.active:
-        return True
+    if room.channel_id:
+        channel = await chat.channels.get(room.channel_id.key())
+        if channel and not channel.active:
+            return True
     try:
         online = await provider_service.is_online(room)
         return not online
@@ -157,7 +156,7 @@ async def stop_room(room: Room):
 
 
 async def check_rooms():
-    rooms = await chat.rooms.fetch_all()
+    rooms = await chat.rooms.fetch_items(64, backward=True)
     for room in filter(lambda r: r.connected, rooms.values()):
         provider = provider_services.get(room.provider_id)
         if provider is None:

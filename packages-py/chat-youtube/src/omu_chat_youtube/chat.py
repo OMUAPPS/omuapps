@@ -151,6 +151,11 @@ class YoutubeChatAPI:
 
     async def next(self) -> ChatData | None:
         data: types.live_chat = await self.fetch()
+        if "error" in data:
+            logger.error(f"Error while fetching youtube chat with video id {self.video_id}: {data['error']}")
+            self.chat_continuation = None
+            await asyncio.sleep(10)
+            data: types.live_chat = await self.fetch()
         if "continuationContents" not in data:
             return None
         live_chat_continuation = data["continuationContents"]["liveChatContinuation"]
@@ -262,7 +267,6 @@ class YoutubeChat:
         exist_room = await chat.rooms.get(room.id.key())
         if exist_room:
             room.metadata |= exist_room.metadata
-        await chat.rooms.update(room)
         video_id = room.id.path[-1]
         youtube_chat = await YoutubeChatAPI.from_video_id(
             youtube_service.extractor,

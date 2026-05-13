@@ -60,8 +60,9 @@ class YoutubeChatService(ProviderService):
         room = Room(
             provider_id=YOUTUBE_ID,
             id=room_id,
-            connected=False,
-            status="offline",
+            channel_id=channel.id if channel else None,
+            connected=True,
+            status="online",
             metadata={
                 "url": f"https://www.youtube.com/watch?v={video_id}",
             },
@@ -91,10 +92,11 @@ class YoutubeChatService(ProviderService):
                     del self.chats[chat.room.id]
 
     async def stop_room(self, ctx: ProviderContext, room: Room):
-        if room.id in self.chats:
-            chat = self.chats[room.id]
-            await chat.stop()
-            del self.chats[room.id]
+        if room.id not in self.chats:
+            return
+        chat = self.chats[room.id]
+        await chat.stop()
+        del self.chats[room.id]
 
     async def is_online(self, room: Room) -> bool:
         return await self.extractor.is_online(video_id=room.id.path[-1])
