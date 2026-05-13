@@ -25,41 +25,45 @@
 <main>
     {#if game.side === 'client'}
         <div class="menu" data-input>
-            <div class="panel">
-                <Button onclick={goBack} primary>
-                    <i class="ti ti-chevron-left"></i>
-                    もどる
-                </Button>
-                <h1>商品研究所</h1>
-                <p>
-                    商品やアイテムを編集できます。
-                </p>
-
-                <div class="actions">
-                    <Button primary onclick={() => {
-                        game.startTransition({
-                            type: 'export',
-                        });
-                    }}>
-                        <Tooltip>
-                            他の人に共有することができます。
-                        </Tooltip>
-                        輸出
+            {#if scene.selecting?.type !== 'pick_product'}
+                <div class="panel">
+                    <Button onclick={goBack} primary>
+                        <i class="ti ti-chevron-left"></i>
+                        もどる
                     </Button>
+                    <h1>商品研究所</h1>
+                    <p>
+                        商品やアイテムを編集できます。
+                    </p>
+
+                    <div class="actions">
+                        <Button primary onclick={() => {
+                            game.startTransition({
+                                type: 'export',
+                            });
+                        }}>
+                            <Tooltip>
+                                他の人に共有することができます。
+                            </Tooltip>
+                            アイテムを共有
+                            <i class="ti ti-share-2"></i>
+                        </Button>
+                    </div>
                 </div>
-            </div>
+            {/if}
             {#if !scene.selecting}
                 <div class="panel omu-scroll">
-                    <h1>商品化</h1>
-                    <Button primary onclick={() => {
-                        scene.selecting = { type: 'pick_product' };
-                        scene = { ...scene };
-                    }}>
-                        アイテムを選択する
-                        <i class="ti ti-pointer"></i>
-                    </Button>
                     <div class="product-list">
-                        <h1>商品一覧</h1>
+                        <h1>
+                            商品一覧
+                            <Button primary onclick={() => {
+                                scene.selecting = { type: 'pick_product' };
+                                scene = { ...scene };
+                            }}>
+                                商品を作る
+                                <i class="ti ti-plus"></i>
+                            </Button>
+                        </h1>
                         {#each game.states.products.values() as product (product.id)}
                             <div class="entry">
                                 <button onclick={() => {
@@ -163,8 +167,9 @@
     }
 
     h1 {
+        display: flex;
+        justify-content: space-between;
         margin: 0.5rem 0;
-        margin-top: 1rem;
         text-align: left;
         font-size: 1.5rem;
         color: var(--color-1);
@@ -183,7 +188,7 @@
         .entry {
             width: 100%;
             outline: 1px solid var(--color-outline);
-            border-radius: 0.5rem;
+            border-radius: 0.25rem;
             overflow: hidden;
 
             > button {
@@ -194,7 +199,6 @@
                 gap: 1rem;
                 padding: 0.75rem 1.5rem;
                 background: var(--color-bg-2);
-                color: var(--color-text);
                 border-radius: 2px;
                 border: none;
                 cursor: pointer;
@@ -209,6 +213,8 @@
     }
 
     .actions {
+        display: flex;
+        gap: 1rem;
         margin-top: 2rem;
     }
 </style>

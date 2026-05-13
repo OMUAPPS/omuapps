@@ -16,156 +16,156 @@
     const shop = game.states.shop.store;
     const config = game.states.config.store;
 
-    let confirmScreen: {
-        type: 'reset';
-        confirm: () => void;
-    } | undefined = $state();
+    let confirmScreen: { type: 'reset'; confirm: () => void } | undefined = $state();
+
+    // ==========================================
+    // イベントハンドラー
+    // ==========================================
+
+    async function handleExport() {
+        const pack = await CafePack.create(game.states);
+        pack.download(`${game.states.shop.value.shop.name}.omucafe`);
+    }
+
+    async function handleImport(files: FileList) {
+        const buffer = new Uint8Array(await files[0].arrayBuffer());
+        const pack = CafePack.load(buffer);
+        await pack.apply(game);
+    }
+
+    function handleResetAll() {
+        confirmScreen = {
+            type: 'reset',
+            confirm: () => {
+                game.addTask(async () => {
+                    await game.states.resetAll();
+                    game.states.scene.value = {
+                        type: 'main_menu',
+                        task: { type: 'obs_waiting' },
+                    };
+                });
+            },
+        };
+    }
+
+    function navigateToPrev() {
+        game.startTransition(scene.prev);
+    }
+
+    function navigateToObsSetup() {
+        game.startTransition({
+            type: 'main_menu',
+            task: { type: 'obs_waiting' },
+        });
+    }
 </script>
 
 {#snippet client()}
     <main>
         <div class="header">
-            <h1>設定</h1>
+            <div class="inner">
+                <h1>設定</h1>
+                <label>
+                    <button onclick={navigateToPrev}>
+                        戻る <i class="ti ti-chevron-right"></i>
+                    </button>
+                </label>
+            </div>
         </div>
+
         <div class="settings">
             <div class="panel data">
-                <h1>音</h1>
+                <h2>音</h2>
 
                 <label>
-                    主音量
+                    <span>主音量</span>
                     <Slider bind:value={$config.audio.masterVolume} min={0} max={1} step={0.01} type="percent" />
                 </label>
                 <label>
-                    音楽
+                    <span>音楽</span>
                     <Slider bind:value={$config.audio.musicVolume} min={0} max={1} step={0.01} type="percent" />
                 </label>
                 <label>
-                    効果音
+                    <span>効果音</span>
                     <Slider bind:value={$config.audio.sfxVolume} min={0} max={1} step={0.01} type="percent" />
                 </label>
                 <label>
-                    アプリ側
+                    <span>アプリ側</span>
                     <Checkbox bind:value={$config.audio.client} />
                 </label>
                 <label>
-                    OBS側
+                    <span>OBS側</span>
                     <Checkbox bind:value={$config.audio.overlay} />
                 </label>
             </div>
+
             <div class="panel data">
-                <h1>データ</h1>
+                <h2>データ</h2>
 
                 <label>
-                    <Tooltip>
-                        「ダウンロード」フォルダーに保存されます
-                    </Tooltip>
-                    <p>書き出し</p>
-                    <Button primary onclick={async () => {
-                        const pack = await CafePack.create(game.states);
-                        const filename = `${game.states.shop.value.shop.name}.omucafe`;
-                        pack.download(filename);
-                    }}>
-                        保存
-                        <i class="ti ti-download"></i>
+                    <Tooltip>「ダウンロード」フォルダーに保存されます</Tooltip>
+                    <span>書き出し</span>
+                    <Button primary onclick={handleExport}>
+                        保存 <i class="ti ti-download"></i>
                     </Button>
                 </label>
                 <label>
-                    <p>読み込み</p>
-                    <FileDrop primary handle={async (files) => {
-                        const arrayBuffer = await files[0].arrayBuffer();
-                        const buffer = new Uint8Array(arrayBuffer);
-                        const pack = CafePack.load(buffer);
-                        await pack.apply(game);
-                    }} accept=".omucafe">
-                        <i class="ti ti-upload"></i>
-                        開く
+                    <span>読み込み</span>
+                    <FileDrop primary handle={handleImport} accept=".omucafe">
+                        <i class="ti ti-upload"></i> 開く
                     </FileDrop>
                 </label>
                 <label>
-                    <p>屋号</p>
+                    <span>屋号</span>
                     <Textbox bind:value={$shop.shop.name} />
                 </label>
                 <label>
-                    <p>住所</p>
+                    <span>住所</span>
                     <Textbox bind:value={$shop.shop.address} />
                 </label>
                 <label>
-                    <p>店主名</p>
+                    <span>店主名</span>
                     <Textbox bind:value={$shop.shop.owner} />
                 </label>
                 <label>
-                    <p>データをすべて削除</p>
-                    <Button primary onclick={() => {
-                        confirmScreen = {
-                            type: 'reset',
-                            confirm: () => {
-                                game.addTask(async () => {
-                                    await game.states.resetAll();
-                                    game.states.scene.value = {
-                                        type: 'main_menu',
-                                        task: {
-                                            type: 'obs_waiting',
-                                        },
-                                    };
-                                });
-                            },
-                        };
-                    }}>
-                        削除
-                        <i class="ti ti-x"></i>
+                    <span>データをすべて削除</span>
+                    <Button primary onclick={handleResetAll}>
+                        削除 <i class="ti ti-x"></i>
                     </Button>
                 </label>
             </div>
+
             <div class="panel actions">
                 <label>
-                    <p>キッチンに戻る</p>
-                    <Button onclick={() => {
-                        game.startTransition(scene.prev);
-                    }} primary>
-                        戻る
-                        <i class="ti ti-chevron-right"></i>
-                    </Button>
-                </label>
-                <label>
-                    <p>OBSの設定をやり直す</p>
-                    <Button onclick={() => {
-                        game.startTransition({
-                            type: 'main_menu',
-                            task: { type: 'obs_waiting' },
-                        });
-                    }} primary>
-                        設定
-                        <i class="ti ti-chevron-right"></i>
+                    <span>OBSの設定をやり直す</span>
+                    <Button primary onclick={navigateToObsSetup}>
+                        設定 <i class="ti ti-chevron-right"></i>
                     </Button>
                 </label>
                 <label>
                     <ExternalLink href="https://omuapps.com/docs/app/omucafe/" title="OMUAPPS">
-                        遊び方はこちら
-                        <i class="ti ti-external-link"></i>
+                        遊び方はこちら <i class="ti ti-external-link"></i>
                     </ExternalLink>
                 </label>
+
                 {#if dev}
                     <label>
-                        <p>run</p>
-                        <Button onclick={() => {
-                            testScripting();
-                        }} primary>
-                            設定
-                            <i class="ti ti-chevron-right"></i>
+                        <span>[dev] デバッグスクリプト実行</span>
+                        <Button primary onclick={testScripting}>
+                            実行 <i class="ti ti-chevron-right"></i>
                         </Button>
                     </label>
                 {/if}
             </div>
         </div>
     </main>
+
     {#if confirmScreen}
         <div class="screen">
             <div class="dialog">
                 <h1>本当にデータをすべて削除しますか？</h1>
                 <div class="actions">
-                    <Button onclick={() => {
-                        confirmScreen = undefined;
-                    }}>
+                    <Button onclick={() => (confirmScreen = undefined)}>
                         キャンセル
                     </Button>
                     <Button primary onclick={() => {
@@ -192,24 +192,50 @@
         flex-direction: column;
         align-items: stretch;
         gap: 4rem;
+    }
+
+    .header {
+        color: var(--color-1);
+        padding-bottom: 1rem;
+        background: var(--color-bg-1);
+        border-bottom: 1px solid var(--color-outline);
         padding: 4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        button {
+            width: 10rem;
+            height: 4rem;
+            border: none;
+            background: var(--color-1);
+            color: var(--color-bg-2);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .inner {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            width: min(105rem, 100%);
+        }
+    }
+
+    h1 {
+        height: 8rem;
     }
 
     .settings {
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
-        gap: 4rem;
-    }
-
-    h1 {
-        color: var(--color-1);
-        border-bottom: 2px solid var(--color-1);
-        padding-bottom: 1rem;
+        gap: 2rem;
+        padding: 4rem;
     }
 
     .panel {
-        border-radius: 6px;
+        position: relative;
         background: var(--color-bg-2);
         padding: 2rem;
         display: flex;
@@ -217,13 +243,32 @@
         gap: 2rem;
         width: 30rem;
         height: fit-content;
+        margin-top: 3rem;
+
+        h2 {
+            position: absolute;
+            left: 0;
+            top: -3rem;
+            font-size: 1.25rem;
+            background: var(--color-1);
+            color: var(--color-bg-2);
+            width: fit-content;
+            padding: 0.25rem 0.5rem;
+            width: 8rem;
+        }
     }
 
     label {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         gap: 8rem;
         white-space: nowrap;
+        font-size: 0.9rem;
+
+        span {
+            margin: 0;
+        }
     }
 
     .screen {

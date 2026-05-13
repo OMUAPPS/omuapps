@@ -27,7 +27,7 @@ export const SCENE_CONFIG = {
         },
         OVERLAY: {
             KITCHEN_Y: 50,
-            KITCHEN_TEX_Y: 50,
+            KITCHEN_TEX_Y: 100,
             COUNTER_Y: 200,
             TRASHBIN_X: 400,
         },

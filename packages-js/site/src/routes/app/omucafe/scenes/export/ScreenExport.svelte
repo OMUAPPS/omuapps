@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, Textbox } from '@omujs/ui';
+    import { Button, Textbox, Tooltip } from '@omujs/ui';
     import type { Game } from '../../core/game';
     import { ItemPack } from '../../core/game-state';
     import type { SceneExportData } from './export';
@@ -58,7 +58,7 @@
             </p>
         </div>
         <div class="panel">
-            <h1>商品説明</h1>
+            <h1>書き出し</h1>
 
             {#if $options.export}
                 <Textbox bind:value={$options.export.name} placeholder="パッケージ名" />
@@ -69,7 +69,14 @@
                 <p>ダウンロード後はダウンロードフォルダに出力されます</p>
             </small>
             <div class="actions">
-                <Button primary onclick={download}>
+                <Button primary onclick={download} disabled={!$options.export?.name}>
+                    <Tooltip>
+                        {#if $options.export?.name}
+                            ダウンロードフォルダに書き出されます
+                        {:else}
+                            名前を入力してください
+                        {/if}
+                    </Tooltip>
                     ダウンロード
                     <i class="ti ti-download"></i>
                 </Button>
@@ -78,6 +85,9 @@
                         game.states.exportPool.value.items = {};
                     });
                 }}>
+                    <Tooltip>
+                        箱のアイテムを消します
+                    </Tooltip>
                     新しい箱を用意する
                     <i class="ti ti-plus"></i>
                 </Button>
