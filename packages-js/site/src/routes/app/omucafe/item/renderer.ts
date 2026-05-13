@@ -226,7 +226,12 @@ export class ItemRenderer {
         if (existing && existing.update === item.update) return existing;
 
         const tasks = await this.game.item.loadItem(item);
-        if (tasks.length > 0) return { type: 'loading', tasks, update: item.update };
+        if (tasks.length > 0) {
+            if (existing) {
+                return existing;
+            }
+            return { type: 'loading', tasks, update: item.update };
+        }
 
         // 子要素のレンダー取得（再帰）
         const childrenRender = await this.gatherChildrenItemRender(item);

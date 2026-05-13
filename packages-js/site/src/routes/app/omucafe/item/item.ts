@@ -611,10 +611,9 @@ export class ItemSystem {
             return ordering === 'lower' ? -delta : delta;
         });
 
-        pool.items = {};
-        for (const item of items) {
-            pool.items[item.id] = { id: item.id };
-        }
+        pool.items = Object.fromEntries(items.map((item) => {
+            return [item.id, { id: item.id }];
+        }));
     }
 
     /**
