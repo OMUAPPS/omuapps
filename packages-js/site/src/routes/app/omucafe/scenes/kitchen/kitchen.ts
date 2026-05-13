@@ -196,7 +196,7 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         const counterHeight = assets.texCounter.height / renderer.scale;
         const { min, max } = layout.kitchenOptions.bounds;
 
-        draw.texture(min.x, min.y + OFFSETS.OVERLAY.KITCHEN_Y, max.x, max.y + OFFSETS.OVERLAY.KITCHEN_Y, assets.texKitchen);
+        draw.texture(min.x, min.y + OFFSETS.OVERLAY.KITCHEN_TEX_Y, max.x, max.y + OFFSETS.OVERLAY.KITCHEN_TEX_Y, assets.texKitchen);
         itemRenderer.initPass();
         await itemRenderer.renderPool(states.kitchen.value, layout.kitchenOptions);
 
