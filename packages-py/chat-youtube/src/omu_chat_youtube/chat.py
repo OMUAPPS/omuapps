@@ -106,10 +106,26 @@ class YoutubeChatAPI:
             .map(lambda x: x.get("liveChatRenderer"))
             .map(lambda x: x.get("continuations"))
             .map(lambda x: x[0])
-            .map(lambda x: x.get("invalidationContinuationData") or x.get("timedContinuationData"))
+            .map(
+                lambda x: x.get("invalidationContinuationData")
+                or x.get("timedContinuationData")
+                or x.get("reloadContinuationData")
+            )
             .map(lambda x: x.get("continuation"))
             .get()
         )
+
+    async def reset_continuation(self) -> bool:
+        chat_page = await self.api.get(
+            f"{YOUTUBE_URL}/live_chat",
+            params={"v": self.video_id},
+        )
+        self.api_key = chat_page.INNERTUBE_API_KEY
+        continuation = self.extract_chat_continuation(chat_page)
+        if continuation is None:
+            return False
+        self.chat_continuation = continuation
+        return True
 
     @classmethod
     def extract_script(cls, soup: bs4.BeautifulSoup, startswith: str) -> dict | None:
@@ -150,14 +166,27 @@ class YoutubeChatAPI:
         return data
 
     async def next(self) -> ChatData | None:
-        data: types.live_chat = await self.fetch()
-        if "error" in data:
-            logger.error(f"Error while fetching youtube chat with video id {self.video_id}: {data['error']}")
-            self.chat_continuation = None
-            await asyncio.sleep(10)
+        attempts = 0
+        while True:
+            if attempts > 3:
+                return
             data: types.live_chat = await self.fetch()
-        if "continuationContents" not in data:
-            return None
+            if "error" in data:
+                logger.error(f"Error while fetching youtube chat with video id {self.video_id}: {data['error']}")
+                self.chat_continuation = None
+                await asyncio.sleep(10)
+                if not await self.reset_continuation():
+                    return None
+                attempts += 1
+                continue
+            if "continuationContents" not in data:
+                if not await self.reset_continuation():
+                    return None
+                await asyncio.sleep(3)
+                attempts += 1
+                continue
+            break
+
         live_chat_continuation = data["continuationContents"]["liveChatContinuation"]
         continuations = live_chat_continuation["continuations"]
         if len(continuations) == 0:

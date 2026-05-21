@@ -2,6 +2,7 @@ import asyncio
 import urllib
 import urllib.parse
 
+from loguru import logger
 from omu import Omu
 from omu.identifier import Identifier
 from omu_chat import Chat
@@ -50,7 +51,7 @@ class YoutubeChatService(ProviderService):
         video_id = self._parse_video_id_by_url(url)
         if video_id is None:
             return
-        return await self._start_by_video_id(video_id, None)
+        await self._start_by_video_id(video_id, None)
 
     async def _start_by_video_id(self, video_id: str, channel: Channel | None):
         room_id = YOUTUBE_ID / video_id
@@ -68,12 +69,16 @@ class YoutubeChatService(ProviderService):
             },
         )
 
-        chat = await YoutubeChat.create(
-            self,
-            self.chat,
-            room,
-            channel,
-        )
+        try:
+            chat = await YoutubeChat.create(
+                self,
+                self.chat,
+                room,
+                channel,
+            )
+        except Exception as e:
+            logger.opt(exception=e).error(f"Could not start YouTube chat for {video_id}")
+            return
         self.chats[room_id] = chat
         asyncio.create_task(chat.run())
 
