@@ -296,7 +296,7 @@ export class PNGAvatar implements Avatar {
         const ratio = height / width;
 
         this.pipeline.matrices.model.push();
-        this.pipeline.matrices.model.translate(0, -bounceY * 0.0166 / 4, 0);
+        this.pipeline.matrices.model.translate(0, bounceY, 0);
         this.pipeline.draw.texture(
             -targetWidth / 2, -targetWidth / 2 * ratio,
             targetWidth, targetWidth * ratio,

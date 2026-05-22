@@ -52,9 +52,12 @@
         const { context } = pipeline;
         const { gl } = context;
         const { width, height } = matrices;
+        gl.colorMask(true, true, true, true);
         gl.enable(gl.BLEND);
-        gl.clearColor(1, 1, 1, 0);
-        gl.clear(gl.DEPTH_BUFFER_BIT);
+
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
+
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         gl.viewport(0, 0, matrices.width, matrices.height);
 
