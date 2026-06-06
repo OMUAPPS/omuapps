@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.10.7 (2026-05-21)
+
+
+### Bug Fixes
+
+* **chat-provider, chat-youtube:** 配信が接続されない問題を修正 ([b34fd37](https://github.com/OMUAPPS/omuapps/commit/b34fd370bf804e5ff2a13e7fe12af64205959627))
+
+
+
+
+
 ## 0.10.6 (2026-05-05)
 
 

@@ -15,7 +15,6 @@ export interface AttributeInvoke<Attr> {
 export interface ItemRender {
     update: number;
     texture: GlTexture;
-    target: GlFramebuffer;
     renderBounds: AABB2;
     bounds: AABB2;
 }
@@ -51,6 +50,10 @@ export type ItemMouseEvent = InputEventMouse & {
     poolDelta: Vec2;
 };
 
+export interface HashContext {
+    hash: string;
+}
+
 export interface LoadContext {
     create(options: { title: string }): LoadTask;
 }
@@ -75,8 +78,9 @@ export interface RenderPass {
     render(): Promise<void>;
 }
 
-export interface RenderContext {
+export interface ItemRenderContext {
     render: ItemRender;
+    target: GlFramebuffer;
     children: Record<string, ItemRender>;
     passes: RenderPass[];
 }
@@ -86,9 +90,10 @@ export interface AttributeHandler<T> {
     editor: Component<{ attr: T }>;
     create(): T;
     validate(value: T): ValidateResult<T>;
+    hash?(invoke: AttributeInvoke<T>, ctx: HashContext): Promise<void>;
     load?(invoke: AttributeInvoke<T>, ctx: LoadContext): Promise<void>;
     bounds?(invoke: AttributeInvoke<T>, ctx: CalculateBoundsContext, children: Record<string, ItemRender>): Promise<void>;
-    getRenderPass?(invoke: AttributeInvoke<T>, ctx: RenderContext): Promise<void>;
+    getRenderPass?(invoke: AttributeInvoke<T>, ctx: ItemRenderContext): Promise<void>;
     renderOverlayPre?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
     renderOverlayPost?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
     overlay?(invoke: AttributeInvoke<T>, render: ItemRender): Promise<void>;

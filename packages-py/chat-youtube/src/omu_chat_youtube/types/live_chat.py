@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from .chatactions import ChatActions
 from .contents import Continuations
@@ -16,4 +16,5 @@ class ContinuationContents(TypedDict):
 
 
 class live_chat(YoutubeResponse):
-    continuationContents: ContinuationContents
+    continuationContents: NotRequired[ContinuationContents]
+    error: NotRequired[Any]

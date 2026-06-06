@@ -34,10 +34,10 @@ class ProviderService(abc.ABC):
     @abc.abstractmethod
     def provider(self) -> Provider: ...
 
-    async def start_url(self, ctx: ProviderContext, url: str):
+    async def start_url(self, ctx: ProviderContext, url: str) -> None:
         return
 
-    async def start_channel(self, ctx: ProviderContext, channel: Channel):
+    async def start_channel(self, ctx: ProviderContext, channel: Channel) -> None:
         return
 
     async def stop_channel(self, ctx: ProviderContext, channel: Channel):

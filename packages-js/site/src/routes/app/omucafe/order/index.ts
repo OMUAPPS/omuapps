@@ -73,9 +73,11 @@ export class OrderSystem {
         if (!match) return;
 
         if (existingOrder) {
+            const newProducts = match.products.filter((product) => existingOrder.products.findIndex((item) => item.id === product.id) !== -1);
+            if (newProducts.length === 0) return;
             order = {
                 ...existingOrder,
-                products: [...existingOrder.products, ...match.products],
+                products: [...existingOrder.products, ...newProducts],
             };
         } else {
             // 新規オーダーの作成

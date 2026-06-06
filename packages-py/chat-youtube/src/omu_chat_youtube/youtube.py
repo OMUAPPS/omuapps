@@ -2,6 +2,7 @@ import asyncio
 import urllib
 import urllib.parse
 
+from loguru import logger
 from omu import Omu
 from omu.identifier import Identifier
 from omu_chat import Chat
@@ -50,7 +51,7 @@ class YoutubeChatService(ProviderService):
         video_id = self._parse_video_id_by_url(url)
         if video_id is None:
             return
-        return await self._start_by_video_id(video_id, None)
+        await self._start_by_video_id(video_id, None)
 
     async def _start_by_video_id(self, video_id: str, channel: Channel | None):
         room_id = YOUTUBE_ID / video_id
@@ -60,19 +61,24 @@ class YoutubeChatService(ProviderService):
         room = Room(
             provider_id=YOUTUBE_ID,
             id=room_id,
-            connected=False,
-            status="offline",
+            channel_id=channel.id if channel else None,
+            connected=True,
+            status="online",
             metadata={
                 "url": f"https://www.youtube.com/watch?v={video_id}",
             },
         )
 
-        chat = await YoutubeChat.create(
-            self,
-            self.chat,
-            room,
-            channel,
-        )
+        try:
+            chat = await YoutubeChat.create(
+                self,
+                self.chat,
+                room,
+                channel,
+            )
+        except Exception as e:
+            logger.opt(exception=e).error(f"Could not start YouTube chat for {video_id}")
+            return
         self.chats[room_id] = chat
         asyncio.create_task(chat.run())
 
@@ -91,10 +97,11 @@ class YoutubeChatService(ProviderService):
                     del self.chats[chat.room.id]
 
     async def stop_room(self, ctx: ProviderContext, room: Room):
-        if room.id in self.chats:
-            chat = self.chats[room.id]
-            await chat.stop()
-            del self.chats[room.id]
+        if room.id not in self.chats:
+            return
+        chat = self.chats[room.id]
+        await chat.stop()
+        del self.chats[room.id]
 
     async def is_online(self, room: Room) -> bool:
         return await self.extractor.is_online(video_id=room.id.path[-1])

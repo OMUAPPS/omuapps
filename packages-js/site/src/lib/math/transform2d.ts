@@ -1,4 +1,3 @@
-import { Mat3 } from './mat3.js';
 import { Mat4 } from './mat4.js';
 import { Vec2, type Vec2Like } from './vec2.js';
 
@@ -107,20 +106,12 @@ export class Transform2D {
         return Vec2.from(this.columns[2]);
     }
 
-    public getMat3(): Mat3 {
-        return new Mat3(
-            this.columns[0].x, this.columns[0].y, 0,
-            this.columns[1].x, this.columns[1].y, 0,
-            this.columns[2].x, this.columns[2].y, 1,
-        );
-    }
-
     public getMat4(): Mat4 {
         return new Mat4(
-            this.columns[0].x, this.columns[0].y, 0, 0,
-            this.columns[1].x, this.columns[1].y, 0, 0,
+            this.columns[0].x, this.columns[1].x, 0, this.columns[2].x,
+            this.columns[0].y, this.columns[1].y, 0, this.columns[2].y,
             0, 0, 1, 0,
-            this.columns[2].x, this.columns[2].y, 0, 1,
+            0, 0, 0, 1,
         );
     }
 }

@@ -126,8 +126,8 @@ export class Display {
                 gap: 10,
             });
             await draw.textAlign(textBounds.center, '注文はまだありません', Vec2.CENTER, PALETTE_RGB.ACCENT);
-            await this.renderButton('写真を取る', photoButton, {
-                title: '写真を取る',
+            await this.renderButton('写真を撮る', photoButton, {
+                title: '写真を撮る',
                 id: 'photo-mode',
                 priority: 1,
                 invoke: async () => {

@@ -637,23 +637,6 @@ export class GlFramebuffer {
         } else {
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, null, 0);
         }
-        // Check framebuffer status
-        const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
-        if (status !== this.gl.FRAMEBUFFER_COMPLETE) {
-            throw new Error(`Framebuffer is not complete: ${status}`);
-        }
-        // Check errors
-        const error = this.gl.getError();
-        if (error !== this.gl.NO_ERROR) {
-            const MAP: Record<number, string> = {
-                [this.gl.INVALID_ENUM]: 'INVALID_ENUM',
-                [this.gl.INVALID_VALUE]: 'INVALID_VALUE',
-                [this.gl.INVALID_OPERATION]: 'INVALID_OPERATION',
-                [this.gl.OUT_OF_MEMORY]: 'OUT_OF_MEMORY',
-                [this.gl.INVALID_FRAMEBUFFER_OPERATION]: 'INVALID_FRAMEBUFFER_OPERATION',
-            };
-            throw new Error(`Error attaching texture to framebuffer: ${MAP[error] ?? error}`);
-        }
     }
 
     public readPixels(x: number, y: number, width: number, height: number, format: ColorFormat): Uint8Array {

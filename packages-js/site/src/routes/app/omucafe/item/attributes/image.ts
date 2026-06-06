@@ -4,7 +4,7 @@ import { validateAsset, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
 import type { ValidateResult } from '../../core/helper';
 import placeholder from '../../resources/img/placeholder.png';
-import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, LoadContext, RenderContext } from '../attribute-handler';
+import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, HashContext, ItemMouseEvent, ItemRenderContext, LoadContext } from '../attribute-handler';
 import type { ItemPool } from '../item';
 import ImageEditor from './ImageEditor.svelte';
 
@@ -41,6 +41,10 @@ export class AttributeImage implements AttributeHandler<AttrImage> {
         }
 
         return { type: 'valid', value: value };
+    }
+
+    async hash(invoke: AttributeInvoke<AttrImage>, ctx: HashContext): Promise<void> {
+        ctx.hash += `image:${JSON.stringify(invoke.attr)}`;
     }
 
     /**
@@ -107,7 +111,7 @@ export class AttributeImage implements AttributeHandler<AttrImage> {
         ctx.render = ctx.render.union(bounds);
     }
 
-    async getRenderPass({ attr }: AttributeInvoke<AttrImage>, ctx: RenderContext): Promise<void> {
+    async getRenderPass({ attr }: AttributeInvoke<AttrImage>, ctx: ItemRenderContext): Promise<void> {
         const textureResult = this.game.asset.getTexture(attr.asset);
 
         if (textureResult.type !== 'ready') return;

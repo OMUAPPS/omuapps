@@ -33,7 +33,6 @@ omu = Omu(APP)
 chat = Chat(omu)
 
 provider_services: dict[Identifier, ProviderService] = {}
-provider_channels: dict[Identifier, list[Identifier]] = {}
 ctx = ProviderContext()
 
 
@@ -42,7 +41,6 @@ async def register_services():
     for service_class in retrieve_services():
         service = await service_class.create(omu, chat)
         provider_services[service.provider.id] = service
-        provider_channels[service.provider.id] = []
         await chat.providers.add(service.provider)
 
 
@@ -65,23 +63,17 @@ async def update_channel(channel: Channel, service: ProviderService):
 
 
 async def start_channel(channel: Channel, service: ProviderService):
-    if channel.id in provider_channels[channel.provider_id]:
-        return
     try:
         await service.start_channel(ctx, channel)
     except Exception as e:
         logger.opt(exception=e).error(f"Error starting channel {channel.key()}")
-    provider_channels[channel.provider_id].append(channel.id)
 
 
 async def stop_channel(channel: Channel, service: ProviderService):
-    if channel.id not in provider_channels[channel.provider_id]:
-        return
     try:
         await service.stop_channel(ctx, channel)
     except Exception as e:
         logger.opt(exception=e).error(f"Error stopping channel {channel.key()}")
-    provider_channels[channel.provider_id].remove(channel.id)
 
 
 @chat.on(events.channel.add)
@@ -134,11 +126,10 @@ async def check_channels():
 
 
 async def should_remove(room: Room, provider_service: ProviderService):
-    if room.channel_id is None:
-        return False
-    channel = await chat.channels.get(room.channel_id.key())
-    if channel and not channel.active:
-        return True
+    if room.channel_id:
+        channel = await chat.channels.get(room.channel_id.key())
+        if channel and not channel.active:
+            return True
     try:
         online = await provider_service.is_online(room)
         return not online
@@ -157,7 +148,7 @@ async def stop_room(room: Room):
 
 
 async def check_rooms():
-    rooms = await chat.rooms.fetch_all()
+    rooms = await chat.rooms.fetch_items(64, backward=True)
     for room in filter(lambda r: r.connected, rooms.values()):
         provider = provider_services.get(room.provider_id)
         if provider is None:

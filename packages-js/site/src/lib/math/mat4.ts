@@ -1,10 +1,10 @@
 import { AABB2, type AABB2Like } from './aabb2.js';
 import { Mat2 } from './mat2.js';
 import { Mat3 } from './mat3.js';
-import type { Quaternion } from './quaternion.js';
+import { Quaternion } from './quaternion.js';
 import { Vec2, type Vec2Like } from './vec2.js';
 import { Vec3, type Vec3Like } from './vec3.js';
-import { Vec4 } from './vec4.js';
+import { Vec4, type Vec4Like } from './vec4.js';
 
 export type Mat4Like = {
     m00: number; m01: number; m02: number; m03: number;
@@ -27,6 +27,16 @@ export class Mat4 {
         0, 0, 0, 0,
     );
 
+    /**
+     * internally:
+     *
+     * | m00 m01 m02 m03 |
+     * | m10 m11 m12 m13 |
+     * | m20 m21 m22 m23 |
+     * | m30 m31 m32 m33 |
+     *
+     * exported to WebGL as column-major Float32Array
+     */
     public readonly elements: Float32Array;
 
     constructor(
@@ -35,31 +45,13 @@ export class Mat4 {
         readonly m20: number, readonly m21: number, readonly m22: number, readonly m23: number,
         readonly m30: number, readonly m31: number, readonly m32: number, readonly m33: number,
     ) {
+        // column-major for WebGL
         this.elements = new Float32Array([
-            m00, m01, m02, m03,
-            m10, m11, m12, m13,
-            m20, m21, m22, m23,
-            m30, m31, m32, m33,
+            m00, m10, m20, m30,
+            m01, m11, m21, m31,
+            m02, m12, m22, m32,
+            m03, m13, m23, m33,
         ]);
-    }
-
-    public static orthographic(left: number, right: number, bottom: number, top: number, near: number, far: number): Mat4 {
-        return new Mat4(
-            2 / (right - left), 0, 0, 0,
-            0, 2 / (top - bottom), 0, 0,
-            0, 0, -2 / (far - near), 0,
-            (right + left) / (left - right), (top + bottom) / (bottom - top), (far + near) / (near - far), 1,
-        );
-    }
-
-    public static perspective(fov: number, aspect: number, near: number, far: number): Mat4 {
-        const f = 1 / Math.tan(fov / 2);
-        return new Mat4(
-            f / aspect, 0, 0, 0,
-            0, f, 0, 0,
-            0, 0, (far + near) / (near - far), -1,
-            0, 0, (2 * far * near) / (near - far), 0,
-        );
     }
 
     public static from(mat4like: Mat4Like): Mat4 {
@@ -77,31 +69,6 @@ export class Mat4 {
             this.m10 + mat.m10, this.m11 + mat.m11, this.m12 + mat.m12, this.m13 + mat.m13,
             this.m20 + mat.m20, this.m21 + mat.m21, this.m22 + mat.m22, this.m23 + mat.m23,
             this.m30 + mat.m30, this.m31 + mat.m31, this.m32 + mat.m32, this.m33 + mat.m33,
-        );
-    }
-
-    public multiply(right: Mat4Like): Mat4 {
-        const nm00 = this.m00 * right.m00 + this.m10 * right.m01 + this.m20 * right.m02 + this.m30 * right.m03;
-        const nm01 = this.m01 * right.m00 + this.m11 * right.m01 + this.m21 * right.m02 + this.m31 * right.m03;
-        const nm02 = this.m02 * right.m00 + this.m12 * right.m01 + this.m22 * right.m02 + this.m32 * right.m03;
-        const nm03 = this.m03 * right.m00 + this.m13 * right.m01 + this.m23 * right.m02 + this.m33 * right.m03;
-        const nm10 = this.m00 * right.m10 + this.m10 * right.m11 + this.m20 * right.m12 + this.m30 * right.m13;
-        const nm11 = this.m01 * right.m10 + this.m11 * right.m11 + this.m21 * right.m12 + this.m31 * right.m13;
-        const nm12 = this.m02 * right.m10 + this.m12 * right.m11 + this.m22 * right.m12 + this.m32 * right.m13;
-        const nm13 = this.m03 * right.m10 + this.m13 * right.m11 + this.m23 * right.m12 + this.m33 * right.m13;
-        const nm20 = this.m00 * right.m20 + this.m10 * right.m21 + this.m20 * right.m22 + this.m30 * right.m23;
-        const nm21 = this.m01 * right.m20 + this.m11 * right.m21 + this.m21 * right.m22 + this.m31 * right.m23;
-        const nm22 = this.m02 * right.m20 + this.m12 * right.m21 + this.m22 * right.m22 + this.m32 * right.m23;
-        const nm23 = this.m03 * right.m20 + this.m13 * right.m21 + this.m23 * right.m22 + this.m33 * right.m23;
-        const nm30 = this.m00 * right.m30 + this.m10 * right.m31 + this.m20 * right.m32 + this.m30 * right.m33;
-        const nm31 = this.m01 * right.m30 + this.m11 * right.m31 + this.m21 * right.m32 + this.m31 * right.m33;
-        const nm32 = this.m02 * right.m30 + this.m12 * right.m31 + this.m22 * right.m32 + this.m32 * right.m33;
-        const nm33 = this.m03 * right.m30 + this.m13 * right.m31 + this.m23 * right.m32 + this.m33 * right.m33;
-        return new Mat4(
-            nm00, nm01, nm02, nm03,
-            nm10, nm11, nm12, nm13,
-            nm20, nm21, nm22, nm23,
-            nm30, nm31, nm32, nm33,
         );
     }
 
@@ -135,118 +102,6 @@ export class Mat4 {
         );
     }
 
-    public scale(x: number, y: number, z: number): Mat4 {
-        return new Mat4(
-            this.m00 * x, this.m01 * y, this.m02 * z, this.m03,
-            this.m10 * x, this.m11 * y, this.m12 * z, this.m13,
-            this.m20 * x, this.m21 * y, this.m22 * z, this.m23,
-            this.m30, this.m31, this.m32, this.m33,
-        );
-    }
-
-    public scaleAt(x: number, y: number, z: number, anchor: Vec3Like) {
-        return this.translate(-anchor.x, -anchor.y, -anchor.z)
-            .scale(x, y, z)
-            .translate(anchor.x, anchor.y, anchor.z);
-    }
-
-    public translate(x: number, y: number, z: number): Mat4 {
-        return new Mat4(
-            this.m00, this.m01, this.m02, this.m03,
-            this.m10, this.m11, this.m12, this.m13,
-            this.m20, this.m21, this.m22, this.m23,
-            this.m00 * x + this.m10 * y + this.m20 * z + this.m30,
-            this.m01 * x + this.m11 * y + this.m21 * z + this.m31,
-            this.m02 * x + this.m12 * y + this.m22 * z + this.m32,
-            this.m03 * x + this.m13 * y + this.m23 * z + this.m33,
-        );
-    }
-
-    public rotateX(angle: number): Mat4 {
-        const c = Math.cos(angle);
-        const s = Math.sin(angle);
-        return new Mat4(
-            this.m00, this.m01, this.m02, this.m03,
-            this.m10 * c + this.m20 * s, this.m11 * c + this.m21 * s, this.m12 * c + this.m22 * s, this.m13 * c + this.m23 * s,
-            this.m20 * c - this.m10 * s, this.m21 * c - this.m11 * s, this.m22 * c - this.m12 * s, this.m23 * c - this.m13 * s,
-            this.m30, this.m31, this.m32, this.m33,
-        );
-    }
-
-    public rotateY(angle: number): Mat4 {
-        const c = Math.cos(angle);
-        const s = Math.sin(angle);
-        return new Mat4(
-            this.m00 * c - this.m20 * s, this.m01, this.m02 * c - this.m22 * s, this.m03,
-            this.m10, this.m11, this.m12, this.m13,
-            this.m00 * s + this.m20 * c, this.m01, this.m02 * s + this.m22 * c, this.m03,
-            this.m30, this.m31, this.m32, this.m33,
-        );
-    }
-
-    public rotateZ(angle: number): Mat4 {
-        const c = Math.cos(angle);
-        const s = Math.sin(angle);
-        return new Mat4(
-            this.m00 * c + this.m10 * s, this.m01 * c + this.m11 * s, this.m02 * c + this.m12 * s, this.m03 * c + this.m13 * s,
-            this.m10 * c - this.m00 * s, this.m11 * c - this.m01 * s, this.m12 * c - this.m02 * s, this.m13 * c - this.m03 * s,
-            this.m20, this.m21, this.m22, this.m23,
-            this.m30, this.m31, this.m32, this.m33,
-        );
-    }
-
-    public rotate(quaternion: Quaternion): Mat4 {
-        const w2 = quaternion.w * quaternion.w, x2 = quaternion.x * quaternion.x;
-        const y2 = quaternion.y * quaternion.y, z2 = quaternion.z * quaternion.z;
-        const zw = quaternion.z * quaternion.w, dzw = zw + zw, xy = quaternion.x * quaternion.y, dxy = xy + xy;
-        const xz = quaternion.x * quaternion.z, dxz = xz + xz, yw = quaternion.y * quaternion.w, dyw = yw + yw;
-        const yz = quaternion.y * quaternion.z, dyz = yz + yz, xw = quaternion.x * quaternion.w, dxw = xw + xw;
-        const rm00 = w2 + x2 - z2 - y2;
-        const rm01 = dxy + dzw;
-        const rm02 = dxz - dyw;
-        const rm10 = -dzw + dxy;
-        const rm11 = y2 - z2 + w2 - x2;
-        const rm12 = dyz + dxw;
-        const rm20 = dyw + dxz;
-        const rm21 = dyz - dxw;
-        const rm22 = z2 - y2 - x2 + w2;
-        const nm00 = this.m00 * rm00 + this.m10 * rm01 + this.m20 * rm02;
-        const nm01 = this.m01 * rm00 + this.m11 * rm01 + this.m21 * rm02;
-        const nm02 = this.m02 * rm00 + this.m12 * rm01 + this.m22 * rm02;
-        const nm03 = this.m03 * rm00 + this.m13 * rm01 + this.m23 * rm02;
-        const nm10 = this.m00 * rm10 + this.m10 * rm11 + this.m20 * rm12;
-        const nm11 = this.m01 * rm10 + this.m11 * rm11 + this.m21 * rm12;
-        const nm12 = this.m02 * rm10 + this.m12 * rm11 + this.m22 * rm12;
-        const nm13 = this.m03 * rm10 + this.m13 * rm11 + this.m23 * rm12;
-        return new Mat4(
-            nm00, nm01, nm02, nm03,
-            nm10, nm11, nm12, nm13,
-            this.m00 * rm20 + this.m10 * rm21 + this.m20 * rm22,
-            this.m01 * rm20 + this.m11 * rm21 + this.m21 * rm22,
-            this.m02 * rm20 + this.m12 * rm21 + this.m22 * rm22,
-            this.m03 * rm20 + this.m13 * rm21 + this.m23 * rm22,
-            this.m30, this.m31, this.m32, this.m33,
-        );
-    }
-
-    public determinant(): number {
-        return (
-            this.m00 * this.m11 * this.m22 * this.m33 + this.m01 * this.m12 * this.m23 * this.m30 +
-            this.m02 * this.m13 * this.m20 * this.m31 + this.m03 * this.m10 * this.m21 * this.m32 -
-            this.m03 * this.m12 * this.m21 * this.m30 - this.m02 * this.m10 * this.m23 * this.m31 -
-            this.m01 * this.m13 * this.m22 * this.m30 - this.m00 * this.m11 * this.m23 * this.m32
-        );
-    }
-
-    public transpose(): Mat4 {
-        return new Mat4(
-            this.m00, this.m10, this.m20, this.m30,
-            this.m01, this.m11, this.m21, this.m31,
-            this.m02, this.m12, this.m22, this.m32,
-            this.m03, this.m13, this.m23, this.m33,
-        );
-    }
-
     public inverse(): Mat4 {
         const det = this.determinant();
         if (det === 0) {
@@ -277,16 +132,66 @@ export class Mat4 {
         );
     }
 
-    public transform2(point: Vec2Like): Vec2 {
-        const x = this.m00 * point.x + this.m10 * point.y + this.m30;
-        const y = this.m01 * point.x + this.m11 * point.y + this.m31;
-        return new Vec2(x, y);
-    }
+    public decompose(): { translation: Vec3; rotation: Quaternion; scale: Vec3 } {
+        const translation = new Vec3(this.m30, this.m31, this.m32);
 
-    public basisTransform2(point: Vec2Like): Vec2 {
-        const x = this.m00 * point.x + this.m10 * point.y;
-        const y = this.m01 * point.x + this.m11 * point.y;
-        return new Vec2(x, y);
+        // row-vector / row-major 想定で、各「行」の長さをスケールとして取る
+        const scaleX = Math.hypot(this.m00, this.m01, this.m02);
+        const scaleY = Math.hypot(this.m10, this.m11, this.m12);
+        const scaleZ = Math.hypot(this.m20, this.m21, this.m22);
+
+        const invScaleX = scaleX !== 0 ? 1 / scaleX : 0;
+        const invScaleY = scaleY !== 0 ? 1 / scaleY : 0;
+        const invScaleZ = scaleZ !== 0 ? 1 / scaleZ : 0;
+
+        // quaternion 抽出用に、正規化した 3x3 を「転置して」入れる
+        const r00 = this.m00 * invScaleX;
+        const r01 = this.m10 * invScaleY;
+        const r02 = this.m20 * invScaleZ;
+        const r10 = this.m01 * invScaleX;
+        const r11 = this.m11 * invScaleY;
+        const r12 = this.m21 * invScaleZ;
+        const r20 = this.m02 * invScaleX;
+        const r21 = this.m12 * invScaleY;
+        const r22 = this.m22 * invScaleZ;
+
+        const trace = r00 + r11 + r22;
+
+        let x: number, y: number, z: number, w: number;
+
+        if (trace > 0) {
+            const s = Math.sqrt(trace + 1.0) * 2;
+            w = 0.25 * s;
+            x = (r21 - r12) / s;
+            y = (r02 - r20) / s;
+            z = (r10 - r01) / s;
+        } else if (r00 > r11 && r00 > r22) {
+            const s = Math.sqrt(1.0 + r00 - r11 - r22) * 2;
+            w = (r21 - r12) / s;
+            x = 0.25 * s;
+            y = (r01 + r10) / s;
+            z = (r02 + r20) / s;
+        } else if (r11 > r22) {
+            const s = Math.sqrt(1.0 + r11 - r00 - r22) * 2;
+            w = (r02 - r20) / s;
+            x = (r01 + r10) / s;
+            y = 0.25 * s;
+            z = (r12 + r21) / s;
+        } else {
+            const s = Math.sqrt(1.0 + r22 - r00 - r11) * 2;
+            w = (r10 - r01) / s;
+            x = (r02 + r20) / s;
+            y = (r12 + r21) / s;
+            z = 0.25 * s;
+        }
+
+        const rotation = new Quaternion(x, y, z, w).normalize();
+
+        return {
+            translation,
+            rotation,
+            scale: new Vec3(scaleX, scaleY, scaleZ),
+        };
     }
 
     public transformAABB2(aabb: AABB2Like): AABB2 {
@@ -317,21 +222,6 @@ export class Mat4 {
         ]);
     }
 
-    public transform3(point: Vec3): Vec3 {
-        const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30;
-        const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31;
-        const z = this.m02 * point.x + this.m12 * point.y + this.m22 * point.z + this.m32;
-        return new Vec3(x, y, z);
-    }
-
-    public transform4(point: Vec4): Vec4 {
-        const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30 * point.w;
-        const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31 * point.w;
-        const z = this.m02 * point.x + this.m12 * point.y + this.m22 * point.z + this.m32 * point.w;
-        const w = this.m03 * point.x + this.m13 * point.y + this.m23 * point.z + this.m33 * point.w;
-        return new Vec4(x, y, z, w);
-    }
-
     public equals(other: Mat4): boolean {
         return (
             this.m00 === other.m00 && this.m01 === other.m01 && this.m02 === other.m02 && this.m03 === other.m03 &&
@@ -341,12 +231,281 @@ export class Mat4 {
         );
     }
 
+    public asMat2(): Mat2 {
+        return new Mat2(
+            this.m00, this.m01,
+            this.m10, this.m11,
+        );
+    }
+
+    public static translation(x: number, y: number, z: number): Mat4 {
+        return new Mat4(
+            1, 0, 0, x,
+            0, 1, 0, y,
+            0, 0, 1, z,
+            0, 0, 0, 1,
+        );
+    }
+
+    public static scaling(x: number, y: number, z: number): Mat4 {
+        return new Mat4(
+            x, 0, 0, 0,
+            0, y, 0, 0,
+            0, 0, z, 0,
+            0, 0, 0, 1,
+        );
+    }
+
+    public static rotationX(angle: number): Mat4 {
+        const c = Math.cos(angle);
+        const s = Math.sin(angle);
+
+        return new Mat4(
+            1, 0, 0, 0,
+            0, c, -s, 0,
+            0, s, c, 0,
+            0, 0, 0, 1,
+        );
+    }
+
+    public static rotationY(angle: number): Mat4 {
+        const c = Math.cos(angle);
+        const s = Math.sin(angle);
+
+        return new Mat4(
+            c, 0, s, 0,
+            0, 1, 0, 0,
+            -s, 0, c, 0,
+            0, 0, 0, 1,
+        );
+    }
+
+    public static rotationZ(angle: number): Mat4 {
+        const c = Math.cos(angle);
+        const s = Math.sin(angle);
+
+        return new Mat4(
+            c, -s, 0, 0,
+            s, c, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        );
+    }
+
+    public static rotation(q: Quaternion): Mat4 {
+        const xx = q.x * q.x;
+        const yy = q.y * q.y;
+        const zz = q.z * q.z;
+
+        const xy = q.x * q.y;
+        const xz = q.x * q.z;
+        const yz = q.y * q.z;
+
+        const wx = q.w * q.x;
+        const wy = q.w * q.y;
+        const wz = q.w * q.z;
+
+        return new Mat4(
+            1 - 2 * (yy + zz),
+            2 * (xy - wz),
+            2 * (xz + wy),
+            0,
+
+            2 * (xy + wz),
+            1 - 2 * (xx + zz),
+            2 * (yz - wx),
+            0,
+
+            2 * (xz - wy),
+            2 * (yz + wx),
+            1 - 2 * (xx + yy),
+            0,
+
+            0, 0, 0, 1,
+        );
+    }
+
+    public static perspective(
+        fov: number,
+        aspect: number,
+        near: number,
+        far: number,
+    ): Mat4 {
+        const f = 1 / Math.tan(fov / 2);
+
+        return new Mat4(
+            f / aspect, 0, 0, 0,
+            0, f, 0, 0,
+            0, 0, (far + near) / (near - far), (2 * far * near) / (near - far),
+            0, 0, -1, 0,
+        );
+    }
+
+    public static orthographic(
+        left: number,
+        top: number,
+        right: number,
+        bottom: number,
+        near: number,
+        far: number,
+    ): Mat4 {
+        return new Mat4(
+            2 / (right - left),
+            0,
+            0,
+            -(right + left) / (right - left),
+
+            0,
+            2 / (top - bottom),
+            0,
+            -(top + bottom) / (top - bottom),
+
+            0,
+            0,
+            -2 / (far - near),
+            -(far + near) / (far - near),
+
+            0,
+            0,
+            0,
+            1,
+        );
+    }
+
+    public multiply(b: Mat4Like): Mat4 {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const a = this;
+
+        return new Mat4(
+            a.m00 * b.m00 + a.m01 * b.m10 + a.m02 * b.m20 + a.m03 * b.m30,
+            a.m00 * b.m01 + a.m01 * b.m11 + a.m02 * b.m21 + a.m03 * b.m31,
+            a.m00 * b.m02 + a.m01 * b.m12 + a.m02 * b.m22 + a.m03 * b.m32,
+            a.m00 * b.m03 + a.m01 * b.m13 + a.m02 * b.m23 + a.m03 * b.m33,
+
+            a.m10 * b.m00 + a.m11 * b.m10 + a.m12 * b.m20 + a.m13 * b.m30,
+            a.m10 * b.m01 + a.m11 * b.m11 + a.m12 * b.m21 + a.m13 * b.m31,
+            a.m10 * b.m02 + a.m11 * b.m12 + a.m12 * b.m22 + a.m13 * b.m32,
+            a.m10 * b.m03 + a.m11 * b.m13 + a.m12 * b.m23 + a.m13 * b.m33,
+
+            a.m20 * b.m00 + a.m21 * b.m10 + a.m22 * b.m20 + a.m23 * b.m30,
+            a.m20 * b.m01 + a.m21 * b.m11 + a.m22 * b.m21 + a.m23 * b.m31,
+            a.m20 * b.m02 + a.m21 * b.m12 + a.m22 * b.m22 + a.m23 * b.m32,
+            a.m20 * b.m03 + a.m21 * b.m13 + a.m22 * b.m23 + a.m23 * b.m33,
+
+            a.m30 * b.m00 + a.m31 * b.m10 + a.m32 * b.m20 + a.m33 * b.m30,
+            a.m30 * b.m01 + a.m31 * b.m11 + a.m32 * b.m21 + a.m33 * b.m31,
+            a.m30 * b.m02 + a.m31 * b.m12 + a.m32 * b.m22 + a.m33 * b.m32,
+            a.m30 * b.m03 + a.m31 * b.m13 + a.m32 * b.m23 + a.m33 * b.m33,
+        );
+    }
+
+    public translate(x: number, y: number, z: number): Mat4 {
+        return this.multiply(Mat4.translation(x, y, z));
+    }
+
+    public scale(x: number, y: number, z: number): Mat4 {
+        return this.multiply(Mat4.scaling(x, y, z));
+    }
+
+    public rotateX(angle: number): Mat4 {
+        return this.multiply(Mat4.rotationX(angle));
+    }
+
+    public rotateY(angle: number): Mat4 {
+        return this.multiply(Mat4.rotationY(angle));
+    }
+
+    public rotateZ(angle: number): Mat4 {
+        return this.multiply(Mat4.rotationZ(angle));
+    }
+
+    public rotate(q: Quaternion): Mat4 {
+        return this.multiply(Mat4.rotation(q));
+    }
+
+    public transpose(): Mat4 {
+        return new Mat4(
+            this.m00, this.m10, this.m20, this.m30,
+            this.m01, this.m11, this.m21, this.m31,
+            this.m02, this.m12, this.m22, this.m32,
+            this.m03, this.m13, this.m23, this.m33,
+        );
+    }
+
+    public transform2(v: Vec2Like): Vec2 {
+        const x = this.m00 * v.x + this.m01 * v.y + this.m03;
+        const y = this.m10 * v.x + this.m11 * v.y + this.m13;
+
+        return new Vec2(x, y);
+    }
+
+    public transform3(v: Vec3Like): Vec3 {
+        const x =
+            this.m00 * v.x +
+            this.m01 * v.y +
+            this.m02 * v.z +
+            this.m03;
+
+        const y =
+            this.m10 * v.x +
+            this.m11 * v.y +
+            this.m12 * v.z +
+            this.m13;
+
+        const z =
+            this.m20 * v.x +
+            this.m21 * v.y +
+            this.m22 * v.z +
+            this.m23;
+
+        return new Vec3(x, y, z);
+    }
+
+    public basisTransform2(v: Vec2Like): Vec2 {
+        const x = this.m00 * v.x + this.m01 * v.y;
+        const y = this.m10 * v.x + this.m11 * v.y;
+
+        return new Vec2(x, y);
+    }
+
+    public determinant(): number {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const m = this;
+
+        return (
+            m.m03 * m.m12 * m.m21 * m.m30 - m.m02 * m.m13 * m.m21 * m.m30 -
+            m.m03 * m.m11 * m.m22 * m.m30 + m.m01 * m.m13 * m.m22 * m.m30 +
+            m.m02 * m.m11 * m.m23 * m.m30 - m.m01 * m.m12 * m.m23 * m.m30 -
+
+            m.m03 * m.m12 * m.m20 * m.m31 + m.m02 * m.m13 * m.m20 * m.m31 +
+            m.m03 * m.m10 * m.m22 * m.m31 - m.m00 * m.m13 * m.m22 * m.m31 -
+            m.m02 * m.m10 * m.m23 * m.m31 + m.m00 * m.m12 * m.m23 * m.m31 +
+
+            m.m03 * m.m11 * m.m20 * m.m32 - m.m01 * m.m13 * m.m20 * m.m32 -
+            m.m03 * m.m10 * m.m21 * m.m32 + m.m00 * m.m13 * m.m21 * m.m32 +
+            m.m01 * m.m10 * m.m23 * m.m32 - m.m00 * m.m11 * m.m23 * m.m32 -
+
+            m.m02 * m.m11 * m.m20 * m.m33 + m.m01 * m.m12 * m.m20 * m.m33 +
+            m.m02 * m.m10 * m.m21 * m.m33 - m.m00 * m.m12 * m.m21 * m.m33 -
+            m.m01 * m.m10 * m.m22 * m.m33 + m.m00 * m.m11 * m.m22 * m.m33
+        );
+    }
+
     public get offset(): Vec4 {
         return new Vec4(
-            this.m30,
-            this.m31,
-            this.m32,
+            this.m03,
+            this.m13,
+            this.m23,
             this.m33,
+        );
+    }
+
+    public setOffset(offset: Vec4Like): Mat4 {
+        return new Mat4(
+            this.m00, this.m01, this.m02, offset.x,
+            this.m10, this.m11, this.m12, offset.y,
+            this.m20, this.m21, this.m22, offset.z,
+            this.m30, this.m31, this.m32, offset.w,
         );
     }
 
@@ -355,13 +514,6 @@ export class Mat4 {
             this.m00, this.m01, this.m02,
             this.m10, this.m11, this.m12,
             this.m20, this.m21, this.m22,
-        );
-    }
-
-    public asMat2(): Mat2 {
-        return new Mat2(
-            this.m00, this.m01,
-            this.m10, this.m11,
         );
     }
 }

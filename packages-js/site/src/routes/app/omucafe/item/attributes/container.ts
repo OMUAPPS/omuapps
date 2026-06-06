@@ -10,7 +10,7 @@ import { validateAssetTransform, type AssetTransform } from '../../core/game-ren
 import { validateEnum, type ValidateResult } from '../../core/helper';
 import type { Action } from '../../core/input-system';
 import { getTransform } from '../../core/transform';
-import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, ItemRender, LoadContext, RenderContext } from '../attribute-handler';
+import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, HashContext, ItemMouseEvent, ItemRender, ItemRenderContext, LoadContext } from '../attribute-handler';
 import type { Item, ItemPool } from '../item';
 import ContainerEditor from './ContainerEditor.svelte';
 
@@ -153,6 +153,10 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         return { type: 'valid', value: value };
     }
 
+    async hash(invoke: AttributeInvoke<AttrContainer>, ctx: HashContext): Promise<void> {
+        ctx.hash += `container:${JSON.stringify(invoke.attr)}`;
+    }
+
     /** * 蓋（カバー）用テクスチャの事前ロード
      */
     async load({ attr }: AttributeInvoke<AttrContainer>, ctx: LoadContext): Promise<void> {
@@ -250,7 +254,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         }
     }
 
-    async getRenderPass(invoke: AttributeInvoke<AttrContainer>, ctx: RenderContext): Promise<void> {
+    async getRenderPass(invoke: AttributeInvoke<AttrContainer>, ctx: ItemRenderContext): Promise<void> {
         const { attr, item } = invoke;
         if (attr.cover) {
             ctx.passes.push({
