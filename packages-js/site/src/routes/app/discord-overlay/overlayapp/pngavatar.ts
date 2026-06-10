@@ -1,9 +1,9 @@
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlTexture } from '$lib/components/canvas/glcontext.js';
-import type { RenderPipeline } from '$lib/components/canvas/pipeline.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { Timer } from '$lib/timer.js';
+import type { AppRenderer } from './app-renderer.js';
 import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
 import { MVP_VERTEX_SHADER, TEXTURE_FRAGMENT_SHADER } from './shaders.js';
 
@@ -136,37 +136,37 @@ export class PNGAvatar implements Avatar {
     private readonly geometry: QuadGeometry;
 
     private constructor(
-        private readonly pipeline: RenderPipeline,
+        private readonly app: AppRenderer,
         public program: GlProgram,
         public base: TextureMesh,
         public active?: TextureMesh,
         public deafened?: TextureMesh,
         public muted?: TextureMesh,
     ) {
-        this.primaryTarget = createRenderTarget(pipeline.context);
-        this.effectTarget = createRenderTarget(pipeline.context);
+        this.primaryTarget = createRenderTarget(app.pipeline.context);
+        this.effectTarget = createRenderTarget(app.pipeline.context);
 
-        this.geometry = createQuadGeometry(pipeline.context);
+        this.geometry = createQuadGeometry(app.pipeline.context);
     }
 
-    public static async load(pipeline: RenderPipeline, options: {
+    public static async load(app: AppRenderer, options: {
         base: Uint8Array;
         active?: Uint8Array;
         deafened?: Uint8Array;
         muted?: Uint8Array;
     }): Promise<PNGAvatar> {
-        const vertexShader = pipeline.context.createShader({ type: 'vertex', source: MVP_VERTEX_SHADER });
-        const fragmentShader = pipeline.context.createShader({ type: 'fragment', source: TEXTURE_FRAGMENT_SHADER });
-        const program = pipeline.context.createProgram([vertexShader, fragmentShader]);
+        const vertexShader = app.pipeline.context.createShader({ type: 'vertex', source: MVP_VERTEX_SHADER });
+        const fragmentShader = app.pipeline.context.createShader({ type: 'fragment', source: TEXTURE_FRAGMENT_SHADER });
+        const program = app.pipeline.context.createProgram([vertexShader, fragmentShader]);
 
         const [base, active, deafened, muted] = await Promise.all([
-            PNGAvatar.createTextureMesh(pipeline.context, options.base),
-            options.active ? PNGAvatar.createTextureMesh(pipeline.context, options.active) : undefined,
-            options.deafened ? PNGAvatar.createTextureMesh(pipeline.context, options.deafened) : undefined,
-            options.muted ? PNGAvatar.createTextureMesh(pipeline.context, options.muted) : undefined,
+            PNGAvatar.createTextureMesh(app.pipeline.context, options.base),
+            options.active ? PNGAvatar.createTextureMesh(app.pipeline.context, options.active) : undefined,
+            options.deafened ? PNGAvatar.createTextureMesh(app.pipeline.context, options.deafened) : undefined,
+            options.muted ? PNGAvatar.createTextureMesh(app.pipeline.context, options.muted) : undefined,
         ]);
 
-        return new PNGAvatar(pipeline, program, base, active || base, deafened || base, muted || base);
+        return new PNGAvatar(app, program, base, active || base, deafened || base, muted || base);
     }
 
     private static async createTextureMesh(context: GlContext, body: Uint8Array): Promise<TextureMesh> {
@@ -235,7 +235,7 @@ export class PNGAvatar implements Avatar {
         };
 
         const render = (action: AvatarAction, options: RenderOptions) => {
-            const { gl } = this.pipeline.context;
+            const { gl } = this.app.pipeline.context;
 
             updatePhysics(action);
 
@@ -283,7 +283,7 @@ export class PNGAvatar implements Avatar {
                 const ratio = height / width;
                 return AABB2.fromPoints([
                     new Vec2(-targetWidth / 2, -targetWidth / 2 * ratio),
-                    new Vec2(targetWidth, targetWidth * ratio),
+                    new Vec2(targetWidth / 2, targetWidth / 2 * ratio),
                 ]);
             },
             getContactCandidate: () => undefined,
@@ -295,18 +295,19 @@ export class PNGAvatar implements Avatar {
         const targetWidth = 300;
         const ratio = height / width;
 
-        this.pipeline.matrices.model.push();
-        this.pipeline.matrices.model.translate(0, bounceY, 0);
-        this.pipeline.draw.texture(
-            -targetWidth / 2, -targetWidth / 2 * ratio,
-            targetWidth, targetWidth * ratio,
+        this.app.pipeline.matrices.model.push();
+        this.app.pipeline.matrices.model.translate(0, bounceY, 0);
+        this.app.pipeline.draw.roundedRectTexture(
+            new Vec2(-targetWidth / 2, -targetWidth / 2 * ratio),
+            new Vec2(targetWidth / 2, targetWidth / 2 * ratio),
+            Math.max(1, targetWidth / 2 * this.app.config.align.border_radius),
             mesh.texture,
         );
-        this.pipeline.matrices.model.pop();
+        this.app.pipeline.matrices.model.pop();
     }
 
     private drawFullscreenQuad(texture: GlTexture) {
-        const { gl } = this.pipeline.context;
+        const { gl } = this.app.pipeline.context;
 
         this.program.getUniform('u_texture').asSampler2D().set(texture);
         this.program.getUniform('u_projection').asMat4().set(Mat4.IDENTITY);

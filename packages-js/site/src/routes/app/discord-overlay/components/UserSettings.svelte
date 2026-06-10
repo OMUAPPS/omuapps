@@ -169,7 +169,7 @@
         <Button onclick={() => {
             $config.users[id] = {
                 ...$config.users[id],
-                scale: 1,
+                scale: $config.align.default_scale,
                 position: DEFAULT_USER_CONFIG.position,
                 align: false,
             };

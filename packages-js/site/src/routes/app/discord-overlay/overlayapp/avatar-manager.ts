@@ -48,7 +48,7 @@ export class AvatarManager {
 
     private async createDefaultAvatar(url: string) {
         const base = await this.app.overlayApp.getSource({ type: 'url', url });
-        const model = await PNGAvatar.load(this.app.pipeline, {
+        const model = await PNGAvatar.load(this.app, {
             base,
         });
         return model;
@@ -74,7 +74,7 @@ export class AvatarManager {
             const active = avatar.active && await this.app.overlayApp.getSource(avatar.active);
             const deafened = avatar.deafened && await this.app.overlayApp.getSource(avatar.deafened);
             const muted = avatar.muted && await this.app.overlayApp.getSource(avatar.muted);
-            const model = await PNGAvatar.load(this.app.pipeline, {
+            const model = await PNGAvatar.load(this.app, {
                 base,
                 active,
                 deafened,

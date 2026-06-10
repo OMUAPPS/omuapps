@@ -44,13 +44,12 @@ const OUTLINE_WIDTH = 2;
 const TOOLTIP_ARROW_SCALE = 5;
 
 export class LayoutEngine {
-    public static AVATAR_FACE_RADIUS = 150;
+    public static AVATAR_FACE_RADIUS = 200;
     public static POSITION_OFFSET = this.AVATAR_FACE_RADIUS / 2;
     private radius = 24;
     private radiusVec = new Vec2(this.radius, this.radius);
     private hoveredAlign: string | undefined = undefined;
 
-    private alignDistances: Record<string, number> = {};
     private alignDistanceCache: Record<string, number> = {};
 
     constructor(
@@ -90,7 +89,7 @@ export class LayoutEngine {
 
     public getFitScaleFactor(): number {
         const MARGIN = this.app.config.align.margin;
-        const total = Object.keys(this.alignDistances).length;
+        const total = Object.keys(this.alignDistanceCache).length;
         const spacing = this.app.config.align.spacing / Math.min(this.app.config.align.spacing, (this.app.dimensions.x - MARGIN * 2) / total);
         return spacing;
     }
