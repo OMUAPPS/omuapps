@@ -34,7 +34,7 @@ out vec4 outColor;
 void main() {
     vec2 coord = v_texcoord * u_resolution;
     vec4 color = texture(u_texture, v_texcoord);
-    vec2 offset = vec2(-10.0, 10.0);
+    vec2 offset = vec2(-3.0, 3.0);
     float shadow = texture(u_texture, (v_texcoord * u_resolution + offset) / u_resolution).a;
     float shadowAlpha = shadow - color.a;
     outColor = mix(color, u_color, clamp(shadowAlpha, 0.0, 1.0));

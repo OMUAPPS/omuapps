@@ -193,6 +193,7 @@
     function handleWheel(e: WheelEvent) {
         const currentLevel = Math.log2(user.scale);
         user.scale = BetterMath.clamp(Math.pow(2, currentLevel - e.deltaY / 1000), 0.1, 5);
+        $config.align.default_scale = user.scale;
     }
 </script>
 

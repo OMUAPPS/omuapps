@@ -2,15 +2,15 @@
 
     import { comparator } from '$lib/helper';
     import { Vec2, type Vec2Like } from '$lib/math/vec2';
-    import { omu, Popup, Tooltip } from '@omujs/ui';
+    import { omu, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
     import DiscordRenderer from './components/DiscordRenderer.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
-    import VisualConfig from './components/VisualConfig.svelte';
     import { createUserConfig, DiscordOverlayApp } from './discord-overlay-app.js';
     import type { RPCSpeakingStates, RPCVoiceStates } from './discord/discord';
     import { dragState, selectedAvatar } from './states.js';
+    import VisualConfig from './components/VisualConfig.svelte';
 
     interface Props {
         voiceState: RPCVoiceStates;
@@ -34,6 +34,7 @@
         let user = $config.users[id];
         if (!user) {
             user = createUserConfig();
+            user.scale = $config.align.default_scale;
             $config.users[id] = user;
         }
         return user;
@@ -62,6 +63,8 @@
             }
         });
     });
+
+    let isSettingsOpen = $state(false);
 </script>
 
 <main>
@@ -107,69 +110,63 @@
                 $config.effects.backlightEffect.active = !$config.effects.backlightEffect.active;
             }} class:active={$config.effects.backlightEffect.active}>
                 <Tooltip>
-                    <p>逆光効果</p>
                     <small>注意！高GPU使用率</small>
                 </Tooltip>
+                <p>逆光効果</p>
                 <i class="ti ti-sun"></i>
             </button>
             <button onclick={() => {
                 $config.effects.shadow.active = !$config.effects.shadow.active;
             }} class:active={$config.effects.shadow.active}>
                 <Tooltip>
-                    <p>アバターの影</p>
                     <small>影をつけて見やすくします</small>
                 </Tooltip>
+                <p>アバターの影</p>
                 <i class="ti ti-ghost-3"></i>
             </button>
             <button onclick={() => {
                 $config.effects.speech.active = !$config.effects.speech.active;
             }} class:active={$config.effects.speech.active}>
                 <Tooltip>
-                    <p>明るさ調整</p>
                     <small>喋ってないときに暗くなり、喋ると明るくなります</small>
                 </Tooltip>
+                <p>明るさ調整</p>
                 <i class="ti ti-ghost-3"></i>
             </button>
             <button onclick={() => {
                 $config.show_name_tags = !$config.show_name_tags;
             }} class:active={$config.show_name_tags}>
-                <Tooltip>
-                    <p>名前を表示</p>
-                </Tooltip>
+                <p>名前を表示</p>
                 <i class="ti ti-label"></i>
             </button>
-            <Popup>
-                {#snippet children(open)}
-                    <button onclick={(event) => {
-                        open(event.currentTarget);
-                    }} class="settings">
-                        <Tooltip>
-                            <p>
-                                設定を開く
-                            </p>
-                        </Tooltip>
-                        <i class="ti ti-settings"></i>
-                    </button>
-                {/snippet}
-                {#snippet content()}
+            <button class:active={isSettingsOpen} class="setting-expand" onclick={() => {
+                isSettingsOpen = !isSettingsOpen;
+            }}>
+                詳細設定
+                {#if isSettingsOpen}
+                    <i class="ti ti-chevron-up"></i>
+                {:else}
+                    <i class="ti ti-chevron-down"></i>
+                {/if}
+            </button>
+            {#if isSettingsOpen}
+                <div class="settings omu-scroll">
                     <VisualConfig {overlayApp} />
-                {/snippet}
-            </Popup>
-            <button onclick={() => {
-                $world.attahed = {};
-                $world.objects = {};
-            }} class="screenshot">
-                <Tooltip>
+                </div>
+            {:else}
+                <hr>
+                <button onclick={takeScreenshot}>
+                    <p>スクリーンショット</p>
+                    <i class="ti ti-camera"></i>
+                </button>
+                <button onclick={() => {
+                    $world.attahed = {};
+                    $world.objects = {};
+                }}>
                     <p>アイテムをすべて消す</p>
-                </Tooltip>
-                <i class="ti ti-x"></i>
-            </button>
-            <button onclick={takeScreenshot}>
-                <Tooltip>
-                    <p>撮影</p>
-                </Tooltip>
-                <i class="ti ti-camera"></i>
-            </button>
+                    <i class="ti ti-photo-x"></i>
+                </button>
+            {/if}
         </div>
     {/if}
     {#if Object.keys(voiceState.states).length === 0}
@@ -261,16 +258,25 @@
         padding: 0.5rem;
         display: flex;
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-end;
         z-index: 1;
         margin: 1rem;
         margin-left: 24rem;
         animation: slide-in 0.0621s ease;
 
+        > hr {
+            margin-top: auto;
+            margin-bottom: 1rem;
+            width: 100%;
+            height: 1px;
+            background: var(--color-outline);
+            border: none;
+        }
+
         > button {
             border: none;
             border-radius: 4rem;
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             background: var(--color-bg-2);
             color: var(--color-1);
             outline: 1px solid var(--color-1);
@@ -279,7 +285,11 @@
             white-space: nowrap;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            gap: 0.5rem;
+            width: 13rem;
 
             &.active {
                 background: var(--color-1);
@@ -290,14 +300,29 @@
                 outline-offset: -3px;
             }
 
+            > p {
+                margin-left: 0.5rem;
+            }
+
             > i {
                 font-size: 1.25rem;
             }
         }
 
-        > .settings {
+        > .setting-expand {
             background: transparent;
             outline: none;
+        }
+
+        > .settings {
+            background: var(--color-bg-2);
+            outline: 1px solid var(--color-1);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: auto;
+            width: 30rem;
+            height: min(30rem, calc(100% - 10rem));
+            overflow: auto;
         }
 
         > .screenshot {

@@ -33,7 +33,7 @@ export interface RenderObject {
 export interface RenderOptions {
     effects: Effect[];
     objects: RenderObject[];
-};
+}
 
 export interface ContactCandidate {
     attach(object: GameObject, modelMatrix: Mat4, offset: Vec2): AttachedObject;

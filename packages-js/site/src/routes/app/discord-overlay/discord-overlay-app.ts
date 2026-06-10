@@ -16,11 +16,13 @@ export type Source = {
     type: 'url';
     url: string;
 };
+
 export type UserAvatarConfig = {
     pngtuber: {
         layer: number;
     };
 };
+
 export type UserConfig = {
     lastDraggedAt: number;
     position: Vec2Like;
@@ -29,6 +31,7 @@ export type UserConfig = {
     config: UserAvatarConfig;
     align: boolean;
 };
+
 export const DEFAULT_USER_CONFIG: UserConfig = {
     lastDraggedAt: 0,
     position: { x: 1920 / 2, y: 1080 / 2 },
@@ -41,6 +44,7 @@ export const DEFAULT_USER_CONFIG: UserConfig = {
     },
     align: true,
 };
+
 export function createUserConfig(): UserConfig {
     return JSON.parse(JSON.stringify(DEFAULT_USER_CONFIG));
 }
@@ -94,10 +98,13 @@ export type Config = {
         alignSide?: AlignSide;
         margin: number;
         spacing: number;
+        base_scale: number;
+        default_scale: number;
+        border_radius: number;
     };
 };
 export const DEFAULT_CONFIG: Config = {
-    version: 11,
+    version: 12,
     users: {},
     avatars: {},
     effects: {
@@ -116,6 +123,9 @@ export const DEFAULT_CONFIG: Config = {
         },
         margin: 100,
         spacing: 300,
+        base_scale: 1,
+        default_scale: 1,
+        border_radius: 1,
     },
 };
 
@@ -147,6 +157,17 @@ export class DiscordOverlayApp {
                     config.align = {
                         margin: 100,
                         spacing: 300,
+                        base_scale: 1,
+                        default_scale: 1,
+                        border_radius: 0,
+                    };
+                } else if (config.version === 11) {
+                    config.version = 12;
+                    config.align = {
+                        ...config.align,
+                        base_scale: 1,
+                        default_scale: 1,
+                        border_radius: 0,
                     };
                 }
                 return config;

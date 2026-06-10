@@ -76,7 +76,7 @@ export class AvatarRenderer {
 
         const avatarConfig = avatar.data.getConfig();
         const spacingFactor = this.app.layoutEngine.getFitScaleFactor();
-        this.applyAvatarScale(userConfig.scale / spacingFactor);
+        this.applyAvatarScale(userConfig.scale * this.app.config.align.base_scale / spacingFactor);
         if (avatarConfig) {
             this.applyAvatarTransform(avatarConfig);
         }
