@@ -1,26 +1,61 @@
 <script lang="ts">
-    import { browser } from '$app/environment';
-    import { Models } from '@omujs/chat';
-    import type { NetworkStatus } from '@omujs/omu/network';
-    import { Spinner, TableList } from '@omujs/ui';
-    import MessageEntry from '../_components/MessageEntry.svelte';
-    import { ChatOverlayApp } from '../chat-app.js';
-    import WindowResizer from './WindowResizer.svelte';
+    import { browser } from "$app/environment";
+    import { Models } from "@omujs/chat";
+    import type { NetworkStatus } from "@omujs/omu/network";
+    import { Spinner, TableList } from "@omujs/ui";
+    import { onDestroy } from "svelte";
+    import MessageEntry from "../_components/MessageEntry.svelte";
+    import { ChatOverlayApp } from "../chat-app.js";
+    import WindowResizer from "./WindowResizer.svelte";
 
-    let { omu, chat } = ChatOverlayApp.getInstance();
+    let { omu, chat, config } = ChatOverlayApp.getInstance();
 
     let status: NetworkStatus = $state(omu.network.status);
 
-    omu.network.event.status.listen((value) => {
+    const unlistenStatus = omu.network.event.status.listen((value) => {
         status = value;
     });
 
-    let sort = (a: Models.Message) => {
-        if (!a.createdAt) return 0;
-        return a.createdAt.getTime();
-    };
+    const MAX_ROOMS = 20;
 
-    let filter = (_: string, message: Models.Message) => message.deleted !== true;
+    let onlineRoomIds = $state<Set<string>>(new Set());
+
+    const updateOnlineRooms = (
+        rooms: Map<string, Models.Room> | Models.Room[],
+    ) => {
+        const roomArray =
+            rooms instanceof Map ? Array.from(rooms.values()) : rooms;
+        onlineRoomIds = new Set(
+            roomArray.filter((r) => r.connected).map((r) => r.id.key()),
+        );
+    };
+    const unlistenRooms = chat.rooms.listen(updateOnlineRooms);
+    const unlistenAuthors = chat.authors.listen();
+
+    omu.onReady(async () => {
+        const initialRooms = await chat.rooms.fetchItems({
+            limit: MAX_ROOMS,
+            backward: true,
+        });
+
+        updateOnlineRooms(Array.from(initialRooms.values()));
+    });
+
+    onDestroy(() => {
+        unlistenRooms();
+        unlistenAuthors();
+        unlistenStatus();
+    });
+
+    let filter = $derived((_key: string, entry: Models.Message) => {
+        if (entry.deleted) return false;
+        if (!$config.chat.filter.onlyConnected) return true;
+        return onlineRoomIds.has(entry.roomId.key());
+    });
+
+    let sort = (entry: Models.Message) => {
+        return entry.createdAt.getTime();
+    };
 </script>
 
 <main>
@@ -29,31 +64,38 @@
             <i class="ti ti-hand-stop"></i>
             <p>チャットを移動</p>
         </div>
-        <button title="close" onclick={() => {
-            close();
-        }}>
+        <button
+            title="close"
+            onclick={() => {
+                close();
+            }}
+        >
             <i class="ti ti-x"></i>
         </button>
     </div>
     <div class="list">
-        <TableList
-            table={chat.messages}
-            {filter}
-            {sort}
-            reverse={true}
-        >
+        <TableList table={chat.messages} {filter} {sort} reverse={true}>
             {#snippet component({ entry })}
                 <MessageEntry {entry} />
+            {/snippet}
+            {#snippet empty()}
+                <p class="empty">
+                    {#if onlineRoomIds.size === 0}
+                        接続している配信がありません
+                    {:else}
+                        メッセージがありません
+                    {/if}
+                </p>
             {/snippet}
         </TableList>
     </div>
     <div class="overlay">
-        {#if status.type === 'connecting'}
+        {#if status.type === "connecting"}
             <p>
                 接続中
                 <Spinner />
             </p>
-        {:else if status.type === 'disconnected'}
+        {:else if status.type === "disconnected"}
             {@const { reason } = status}
             切断されました
             {#if reason}
@@ -91,6 +133,13 @@
         color: #eee;
         margin: 0.25rem;
         animation: fade 0.2s forwards;
+    }
+
+    .empty {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #aaa;
+        margin-top: 50%;
     }
 
     main:hover {
@@ -154,7 +203,13 @@
 
     .list {
         height: 100%;
-        mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 4%, rgba(0,0,0,1) 95%, rgba(0,0,0,0) 100%);
+        mask-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 1) 4%,
+            rgba(0, 0, 0, 1) 95%,
+            rgba(0, 0, 0, 0) 100%
+        );
     }
 
     .drag {
