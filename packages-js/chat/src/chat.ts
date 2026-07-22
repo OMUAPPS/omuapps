@@ -112,6 +112,7 @@ export class Chat {
         this.reactionSignal = omu.signals.get(REACTION_SIGNAL);
         this.messages.setCacheSize(1000);
         this.authors.setCacheSize(500);
+        this.rooms.setCacheSize(500);
     }
 
     public static create(omu: Omu): Chat {
