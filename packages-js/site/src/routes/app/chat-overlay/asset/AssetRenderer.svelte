@@ -15,16 +15,26 @@
         if (!$config.chat.filter.onlyConnected) return messages;
         return messages.filter((msg) => onlineRoomIds.has(msg.roomId.key()));
     });
+    let sortedMessages: Models.Message[] = $derived.by(() => {
+        return [...filteredMessages].sort(
+            (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+        );
+    });
     let visibleMessages: Models.Message[] = $derived.by(() => {
-        if ($config.asset.displayCount === undefined) return filteredMessages;
-        const sliced = filteredMessages.slice(filteredMessages.length - $config.asset.displayCount);
+        if ($config.asset.displayCount === undefined) return sortedMessages;
+        const sliced = sortedMessages.slice(
+            sortedMessages.length - $config.asset.displayCount,
+        );
         return sliced;
     });
 
-    const updateOnlineRooms = (rooms: Map<string, Models.Room> | Models.Room[]) => {
-        const roomArray = rooms instanceof Map ? Array.from(rooms.values()) : rooms;
+    const updateOnlineRooms = (
+        rooms: Map<string, Models.Room> | Models.Room[],
+    ) => {
+        const roomArray =
+            rooms instanceof Map ? Array.from(rooms.values()) : rooms;
         onlineRoomIds = new Set(
-            roomArray.filter(r => r.connected).map(r => r.id.key()),
+            roomArray.filter((r) => r.connected).map((r) => r.id.key()),
         );
     };
 
@@ -42,6 +52,7 @@
         ]);
 
         messages = Array.from(initialMessages.values());
+        messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
         updateOnlineRooms(Array.from(initialRooms.values()));
     });
 
