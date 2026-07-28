@@ -10,7 +10,7 @@
 
     let { data: _data }: { data: unknown } = $props();
 
-    let screen: 'chat' | 'start_from_url' | 'setup' = $state('chat');
+    let screen: 'chat' | 'start_from_url' | 'setup' | 'chat-clear' = $state('chat');
 
     omu.onReady(async () => {
         screen = await chat.channels.size() == 0 ? 'setup' : 'chat';
@@ -63,6 +63,13 @@
                 <h3>
                     {$t('page.connect.chat')}
                     <i class="ti ti-message"></i>
+                    <div class="actions">
+                        <button onclick={() => screen = 'chat-clear'}>
+                            <Tooltip>{$t('page.connect.clear_chat_tooltip')}</Tooltip>
+                            {$t('page.connect.clear_chat')}
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </div>
                 </h3>
                 <div class="chat">
                     <PanelMessages />
@@ -97,6 +104,28 @@
                     </div>
                 </div>
             </div>
+        {:else if screen === 'chat-clear'}
+            <div class="screen-container right">
+                <div class="screen">
+                    <h1>{$t('page.connect.clear_chat')}</h1>
+                    <p>{$t('page.connect.clear_chat_tooltip')}</p>
+                    <div class="actions">
+                        <button onclick={() => screen = 'chat'}>
+                            <Tooltip>{$t('page.connect.input_cancel')}</Tooltip>
+                            {$t('page.connect.input_cancel')}
+                            <i class="ti ti-chevron-left"></i>
+                        </button>
+                        <button onclick={() => {
+                            chat.messages.clear();
+                            screen = 'chat';
+                        }}>
+                            <Tooltip>{$t('page.connect.clear_chat_tooltip')}</Tooltip>
+                            {$t('page.connect.clear_chat')}
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         {/if}
     </div>
 </main>
@@ -127,6 +156,16 @@
             color-mix(in srgb, var(--color-bg-1) 99%, transparent 0%) 40%,
             color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%) 100%
         );
+
+        &.right {
+            align-items: flex-end;
+            justify-content: flex-start;
+            background: linear-gradient(
+                to left,
+                color-mix(in srgb, var(--color-bg-1) 99%, transparent 0%) 40%,
+                color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%) 100%
+            );
+        }
     }
 
     .screen {

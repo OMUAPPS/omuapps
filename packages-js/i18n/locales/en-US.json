@@ -153,7 +153,9 @@
             "select_submit_tooltip": "Please select at least one.",
             "input_cancel": "Cancel",
             "selected_tooltip": "Click to deselect",
-            "select_tooltip": "Click to select"
+            "select_tooltip": "Click to select",
+            "clear_chat": "Clear All Messages",
+            "clear_chat_tooltip": "This will delete all saved messages."
         },
         "settings": {
             "icon": "ti ti-settings",

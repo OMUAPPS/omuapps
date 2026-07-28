@@ -156,7 +156,9 @@
             "select_submit_tooltip": "一つ以上選択してください。",
             "input_cancel": "やめる",
             "selected_tooltip": "クリックで選択を解除",
-            "select_tooltip": "クリックで選択"
+            "select_tooltip": "クリックで選択",
+            "clear_chat": "すべて削除",
+            "clear_chat_tooltip": "保存されているメッセージをすべて削除します。"
         },
         "settings": {
             "icon": "ti ti-settings",
