@@ -247,7 +247,7 @@ export class TutorialApp {
 <script lang="ts">
     import { browser } from "$app/environment";
     import { OBSPermissions, OBSPlugin } from "@omujs/obs";
-    import { Omu, OmuPermissions } from "@omujs/omu";
+    import { BrowserSession, Omu, OmuPermissions } from "@omujs/omu";
     import { TUTORIAL_APP, TUTORIAL_ASSET_APP, TutorialApp } from ".";
 
     // APIを触るのに必要なOmuオブジェクトを生成します
