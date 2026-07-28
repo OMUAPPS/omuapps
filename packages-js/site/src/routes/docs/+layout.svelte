@@ -1,5 +1,6 @@
 <script lang="ts">
 
+    import { resolve } from '$app/paths';
     import Page from '$lib/components/Page.svelte';
     import { ExternalLink, Tooltip } from '@omujs/ui';
     import style from 'svelte-highlight/styles/stackoverflow-light';
@@ -66,7 +67,7 @@
                         </h2>
                         <small>
                             報告は
-                            <ExternalLink href="/redirect/discord">
+                            <ExternalLink href={resolve('/redirect/discord')}>
                                 Discord
                                 <i class="ti ti-external-link"></i>
                             </ExternalLink>

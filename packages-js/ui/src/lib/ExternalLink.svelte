@@ -17,7 +17,7 @@
     }: Props = $props();
 
     if (href?.length && !href.startsWith('http')) {
-        href = `https://${href}`;
+        href = new URL(href, window.location.href).toString();
     }
 </script>
 
