@@ -90,7 +90,6 @@ async def on_channel_remove(channel: Channel):
     if provider is not None:
         channel.active = False
         await provider.stop_channel(ctx, channel)
-        await update_channel(channel, provider)
 
 
 @chat.on(events.channel.update)
