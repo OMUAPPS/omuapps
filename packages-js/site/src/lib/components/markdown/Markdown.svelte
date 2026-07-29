@@ -5,6 +5,7 @@
     import MdCodeSpan from './MdCodeSpan.svelte';
     import MdImage from './MdImage.svelte';
     import MdLink from './MdLink.svelte';
+    import MdTable from './MdTable.svelte';
 
     interface Props {
         source: string;
@@ -22,6 +23,7 @@
             link: MdLink,
             image: MdImage,
             blockquote: MdBlockquote,
+            table: MdTable,
         }}
     />
 </div>
