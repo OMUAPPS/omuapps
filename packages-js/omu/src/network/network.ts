@@ -305,7 +305,10 @@ export class Network {
     }
 
     public removeTask(task: () => Promise<void> | void): void {
-        this.tasks.splice(this.tasks.indexOf(task), 1);
+        const index = this.tasks.indexOf(task);
+        if (index !== -1) {
+            this.tasks.splice(index, 1);
+        }
     }
 
     private async dispatchTasks(): Promise<void> {

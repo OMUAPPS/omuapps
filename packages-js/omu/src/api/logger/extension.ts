@@ -69,7 +69,10 @@ export class LoggerExtension {
         list.push(listener);
         this.listeners.set(id, list);
         return () => {
-            list.splice(list.indexOf(listener), 1);
+            const index = list.indexOf(listener);
+            if (index !== -1) {
+                list.splice(index, 1);
+            }
         };
     }
 }

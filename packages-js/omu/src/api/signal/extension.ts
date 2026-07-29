@@ -99,7 +99,10 @@ class SignalImpl<T> implements Signal<T> {
         }
         this.listeners.push(handler);
         return () => {
-            this.listeners.splice(this.listeners.indexOf(handler), 1);
+            const index = this.listeners.indexOf(handler);
+            if (index !== -1) {
+                this.listeners.splice(index, 1);
+            }
         };
     }
 
