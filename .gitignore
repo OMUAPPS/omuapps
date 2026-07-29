@@ -57,3 +57,7 @@ dist-ssr
 
 # env files
 .env
+
+# Cloudflare
+
+**/.wrangler/cache/cf.json
