@@ -94,7 +94,8 @@
             "bookmark": "Bookmark",
             "copy": "Copy",
             "see_in_room": "See in stream",
-            "paid": "Donation"
+            "paid": "Donation",
+            "remove": "Remove"
         },
         "apps": {
             "title": "Apps",

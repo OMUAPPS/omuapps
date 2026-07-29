@@ -20,6 +20,7 @@
         createdAt?: Date | undefined;
         content?: Content.Component | undefined;
         handleCopy?: () => void;
+        handleRemove?: () => void;
         selected?: boolean;
     }
 
@@ -30,7 +31,8 @@
         room = undefined,
         createdAt = undefined,
         content = undefined,
-        handleCopy = () => {},
+        handleCopy = undefined,
+        handleRemove = undefined,
         selected = false,
     }: Props = $props();
 
@@ -158,6 +160,12 @@
     </div>
     {#if selected}
         <div class="actions">
+            {#if handleRemove}
+                <ButtonMini primary onclick={handleRemove}>
+                    <Tooltip>{$i18n.translate('panels.messages.remove')}</Tooltip>
+                    <i class="ti ti-trash"></i>
+                </ButtonMini>
+            {/if}
             {#if time}
                 {@const timedLink = `${url}&t=${Math.floor(time.getTime() / 1000) + 10}s`}
                 <ButtonLink
@@ -171,10 +179,12 @@
                     <i class="ti ti-external-link"></i>
                 </ButtonLink>
             {/if}
-            <ButtonMini primary onclick={handleCopy}>
-                <Tooltip>{$i18n.translate('panels.messages.copy')}</Tooltip>
-                <i class="ti ti-files"></i>
-            </ButtonMini>
+            {#if handleCopy}
+                <ButtonMini primary onclick={handleCopy}>
+                    <Tooltip>{$i18n.translate('panels.messages.copy')}</Tooltip>
+                    <i class="ti ti-files"></i>
+                </ButtonMini>
+            {/if}
         </div>
     {/if}
 </article>

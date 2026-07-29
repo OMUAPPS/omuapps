@@ -34,6 +34,10 @@
     function handleCopy() {
         navigator.clipboard.writeText(entry.text);
     }
+
+    function handleRemove() {
+        $chat.messages.remove(entry);
+    }
 </script>
 
 <MessageRenderer
@@ -44,5 +48,6 @@
     {room}
     {author}
     {handleCopy}
+    {handleRemove}
     {selected}
 />

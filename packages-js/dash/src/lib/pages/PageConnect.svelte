@@ -82,6 +82,7 @@
                 </h3>
                 <div class="chat">
                     <PanelMessages filter={(_, message) => {
+                        if (message.deleted) return false;
                         if (!search) return true;
                         const keywords: string[] = [];
                         const content = message.text;
