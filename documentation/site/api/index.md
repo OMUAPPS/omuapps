@@ -19,6 +19,22 @@ description: APIの概要
 
 OMUAPPSのアプリはこれらの機能を使うことで作られています
 
+### [OMUクライアント](%DOCS_ROOT%/api/core)
+
+アプリの定義、接続、識別子など、すべてのAPIで使う基本機能です
+
+### [権限](%DOCS_ROOT%/api/permission)
+
+アプリが利用する機能を接続前に要求します
+
+### [OBS](%DOCS_ROOT%/api/obs)
+
+OBSのシーンやソースを操作します
+
+### [チャット](%DOCS_ROOT%/api/chat)
+
+配信サイトのチャット、投稿者、チャンネル、配信枠を利用します
+
 ### [レジストリ](%DOCS_ROOT%/api/registry)
 
 データをアプリ間で同期・保持する事ができます
@@ -46,3 +62,11 @@ OMUAPPSのアプリはこれらの機能を使うことで作られています
 ### [セッション](%DOCS_ROOT%/api/session)
 
 子アプリのためのトークンを生成したり、他のアプリの接続を待機する事ができます
+
+### [Endpoint](%DOCS_ROOT%/api/endpoint)
+
+型付きのリクエストとレスポンスでアプリ間の処理を呼び出します
+
+### [Serializer](%DOCS_ROOT%/api/serializer)
+
+APIで送受信するデータの変換方法を定義します
