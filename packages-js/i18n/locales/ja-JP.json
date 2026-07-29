@@ -158,7 +158,8 @@
             "selected_tooltip": "クリックで選択を解除",
             "select_tooltip": "クリックで選択",
             "clear_chat": "すべて削除",
-            "clear_chat_tooltip": "保存されているメッセージをすべて削除します。"
+            "clear_chat_tooltip": "保存されているメッセージをすべて削除します。",
+            "search_placeholder": "検索..."
         },
         "settings": {
             "icon": "ti ti-settings",

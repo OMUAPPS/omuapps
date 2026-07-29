@@ -24,6 +24,11 @@
     });
 
     let startURL = $state('');
+    let search = $state('');
+
+    function normalizeText(text: string): string {
+        return text.normalize('NFKC').toLowerCase();
+    }
 </script>
 
 <main>
@@ -59,11 +64,15 @@
                     <PanelRooms openSetup={() => screen = 'setup'} />
                 </div>
             </div>
-            <dir class="chat">
+            <div class="chat">
                 <h3>
                     {$t('page.connect.chat')}
                     <i class="ti ti-message"></i>
                     <div class="actions">
+                        <div class="search">
+                            <input type="text" placeholder={$t('page.connect.search_placeholder')} bind:value={search} />
+                            <i class="ti ti-search"></i>
+                        </div>
                         <button onclick={() => screen = 'chat-clear'}>
                             <Tooltip>{$t('page.connect.clear_chat_tooltip')}</Tooltip>
                             {$t('page.connect.clear_chat')}
@@ -72,9 +81,25 @@
                     </div>
                 </h3>
                 <div class="chat">
-                    <PanelMessages />
+                    <PanelMessages filter={(_, message) => {
+                        if (!search) return true;
+                        const keywords: string[] = [];
+                        const content = message.text;
+                        keywords.push(content);
+                        const author = message.authorId && chat.authors.cache.get(message.authorId.key());
+                        if (author) {
+                            if (author.name) {
+                                keywords.push(author.name);
+                            }
+                            if (author.metadata.screen_id) {
+                                keywords.push(author.metadata.screen_id);
+                            }
+                        }
+                        const normalizedSearch = normalizeText(search);
+                        return keywords.some(keyword => normalizeText(keyword).includes(normalizedSearch));
+                    }} />
                 </div>
-            </dir>
+            </div>
         </div>
         {#if screen === 'setup'}
             <div class="screen-container">
@@ -90,8 +115,8 @@
                     <div class="actions">
                         <button onclick={() => screen = 'chat'}>
                             <Tooltip>{$t('page.connect.input_cancel')}</Tooltip>
-                            {$t('page.connect.input_cancel')}
                             <i class="ti ti-chevron-left"></i>
+                            {$t('page.connect.input_cancel')}
                         </button>
                         <button onclick={() => {
                             provider.startFromUrl(startURL);
@@ -112,8 +137,8 @@
                     <div class="actions">
                         <button onclick={() => screen = 'chat'}>
                             <Tooltip>{$t('page.connect.input_cancel')}</Tooltip>
-                            {$t('page.connect.input_cancel')}
                             <i class="ti ti-chevron-left"></i>
+                            {$t('page.connect.input_cancel')}
                         </button>
                         <button onclick={() => {
                             chat.messages.clear();
@@ -209,6 +234,7 @@
             border-radius: 2px;
             font-size: 0.8rem;
             font-weight: 600;
+            white-space: nowrap;
 
             &:hover {
                 background: var(--color-bg-2);
@@ -216,6 +242,38 @@
                 outline: 1px solid var(--color-1);
                 outline-offset: -1px;
             }
+        }
+    }
+
+    .search {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+
+        > input {
+            padding: 0 0.5rem;
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            border: none;
+            border-radius: 2px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+
+            &:focus-visible,
+            &:hover {
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+            }
+        }
+
+        > i {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-1);
         }
     }
 

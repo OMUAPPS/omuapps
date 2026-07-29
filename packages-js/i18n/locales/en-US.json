@@ -155,7 +155,8 @@
             "selected_tooltip": "Click to deselect",
             "select_tooltip": "Click to select",
             "clear_chat": "Clear All Messages",
-            "clear_chat_tooltip": "This will delete all saved messages."
+            "clear_chat_tooltip": "This will delete all saved messages.",
+            "search_placeholder": "Search..."
         },
         "settings": {
             "icon": "ti ti-settings",
