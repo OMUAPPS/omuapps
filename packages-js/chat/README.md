@@ -6,14 +6,18 @@ OMUを通してチャット機能を提供するパッケージです。
 
 ```typescript
 ...
-import { Chat, events } from '@omujs/chat';
+import { Chat, ChatEvents } from '@omujs/chat';
 
 const chat = Chat.create(omu);
 
-chat.on(events.message.add, async (message) => {
+const unlistenMessage = chat.on(ChatEvents.Message.Add, async (message) => {
     console.log(`New message created: ${message.text}`);
 });
-chat.on(events.room.add, (room) => {
+chat.on(ChatEvents.Room.Add, (room) => {
     console.log(`New room created: ${room.metadata.title}`);
-})
+});
+
+function cleanup() {
+    unlistenMessage();
+}
 ```
