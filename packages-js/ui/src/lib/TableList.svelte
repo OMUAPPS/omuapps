@@ -1,9 +1,8 @@
 <script lang="ts" generics="T">
 
     import type { Table } from '@omujs/omu/api/table';
-    import { type Snippet } from 'svelte';
+    import { onMount, type Snippet } from 'svelte';
     import { SvelteMap } from 'svelte/reactivity';
-    import { omu } from './stores';
     import VirtualList from './VirtualList.svelte';
 
     interface Props<T> {
@@ -78,18 +77,23 @@
     let viewport: HTMLElement | undefined = $state(undefined);
     let averageHeight: number = $state(0);
 
-    $omu.onReady(() => {
+    onMount(() => {
         fetch();
     });
-    table.listen((items) => {
-        updateItems(items);
-    });
-    table.on('remove', (removedItems) => {
-        for (const key of removedItems.keys()) {
-            items.delete(key);
-        }
-        const removedKeys = new Set(removedItems.keys());
-        fetchedKeys = fetchedKeys.filter((key) => !removedKeys.has(key));
+
+    $effect(() => {
+        const unlistenCache = table.listen(updateItems);
+        const unlistenRemove = table.on('remove', (removedItems) => {
+            for (const key of removedItems.keys()) {
+                items.delete(key);
+            }
+            const removedKeys = new Set(removedItems.keys());
+            fetchedKeys = fetchedKeys.filter((key) => !removedKeys.has(key));
+        });
+        return () => {
+            unlistenCache();
+            unlistenRemove();
+        };
     });
 
     let filtered = $derived.by(() => {

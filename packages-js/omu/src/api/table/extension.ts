@@ -450,6 +450,7 @@ class TableImpl<T> implements Table<T> {
         backward?: boolean;
         cursor?: string;
     }): Promise<Map<string, T>> {
+        await this.omu.waitForReady();
         const res = await this.omu.endpoints.call(
             TABLE_FETCH_ENDPOINT,
             new TableFetchPacket(this.id, limit, backward, cursor),
