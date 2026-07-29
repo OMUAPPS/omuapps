@@ -41,14 +41,15 @@
     async function openApps() {
         omu.server.apps.listen();
         const update = async (apps: Map<string, App>) => {
-            const services = [...apps.values().filter((app) => app.type === 'service')];
-            for (const service of services) {
-                const id = `app-${service.id.key()}`;
+            const serviceApps = [...apps.values().filter((app) => app.type === 'service')];
+            const startUps = [...(await omu.dashboard.apps.getStartupApps()).values()].map((it) => apps.get(it.id)).filter((it): it is App => !!it);
+            for (const app of [...serviceApps, ...startUps]) {
+                const id = `app-${app.id.key()}`;
                 const page: PageItem<{ app: App }> = {
                     id,
                     component: AppPage,
                     data: {
-                        app: service,
+                        app,
                     },
                 };
                 $pages[id] = {
