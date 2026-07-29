@@ -152,6 +152,16 @@
     let visible = $derived(items.slice(start, end + 1).map((data, i) => {
         return { index: i + start, data };
     }));
+
+    $effect(() => {
+        const remaining = items.length - end;
+        if ((items.length > 0 && visible.length === 0) || remaining < 3) {
+            onreached({
+                top: false,
+                bottom: true,
+            });
+        }
+    });
 </script>
 
 <div class="viewport omu-scroll" bind:this={viewport} onscroll={() => handleUpdate()}>
