@@ -84,7 +84,11 @@ class YoutubeChatService(ProviderService):
 
     async def start_channel(self, ctx: ProviderContext, channel: Channel):
         videos = await self.extractor.fetch_online_videos(channel.url)
+        if not ctx.is_channel_active(channel.id):
+            return
         for video_id in videos:
+            if not ctx.is_channel_active(channel.id):
+                return
             await self._start_by_video_id(video_id, channel)
 
     async def stop_channel(self, ctx: ProviderContext, channel: Channel):
@@ -93,7 +97,7 @@ class YoutubeChatService(ProviderService):
                 continue
             if chat.channel.id == channel.id:
                 await chat.stop()
-                if chat.room.id in self.chats:
+                if self.chats.get(chat.room.id) is chat:
                     del self.chats[chat.room.id]
 
     async def stop_room(self, ctx: ProviderContext, room: Room):
@@ -101,7 +105,8 @@ class YoutubeChatService(ProviderService):
             return
         chat = self.chats[room.id]
         await chat.stop()
-        del self.chats[room.id]
+        if self.chats.get(room.id) is chat:
+            del self.chats[room.id]
 
     async def is_online(self, room: Room) -> bool:
         return await self.extractor.is_online(video_id=room.id.path[-1])

@@ -1,9 +1,8 @@
 <script lang="ts" generics="T">
 
     import type { Table } from '@omujs/omu/api/table';
-    import { type Snippet } from 'svelte';
+    import { onMount, type Snippet } from 'svelte';
     import { SvelteMap } from 'svelte/reactivity';
-    import { omu } from './stores';
     import VirtualList from './VirtualList.svelte';
 
     interface Props<T> {
@@ -21,6 +20,7 @@
         component,
         filter = () => true,
         sort = undefined,
+        reverse = false,
         chunkSize = 40,
         empty,
     }: Props<T> = $props();
@@ -33,27 +33,39 @@
         }
     }
 
-    let lock: Promise<void> | undefined;
+    let loading = $state(false);
+    let hasMore = $state(true);
+    let fetchedKeys: string[] = [];
     let lastScroll = {
         time: 0,
         y: 0,
     };
 
     async function fetch() {
-        if (lock) await lock;
+        if (loading || !hasMore) return;
+        loading = true;
         const scrollTop = viewport?.scrollTop ?? 0;
         const deltaY = scrollTop - lastScroll.y;
         const deltaTime = (performance.now() - lastScroll.time) / 1000;
-        const itemsInSeconds = (deltaY / deltaTime) / Math.max(1, averageHeight);
-        lock = table.fetchItems({
-            limit: Math.max(chunkSize, Math.pow(itemsInSeconds, 0.98) + Math.log(itemsInSeconds)),
-            backward: true,
-            cursor: [...items.keys()][items.size - 1],
-        }).then((newItems) => {
+        const itemsInSeconds = Math.max(0, (deltaY / deltaTime) / Math.max(1, averageHeight));
+        const dynamicLimit = itemsInSeconds > 0
+            ? Math.pow(itemsInSeconds, 0.98) + Math.log(itemsInSeconds)
+            : 0;
+        const limit = Math.ceil(Math.max(chunkSize, dynamicLimit));
+        try {
+            const newItems = await table.fetchItems({
+                limit,
+                backward: true,
+                cursor: fetchedKeys.at(-1),
+            });
             updateItems(newItems);
+            fetchedKeys.push(...newItems.keys());
+            hasMore = newItems.size >= limit;
             lastScroll.time = performance.now();
             lastScroll.y = scrollTop;
-        });
+        } finally {
+            loading = false;
+        }
     }
 
     async function onreached(args: { top: boolean; bottom: boolean }) {
@@ -65,16 +77,23 @@
     let viewport: HTMLElement | undefined = $state(undefined);
     let averageHeight: number = $state(0);
 
-    $omu.onReady(() => {
+    onMount(() => {
         fetch();
     });
-    table.listen((items) => {
-        updateItems(items);
-    });
-    table.event.remove.listen((removedItems) => {
-        for (const key of removedItems.keys()) {
-            items.delete(key);
-        }
+
+    $effect(() => {
+        const unlistenCache = table.listen(updateItems);
+        const unlistenRemove = table.on('remove', (removedItems) => {
+            for (const key of removedItems.keys()) {
+                items.delete(key);
+            }
+            const removedKeys = new Set(removedItems.keys());
+            fetchedKeys = fetchedKeys.filter((key) => !removedKeys.has(key));
+        });
+        return () => {
+            unlistenCache();
+            unlistenRemove();
+        };
     });
 
     let filtered = $derived.by(() => {
@@ -85,8 +104,16 @@
         if (sort) {
             entries = entries.sort(([, entryA], [, entryB]) => sort(entryA) - sort(entryB));
         }
-        entries = entries.reverse();
+        if (reverse) {
+            entries = entries.reverse();
+        }
         return entries;
+    });
+
+    $effect(() => {
+        if (items.size > 0 && filtered.length === 0 && hasMore && !loading) {
+            fetch();
+        }
     });
 
     let selected: string | undefined = $state(undefined);

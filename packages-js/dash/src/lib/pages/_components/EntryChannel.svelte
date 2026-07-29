@@ -22,6 +22,7 @@
     });
 
     function remove() {
+        entry.active = false;
         chat.channels.remove(entry);
     }
 </script>

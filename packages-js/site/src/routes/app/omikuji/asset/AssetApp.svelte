@@ -15,7 +15,7 @@
     const { results, config, testSignal } = OmikujiApp.create(omu);
     const chat = Chat.create(omu);
 
-    function pollPattern(message: Models.Message): Pattern {
+    function pollPattern(_message: Models.Message): Pattern {
         const patterns = $config.patterns;
         if (patterns.length === 0) {
             return {
@@ -119,8 +119,7 @@
     }
 </script>
 
-{#if omikujiState.type === 'idle'}
-{:else}
+{#if omikujiState.type !== 'idle'}
     <div class="container" transition:fly={{ y: 10, duration: 2000 }}>
         <img src={bg_result} alt="">
         {#if omikujiState.type === 'drawing'}

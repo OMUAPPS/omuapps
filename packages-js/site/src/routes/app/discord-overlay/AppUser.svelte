@@ -7,10 +7,10 @@
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
     import DiscordRenderer from './components/DiscordRenderer.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
+    import VisualConfig from './components/VisualConfig.svelte';
     import { createUserConfig, DiscordOverlayApp } from './discord-overlay-app.js';
     import type { RPCSpeakingStates, RPCVoiceStates } from './discord/discord';
     import { dragState, selectedAvatar } from './states.js';
-    import VisualConfig from './components/VisualConfig.svelte';
 
     interface Props {
         voiceState: RPCVoiceStates;
@@ -323,10 +323,6 @@
             width: 30rem;
             height: min(30rem, calc(100% - 10rem));
             overflow: auto;
-        }
-
-        > .screenshot {
-            margin-top: auto;
         }
     }
 

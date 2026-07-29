@@ -14,7 +14,7 @@ import { SIGNAL_EXTENSION_TYPE, type SignalExtension } from './api/signal/extens
 import { TABLE_EXTENSION_TYPE, type TableExtension } from './api/table/extension';
 import type { App } from './app.js';
 import type { Unlisten } from './event';
-import { EventEmitter } from './event';
+import { EventHub } from './event';
 import type { Address, Connection } from './network';
 import { Network } from './network';
 import { Transport } from './network/connection.js';
@@ -24,19 +24,15 @@ import { WebsocketTransport } from './network/websocket-transport';
 import { BrowserSession, type SessioTokenProvider } from './token.js';
 
 export type ClientEvents = {
-    started: EventEmitter<[]>;
-    stopped: EventEmitter<[]>;
-    ready: EventEmitter<[]>;
+    started: [];
+    stopped: [];
+    ready: [];
 };
 
 export class Omu {
     public ready: boolean;
     public running: boolean;
-    readonly event: ClientEvents = {
-        started: new EventEmitter(),
-        stopped: new EventEmitter(),
-        ready: new EventEmitter(),
-    };
+    private readonly events = new EventHub<ClientEvents>();
     readonly token: SessioTokenProvider;
     readonly address: Address;
     readonly sessions: SessionExtension;
@@ -86,7 +82,7 @@ export class Omu {
             options?.transport ?? new WebsocketTransport(this.address),
             options?.connection,
         );
-        this.network.event.disconnected.listen(() => {
+        this.network.on('disconnected', () => {
             this.ready = false;
         });
         this.network.addPacketHandler(PACKET_TYPES.READY, () => {
@@ -94,7 +90,7 @@ export class Omu {
                 throw new Error('Received READY packet when already ready');
             }
             this.ready = true;
-            this.event.ready.emit();
+            this.events.emit('ready');
         });
         this.extensions = new ExtensionRegistry(this);
         this.endpoints = this.extensions.register(ENDPOINT_EXTENSION_TYPE);
@@ -125,7 +121,7 @@ export class Omu {
         }
         this.running = true;
         const connect = this.network.connect();
-        this.event.started.emit();
+        this.events.emit('started');
         await connect;
     }
 
@@ -133,21 +129,33 @@ export class Omu {
         this.running = false;
         this.ready = false;
         this.network.close();
-        this.event.stopped.emit();
+        this.events.emit('stopped');
+    }
+
+    public on<K extends keyof ClientEvents>(event: K, handler: (...args: ClientEvents[K]) => void): Unlisten {
+        return this.events.on(event, handler);
+    }
+
+    public off<K extends keyof ClientEvents>(event: K, handler: (...args: ClientEvents[K]) => void): void {
+        this.events.off(event, handler);
+    }
+
+    public emit<K extends keyof ClientEvents>(event: K, ...args: ClientEvents[K]): void {
+        this.events.emit(event, ...args);
     }
 
     public onReady(callback: () => void): Unlisten {
         if (this.ready) {
             callback();
         }
-        return this.event.ready.listen(callback);
+        return this.events.on('ready', callback);
     }
 
     public async waitForReady(): Promise<void> {
         if (this.ready) return;
         return new Promise<void>((resolve) => {
-            let unlisten = () => {};
-            unlisten = this.event.ready.listen(() => {
+            let unlisten: Unlisten = () => {};
+            unlisten = this.events.on('ready', () => {
                 unlisten();
                 resolve();
             });

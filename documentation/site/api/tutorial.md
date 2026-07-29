@@ -17,12 +17,10 @@ description: 初めてのおむアプリを作ってみる
 
 ## 環境を構築
 
-このチュートリアルでは[bun](https://bun.sh/)をパッケージマネージャーとして使用します
-
 SvelteKit を構築し、アプリを作るのに必要な依存関係をインストールしましょう
 
 ```bash
-bunx sv create example
+%PACKAGE_RUNNER% sv create example
 ```
 
 基本的には以下のように選択します
@@ -44,7 +42,7 @@ bunx sv create example
 ◆  Successfully setup add-ons
 │
 ◇  Which package manager do you want to install dependencies with?
-│  bun // このチュートリアルではbunを使って構築します
+│  %PACKAGE_MANAGER% // 使用したいパッケージマネージャー
 ```
 
 プロジェクトディレクトリに移動します
@@ -247,7 +245,7 @@ export class TutorialApp {
 <script lang="ts">
     import { browser } from "$app/environment";
     import { OBSPermissions, OBSPlugin } from "@omujs/obs";
-    import { Omu, OmuPermissions } from "@omujs/omu";
+    import { BrowserSession, Omu, OmuPermissions } from "@omujs/omu";
     import { TUTORIAL_APP, TUTORIAL_ASSET_APP, TutorialApp } from ".";
 
     // APIを触るのに必要なOmuオブジェクトを生成します

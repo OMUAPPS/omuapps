@@ -10,7 +10,7 @@
 
     let { data: _data }: { data: unknown } = $props();
 
-    let screen: 'chat' | 'start_from_url' | 'setup' = $state('chat');
+    let screen: 'chat' | 'start_from_url' | 'setup' | 'chat-clear' = $state('chat');
 
     omu.onReady(async () => {
         screen = await chat.channels.size() == 0 ? 'setup' : 'chat';
@@ -24,6 +24,11 @@
     });
 
     let startURL = $state('');
+    let search = $state('');
+
+    function normalizeText(text: string): string {
+        return text.normalize('NFKC').toLowerCase();
+    }
 </script>
 
 <main>
@@ -59,15 +64,43 @@
                     <PanelRooms openSetup={() => screen = 'setup'} />
                 </div>
             </div>
-            <dir class="chat">
+            <div class="chat">
                 <h3>
                     {$t('page.connect.chat')}
                     <i class="ti ti-message"></i>
+                    <div class="actions">
+                        <div class="search">
+                            <input type="text" placeholder={$t('page.connect.search_placeholder')} bind:value={search} />
+                            <i class="ti ti-search"></i>
+                        </div>
+                        <button onclick={() => screen = 'chat-clear'}>
+                            <Tooltip>{$t('page.connect.clear_chat_tooltip')}</Tooltip>
+                            {$t('page.connect.clear_chat')}
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </div>
                 </h3>
                 <div class="chat">
-                    <PanelMessages />
+                    <PanelMessages filter={(_, message) => {
+                        if (message.deleted) return false;
+                        if (!search) return true;
+                        const keywords: string[] = [];
+                        const content = message.text;
+                        keywords.push(content);
+                        const author = message.authorId && chat.authors.cache.get(message.authorId.key());
+                        if (author) {
+                            if (author.name) {
+                                keywords.push(author.name);
+                            }
+                            if (author.metadata.screen_id) {
+                                keywords.push(author.metadata.screen_id);
+                            }
+                        }
+                        const normalizedSearch = normalizeText(search);
+                        return keywords.some(keyword => normalizeText(keyword).includes(normalizedSearch));
+                    }} />
                 </div>
-            </dir>
+            </div>
         </div>
         {#if screen === 'setup'}
             <div class="screen-container">
@@ -83,8 +116,8 @@
                     <div class="actions">
                         <button onclick={() => screen = 'chat'}>
                             <Tooltip>{$t('page.connect.input_cancel')}</Tooltip>
-                            {$t('page.connect.input_cancel')}
                             <i class="ti ti-chevron-left"></i>
+                            {$t('page.connect.input_cancel')}
                         </button>
                         <button onclick={() => {
                             provider.startFromUrl(startURL);
@@ -93,6 +126,28 @@
                             <Tooltip>{$t('panels.channels.setup_channel')}</Tooltip>
                             {$t('panels.channels.append_channel')}
                             <i class="ti ti-user-share"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {:else if screen === 'chat-clear'}
+            <div class="screen-container right">
+                <div class="screen">
+                    <h1>{$t('page.connect.clear_chat')}</h1>
+                    <p>{$t('page.connect.clear_chat_tooltip')}</p>
+                    <div class="actions">
+                        <button onclick={() => screen = 'chat'}>
+                            <Tooltip>{$t('page.connect.input_cancel')}</Tooltip>
+                            <i class="ti ti-chevron-left"></i>
+                            {$t('page.connect.input_cancel')}
+                        </button>
+                        <button onclick={() => {
+                            chat.messages.clear();
+                            screen = 'chat';
+                        }}>
+                            <Tooltip>{$t('page.connect.clear_chat_tooltip')}</Tooltip>
+                            {$t('page.connect.clear_chat')}
+                            <i class="ti ti-trash"></i>
                         </button>
                     </div>
                 </div>
@@ -127,6 +182,16 @@
             color-mix(in srgb, var(--color-bg-1) 99%, transparent 0%) 40%,
             color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%) 100%
         );
+
+        &.right {
+            align-items: flex-end;
+            justify-content: flex-start;
+            background: linear-gradient(
+                to left,
+                color-mix(in srgb, var(--color-bg-1) 99%, transparent 0%) 40%,
+                color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%) 100%
+            );
+        }
     }
 
     .screen {
@@ -170,6 +235,7 @@
             border-radius: 2px;
             font-size: 0.8rem;
             font-weight: 600;
+            white-space: nowrap;
 
             &:hover {
                 background: var(--color-bg-2);
@@ -177,6 +243,38 @@
                 outline: 1px solid var(--color-1);
                 outline-offset: -1px;
             }
+        }
+    }
+
+    .search {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+
+        > input {
+            padding: 0 0.5rem;
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            border: none;
+            border-radius: 2px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+
+            &:focus-visible,
+            &:hover {
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+            }
+        }
+
+        > i {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-1);
         }
     }
 

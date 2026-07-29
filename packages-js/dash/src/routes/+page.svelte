@@ -4,6 +4,7 @@
     import { installed, keepOpenOnBackground } from '$lib/settings';
     import { appWindow, backgroundRequested, checkUpdate, serverState, startProgress } from '$lib/tauri';
     import { DisconnectType } from '@omujs/omu/network/packet';
+    import type { Keys } from '@omujs/i18n';
     import { Button, Spinner } from '@omujs/ui';
     import { invoke } from '@tauri-apps/api/core';
     import { error } from '@tauri-apps/plugin-log';
@@ -84,7 +85,7 @@
                     omu.stop();
                 }
                 omu.start();
-                omu.network.event.status.listen((status) => {
+                omu.network.on('status', (status) => {
                     $netState = status;
                 });
                 omu.waitForReady().then(() => {
@@ -158,7 +159,7 @@
                 </h1>
                 {#if $startProgress}
                     <small>
-                        {$t(`setup.progress.${$startProgress.type}.${$startProgress.progress.type}`)}
+                        {$t(`setup.progress.${$startProgress.type}.${$startProgress.progress.type}` as Keys)}
                     </small>
                 {/if}
             </div>

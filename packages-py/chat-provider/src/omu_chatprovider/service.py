@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import abc
+from collections.abc import Callable
 from dataclasses import dataclass
 from importlib import metadata
 
 from loguru import logger
 from omu import Omu
 from omu.helper import Coro
+from omu.identifier import Identifier
 from omu_chat import Channel, Chat, Provider, Room
 from typing_extensions import deprecated
 
@@ -19,7 +21,18 @@ class FetchedRoom:
     create: ChatServiceFactory
 
 
-class ProviderContext: ...  # For future compatibility's sake
+class ProviderContext:
+    def __init__(self) -> None:
+        self._is_channel_active: Callable[[Identifier], bool] = lambda _: False
+
+    def bind_channel_active(
+        self,
+        callback: Callable[[Identifier], bool],
+    ) -> None:
+        self._is_channel_active = callback
+
+    def is_channel_active(self, channel_id: Identifier) -> bool:
+        return self._is_channel_active(channel_id)
 
 
 class ProviderService(abc.ABC):

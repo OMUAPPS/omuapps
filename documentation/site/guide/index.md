@@ -11,6 +11,10 @@ description: アプリを使うまでの説明一覧
 
 [アプリの導入方法\\アプリを導入して使う](%DOCS_ROOT%/guide/apps?_style=large)
 
+## 困ったとき
+
+[トラブルシューティング\\接続やOBS表示の問題を確認する](%DOCS_ROOT%/guide/troubleshooting?_style=large)
+
 ## アプリ
 
 [アプリ一覧\\使いたいアプリがあるかも](%DOCS_ROOT%/app?_style=large)

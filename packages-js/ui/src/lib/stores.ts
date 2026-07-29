@@ -25,6 +25,28 @@ export function setGlobal(values: {
     }
 }
 
+export function getGlobal() {
+    let omuValue: Omu | undefined;
+    let chatValue: Chat | undefined;
+    let obsValue: OBSPlugin | undefined;
+
+    omu.subscribe((value) => {
+        omuValue = value;
+    })();
+    chat.subscribe((value) => {
+        chatValue = value;
+    })();
+    obs.subscribe((value) => {
+        obsValue = value;
+    })();
+
+    return {
+        omu: omuValue,
+        chat: chatValue,
+        obs: obsValue,
+    };
+}
+
 export type Color = {
     r: number;
     g: number;
@@ -77,7 +99,7 @@ export interface TooltipEntry {
     update: () => void;
     render: Snippet<[]>;
     element: HTMLElement;
-};
+}
 
 export const tooltipStack = writable<TooltipEntry[]>([]);
 export let tooltipId = 0;
@@ -105,7 +127,7 @@ export interface PopupEntry {
     render: Snippet<[]>;
     element: HTMLElement;
     content?: HTMLElement;
-};
+}
 
 export const popupStack = writable<PopupEntry[]>([]);
 export let popupId = 0;

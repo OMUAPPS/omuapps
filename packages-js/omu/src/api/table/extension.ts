@@ -1,5 +1,5 @@
 import type { Unlisten } from '../../event';
-import { EventEmitter } from '../../event';
+import { EventHub } from '../../event';
 import { Identifier, IdentifierMap } from '../../identifier';
 import { PacketType } from '../../network/packet/packet.js';
 import { Omu } from '../../omu';
@@ -174,7 +174,7 @@ export class TableExtension implements Extension {
 
 class TableImpl<T> implements Table<T> {
     public cache: Map<string, T>;
-    public readonly event: TableEvents<T>;
+    private readonly events = new EventHub<TableEvents<T>>();
     private readonly promiseMap: Map<string, Promise<T | undefined>>;
     private readonly proxies: Array<(item: T) => T | undefined>;
     private id: Identifier;
@@ -193,13 +193,6 @@ class TableImpl<T> implements Table<T> {
         this.serializer = type.serializer;
         this.keyFunction = type.keyFunction;
         this.cache = new Map();
-        this.event = {
-            add: new EventEmitter<[Map<string, T>]>(),
-            update: new EventEmitter<[Map<string, T>]>(),
-            remove: new EventEmitter<[Map<string, T>]>(),
-            clear: new EventEmitter<[]>(),
-            cacheUpdate: new EventEmitter<[Map<string, T>]>(),
-        };
         this.promiseMap = new Map();
         this.proxies = [];
         this.listening = false;
@@ -240,7 +233,7 @@ class TableImpl<T> implements Table<T> {
             }
             const items = this.deserializeItems(packet.items);
             this.updateCache(items);
-            this.event.add.emit(items);
+            this.events.emit('add', items);
         });
         omu.network.addPacketHandler(TABLE_ITEM_UPDATE_PACKET, (packet) => {
             if (!packet.id.isEqual(this.id)) {
@@ -248,7 +241,7 @@ class TableImpl<T> implements Table<T> {
             }
             const items = this.deserializeItems(packet.items);
             this.updateCache(items);
-            this.event.update.emit(items);
+            this.events.emit('update', items);
         });
         omu.network.addPacketHandler(TABLE_ITEM_REMOVE_PACKET, (packet) => {
             if (!packet.id.isEqual(this.id)) {
@@ -258,18 +251,26 @@ class TableImpl<T> implements Table<T> {
             items.forEach((_, key) => {
                 this.cache.delete(key);
             });
-            this.event.remove.emit(items);
-            this.event.cacheUpdate.emit(this.cache);
+            this.events.emit('remove', items);
+            this.events.emit('cache', this.cache);
         });
         omu.network.addPacketHandler(TABLE_ITEM_CLEAR_PACKET, (packet) => {
             if (!packet.id.isEqual(this.id)) {
                 return;
             }
             this.cache = new Map();
-            this.event.clear.emit();
-            this.event.cacheUpdate.emit(this.cache);
+            this.events.emit('clear');
+            this.events.emit('cache', this.cache);
         });
-        omu.event.ready.listen(() => this.onReady());
+        omu.on('ready', () => this.onReady());
+    }
+
+    public on<K extends keyof TableEvents<T>>(event: K, listener: (...args: TableEvents<T>[K]) => void): Unlisten {
+        return this.events.on(event, listener);
+    }
+
+    public off<K extends keyof TableEvents<T>>(event: K, listener: (...args: TableEvents<T>[K]) => void): void {
+        this.events.off(event, listener);
     }
 
     private updateCache(items: Map<string, T>): void {
@@ -279,7 +280,7 @@ class TableImpl<T> implements Table<T> {
             const cache = new Map([...this.cache, ...items].slice(-this.cacheSize));
             this.cache = cache;
         }
-        this.event.cacheUpdate.emit(this.cache);
+        this.events.emit('cache', this.cache);
     }
 
     public listen(listener?: (items: Map<string, T>) => void): Unlisten {
@@ -290,7 +291,7 @@ class TableImpl<T> implements Table<T> {
             this.listening = true;
         }
         if (listener) {
-            return this.event.cacheUpdate.listen(listener);
+            return this.events.on('cache', listener);
         }
         return () => {};
     }
@@ -303,7 +304,10 @@ class TableImpl<T> implements Table<T> {
         }
         this.proxies.push(callback);
         return () => {
-            this.proxies.splice(this.proxies.indexOf(callback), 1);
+            const index = this.proxies.indexOf(callback);
+            if (index !== -1) {
+                this.proxies.splice(index, 1);
+            }
         };
     }
 
@@ -446,6 +450,7 @@ class TableImpl<T> implements Table<T> {
         backward?: boolean;
         cursor?: string;
     }): Promise<Map<string, T>> {
+        await this.omu.waitForReady();
         const res = await this.omu.endpoints.call(
             TABLE_FETCH_ENDPOINT,
             new TableFetchPacket(this.id, limit, backward, cursor),
@@ -498,10 +503,7 @@ class TableImpl<T> implements Table<T> {
                 break;
             }
             yield* items.values();
-            if (cursor !== undefined) {
-                items.delete(cursor);
-            }
-            const cursorItem = backward ? items.values().next().value : [...items.values()].pop();
+            const cursorItem = [...items.values()].pop();
             if (!cursorItem) {
                 break;
             }

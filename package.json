@@ -18,7 +18,8 @@
         "build-tauri": "bun run --cwd packages-js/dash build",
         "publish": "bun ./scripts/js-publish.ts",
         "clean": "bun ./scripts/js-clean.ts",
-        "eslint": "eslint"
+        "eslint": "eslint",
+        "check": "bun run --cwd packages-js/site check && bun run --cwd packages-js/dash ui:check"
     },
     "devDependencies": {
         "@actions/github": "^9.0.0",

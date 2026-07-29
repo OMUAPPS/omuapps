@@ -101,11 +101,17 @@
                                         <div
                                             style="width: 100%; height: 100%; display: block; fill: currentcolor;"
                                         >
-                                            <img
-                                                src={role.iconUrl}
-                                                alt={role.name}
-                                                style="width: 100%; height: 100%;"
-                                            />
+                                            {#if role.iconUrl}
+                                                <img
+                                                    src={role.iconUrl}
+                                                    alt={role.name}
+                                                    style="width: 100%; height: 100%;"
+                                                />
+                                            {:else if role.isModerator}
+                                                <i class="ti ti-shield-check"></i>
+                                            {:else if role.isOwner}
+                                                <i class="ti ti-crown"></i>
+                                            {/if}
                                         </div>
                                     </span>
                                 </yt-icon>

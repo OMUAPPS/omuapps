@@ -111,10 +111,6 @@
             border-top: 1px solid var(--color-outline);
             cursor: grab;
 
-            > .i {
-                margin-left: auto;
-            }
-
             button {
                 background: transparent;
                 border: none;

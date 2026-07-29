@@ -30,7 +30,7 @@
         alreadyAdded = await omu.server.apps.has(app.id.key());
     });
 
-    onMount(() => omu.server.apps.event.remove.listen(async () => {
+    onMount(() => omu.server.apps.on('remove', async () => {
         alreadyAdded = await omu.server.apps.has(app.id.key());
     }));
 

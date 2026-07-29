@@ -69,6 +69,7 @@
         "connecting": "Connecting...",
         "reconnecting": "Reconnecting...",
         "connected": "Connected",
+        "ready": "Ready",
         "disconnected": "Disconnected",
         "connect_attempt_count": "Connect Attempt Count: {count}"
     },
@@ -94,7 +95,8 @@
             "bookmark": "Bookmark",
             "copy": "Copy",
             "see_in_room": "See in stream",
-            "paid": "Donation"
+            "paid": "Donation",
+            "remove": "Remove"
         },
         "apps": {
             "title": "Apps",
@@ -153,7 +155,10 @@
             "select_submit_tooltip": "Please select at least one.",
             "input_cancel": "Cancel",
             "selected_tooltip": "Click to deselect",
-            "select_tooltip": "Click to select"
+            "select_tooltip": "Click to select",
+            "clear_chat": "Clear All Messages",
+            "clear_chat_tooltip": "This will delete all saved messages.",
+            "search_placeholder": "Search..."
         },
         "settings": {
             "icon": "ti ti-settings",

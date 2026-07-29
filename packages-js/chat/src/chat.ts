@@ -5,6 +5,7 @@ import type { Signal } from '@omujs/omu/api/signal';
 import { SignalType } from '@omujs/omu/api/signal';
 import type { Table } from '@omujs/omu/api/table';
 import { TableType } from '@omujs/omu/api/table';
+import type { Unlisten } from '@omujs/omu/event';
 
 import { PLUGIN_ID } from './const';
 import type { EventHandler, EventSource } from './event';
@@ -126,7 +127,7 @@ export class Chat {
         return await this.omu.endpoints.call(CREATE_CHANNEL_TREE_ENDPOINT, url);
     }
 
-    public on<P extends Array<any>>(event: EventSource<P>, handler: EventHandler<P>): void {
-        this.eventRegistry.register(event, handler);
+    public on<P extends Array<any>>(event: EventSource<P>, handler: EventHandler<P>): Unlisten {
+        return this.eventRegistry.register(event, handler);
     }
 }

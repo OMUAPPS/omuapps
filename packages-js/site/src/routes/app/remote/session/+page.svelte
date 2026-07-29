@@ -48,7 +48,8 @@
             type: 'disconnected';
             reason?: string;
         } = $state({ type: 'connecting' });
-    omu.network.event.status.listen((status) => {
+
+    omu.network.on('status', (status) => {
         if (status.type === 'connecting') {
             networkState = { type: 'connecting' };
             logs.push(

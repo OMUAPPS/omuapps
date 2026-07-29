@@ -15,6 +15,7 @@ export class Trashbin {
         bounds: AABB2.ZEROONE,
         transform: DEFAULT_TRANSFORM,
         align: Vec2.CENTER,
+        ordering: 'latest',
     };
 
     constructor(private readonly game: Game) {}

@@ -47,12 +47,12 @@
         omu.onReady(() => {
             appState = { type: 'ready', omu };
         });
-        omu.network.event.status.listen((netState) => {
+        omu.network.on('status', (netState) => {
             if (netState.type === 'connecting') {
                 appState = { type: 'connecting', omu };
             }
         });
-        omu.network.event.disconnected.listen((reason) => {
+        omu.network.on('disconnected', (reason) => {
             appState = {
                 type: 'disconnected',
                 omu,

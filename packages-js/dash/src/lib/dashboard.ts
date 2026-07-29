@@ -61,10 +61,10 @@ export class Dashboard implements DashboardHandler {
     constructor(private readonly omu: Omu) {
         omu.dashboard.set(this);
 
-        omu.server.apps.event.remove.listen((apps) => {
+        omu.server.apps.on('remove', (apps) => {
             screenEntries.update((screens) => {
                 for (const id of apps.keys()) {
-                    screens = screens.filter((entry) => entry.target === `app-${id}`);
+                    screens = screens.filter((entry) => entry.target !== `app-${id}`);
                 }
                 return screens;
             });

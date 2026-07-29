@@ -333,7 +333,7 @@ class TableImpl[T](Table[T]):
                 break
             for item in items.values():
                 yield item
-            cursor = next(iter(items.keys()))
+            cursor = next(reversed(items))
 
     async def size(self) -> int:
         res = await self._client.endpoints.call(TABLE_SIZE_ENDPOINT, TablePacket(id=self._id))

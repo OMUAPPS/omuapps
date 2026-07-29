@@ -214,7 +214,7 @@ export class HttpExtension implements Extension {
             handle.handle.error(packet);
             delete this.httpHandles[packet.id];
         });
-        omu.event.ready.listen(() => {
+        omu.on('ready', () => {
             this.wsSendLoop();
         });
     }

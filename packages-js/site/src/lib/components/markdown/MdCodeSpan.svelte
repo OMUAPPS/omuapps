@@ -33,6 +33,7 @@
         outline: 1px solid var(--color-outline);
         border-radius: 3px;
         user-select: text;
+        font-size: 0.9em;
         font-family: monospace;
         font-weight: 600;
         font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;

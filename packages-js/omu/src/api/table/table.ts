@@ -1,4 +1,4 @@
-import type { EventEmitter, Unlisten } from '../../event';
+import type { Unlisten } from '../../event';
 import { Identifier, IntoId } from '../../identifier';
 import type { JsonType, Serializable } from '../../serialize';
 import { Serializer } from '../../serialize';
@@ -10,7 +10,8 @@ export type TableConfig = {
 export interface Table<T> {
     type: TableType<T>;
     readonly cache: ReadonlyMap<string, T>;
-    readonly event: TableEvents<T>;
+    on<K extends keyof TableEvents<T>>(event: K, listener: (...args: TableEvents<T>[K]) => void): Unlisten;
+    off<K extends keyof TableEvents<T>>(event: K, listener: (...args: TableEvents<T>[K]) => void): void;
     get(key: string): Promise<T | undefined>;
     getMany(...keys: string[]): Promise<Map<string, T>>;
     add(...item: T[]): Promise<void>;
@@ -45,11 +46,11 @@ export interface Table<T> {
 }
 
 export type TableEvents<T> = {
-    add: EventEmitter<[Map<string, T>]>;
-    update: EventEmitter<[Map<string, T>]>;
-    remove: EventEmitter<[Map<string, T>]>;
-    clear: EventEmitter<[]>;
-    cacheUpdate: EventEmitter<[Map<string, T>]>;
+    add: [Map<string, T>];
+    update: [Map<string, T>];
+    remove: [Map<string, T>];
+    clear: [];
+    cache: [Map<string, T>];
 };
 
 export type TablePermissions = {

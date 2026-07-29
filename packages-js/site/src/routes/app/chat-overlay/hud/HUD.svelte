@@ -1,18 +1,18 @@
 <script lang="ts">
-    import { browser } from "$app/environment";
-    import { Models } from "@omujs/chat";
-    import type { NetworkStatus } from "@omujs/omu/network";
-    import { Spinner, TableList } from "@omujs/ui";
-    import { onDestroy } from "svelte";
-    import MessageEntry from "../_components/MessageEntry.svelte";
-    import { ChatOverlayApp } from "../chat-app.js";
-    import WindowResizer from "./WindowResizer.svelte";
+    import { browser } from '$app/environment';
+    import { Models } from '@omujs/chat';
+    import type { NetworkStatus } from '@omujs/omu/network';
+    import { Spinner, TableList } from '@omujs/ui';
+    import { onDestroy } from 'svelte';
+    import MessageEntry from '../_components/MessageEntry.svelte';
+    import { ChatOverlayApp } from '../chat-app.js';
+    import WindowResizer from './WindowResizer.svelte';
 
     let { omu, chat, config } = ChatOverlayApp.getInstance();
 
     let status: NetworkStatus = $state(omu.network.status);
 
-    const unlistenStatus = omu.network.event.status.listen((value) => {
+    const unlistenStatus = omu.network.on('status', (value) => {
         status = value;
     });
 
@@ -90,12 +90,12 @@
         </TableList>
     </div>
     <div class="overlay">
-        {#if status.type === "connecting"}
+        {#if status.type === 'connecting'}
             <p>
                 接続中
                 <Spinner />
             </p>
-        {:else if status.type === "disconnected"}
+        {:else if status.type === 'disconnected'}
             {@const { reason } = status}
             切断されました
             {#if reason}

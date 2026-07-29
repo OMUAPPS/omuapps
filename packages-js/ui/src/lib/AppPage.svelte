@@ -26,17 +26,17 @@
         if (!omu) return;
         if (!omu.running) {
             await new Promise<void>((resolve) => {
-                omu.event.started.listen(() => resolve());
+                omu.on('started', () => resolve());
             });
         }
         omu.onReady(() => {
             appState = { type: 'ready' };
         });
-        omu.network.event.status.listen((status) => {
+        omu.network.on('status', (status) => {
             appState = { type: 'connecting', status };
             console.warn(status);
         });
-        omu.network.event.disconnected.listen((reason) => {
+        omu.network.on('disconnected', (reason) => {
             appState = { type: 'disconnected', reason };
         });
     });

@@ -105,34 +105,35 @@ class SqliteTableAdapter(TableAdapter):
         backward: bool = False,
         cursor: str | None = None,
     ) -> dict[str, bytes]:
-        cursor_id: int | None = None
         if cursor is None:
             if backward:
-                _cursor = self._conn.execute("SELECT id FROM data ORDER BY id DESC LIMIT 1")
+                _cursor = self._conn.execute(
+                    "SELECT key, value FROM data ORDER BY id DESC LIMIT ?",
+                    (limit,),
+                )
             else:
-                _cursor = self._conn.execute("SELECT id FROM data ORDER BY id LIMIT 1")
-            row = _cursor.fetchone()
-            if row is None:
-                return {}
-            cursor_id = row[0]
-        else:
-            _cursor = self._conn.execute("SELECT id FROM data WHERE key = ?", (cursor,))
-            row = _cursor.fetchone()
-            if row is None:
-                raise ValueError(f"Cursor {cursor} not found")
-            cursor_id = row[0]
+                _cursor = self._conn.execute(
+                    "SELECT key, value FROM data ORDER BY id LIMIT ?",
+                    (limit,),
+                )
+            return {row[0]: row[1] for row in _cursor.fetchall()}
 
+        _cursor = self._conn.execute("SELECT id FROM data WHERE key = ?", (cursor,))
+        row = _cursor.fetchone()
+        if row is None:
+            raise ValueError(f"Cursor {cursor} not found")
+        cursor_id = row[0]
         if backward:
             _cursor = self._conn.execute(
-                "SELECT key, value FROM data WHERE id <= ? ORDER BY id DESC LIMIT ?",
+                "SELECT key, value FROM data WHERE id < ? ORDER BY id DESC LIMIT ?",
                 (cursor_id, limit),
             )
         else:
             _cursor = self._conn.execute(
-                "SELECT key, value FROM data WHERE id >= ? ORDER BY id LIMIT ?",
+                "SELECT key, value FROM data WHERE id > ? ORDER BY id LIMIT ?",
                 (cursor_id, limit),
             )
-        return {row[0]: (row[1]) for row in _cursor.fetchall()}
+        return {row[0]: row[1] for row in _cursor.fetchall()}
 
     async def fetch_range(self, start: str, end: str) -> dict[str, bytes]:
         start_id: int

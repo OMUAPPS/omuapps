@@ -1,12 +1,13 @@
 <script lang="ts">
 
+    import { resolve } from '$app/paths';
     import Page from '$lib/components/Page.svelte';
     import { ExternalLink, Tooltip } from '@omujs/ui';
     import style from 'svelte-highlight/styles/stackoverflow-light';
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
     import { config, GROUP_NAMES } from './constants.js';
-    import type { DocsSection } from './server';
+    import type { DocsSection } from './docs-data';
     import { docs, menuOpen, openedGroups } from './stores.js';
 
     interface Props {
@@ -66,7 +67,7 @@
                         </h2>
                         <small>
                             報告は
-                            <ExternalLink href="/redirect/discord">
+                            <ExternalLink href={resolve('/redirect/discord')}>
                                 Discord
                                 <i class="ti ti-external-link"></i>
                             </ExternalLink>

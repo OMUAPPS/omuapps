@@ -68,6 +68,7 @@
     "status": {
         "connecting": "接続中...",
         "connected": "認証中...",
+        "ready": "接続しました",
         "reconnecting": "再接続中...",
         "disconnected": "切断されました",
         "attempt": "{count} 回目の接続。 {date} に再接続を試みます"
@@ -97,7 +98,8 @@
             "bookmark": "ブックマーク",
             "copy": "コピー",
             "see_in_room": "配信で見る",
-            "paid": "投げ銭"
+            "paid": "投げ銭",
+            "remove": "削除"
         },
         "apps": {
             "title": "アプリ",
@@ -156,7 +158,10 @@
             "select_submit_tooltip": "一つ以上選択してください。",
             "input_cancel": "やめる",
             "selected_tooltip": "クリックで選択を解除",
-            "select_tooltip": "クリックで選択"
+            "select_tooltip": "クリックで選択",
+            "clear_chat": "すべて削除",
+            "clear_chat_tooltip": "保存されているメッセージをすべて削除します。",
+            "search_placeholder": "検索..."
         },
         "settings": {
             "icon": "ti ti-settings",

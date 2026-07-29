@@ -11,12 +11,12 @@ export interface Pattern {
     name: string;
     description: string;
     probability: number;
-};
+}
 
 export interface Config {
     patterns: Pattern[];
     active: boolean;
-};
+}
 
 export const DEFAULT_CONFIG: Config = {
     active: false,

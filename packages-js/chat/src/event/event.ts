@@ -1,4 +1,4 @@
-import type { Table } from '@omujs/omu/api/table';
+import type { Table, TableEvents } from '@omujs/omu/api/table';
 import type { Unlisten } from '@omujs/omu/event';
 import { EventEmitter } from '@omujs/omu/event';
 
@@ -19,25 +19,39 @@ export class ListenerEvent<P extends Array<any>> implements EventSource<P> {
     }
 }
 
-export class TableEvent<T> extends ListenerEvent<[Map<string, T>]> {
-    public readonly AddBatch: ListenerEvent<[Map<string, T>]>;
-    public readonly UpdateBatch: ListenerEvent<[Map<string, T>]>;
-    public readonly RemoveBatch: ListenerEvent<[Map<string, T>]>;
+class TableListenerEvent<T, K extends keyof TableEvents<T>> implements EventSource<TableEvents<T>[K]> {
+    constructor(
+        protected readonly getTable: (chat: Chat) => Table<T>,
+        private readonly event: K,
+    ) {}
+
+    public subscribe(handler: EventHandler<TableEvents<T>[K]>, chat: Chat): Unlisten {
+        const table = this.getTable(chat);
+        const unlisten = table.on(this.event, handler);
+        table.listen();
+        return unlisten;
+    }
+}
+
+export class TableEvent<T> extends TableListenerEvent<T, 'cache'> {
+    public readonly AddBatch: EventSource<[Map<string, T>]>;
+    public readonly UpdateBatch: EventSource<[Map<string, T>]>;
+    public readonly RemoveBatch: EventSource<[Map<string, T>]>;
     public readonly Add: EventSource<[T]>;
     public readonly Update: EventSource<[T]>;
     public readonly Remove: EventSource<[T]>;
     public readonly Clear: EventSource<[]>;
     public readonly wrappers: Record<string, Unlisten>;
 
-    constructor(private readonly getTable: (chat: Chat) => Table<T>) {
-        super((chat) => getTable(chat).event.cacheUpdate);
-        this.AddBatch = new ListenerEvent((chat) => getTable(chat).event.add);
-        this.UpdateBatch = new ListenerEvent((chat) => getTable(chat).event.update);
-        this.RemoveBatch = new ListenerEvent((chat) => getTable(chat).event.remove);
-        this.Add = this.createBatchSubscriber((table) => table.event.add);
-        this.Update = this.createBatchSubscriber((table) => table.event.update);
-        this.Remove = this.createBatchSubscriber((table) => table.event.remove);
-        this.Clear = new ListenerEvent((client) => getTable(client).event.clear);
+    constructor(getTable: (chat: Chat) => Table<T>) {
+        super(getTable, 'cache');
+        this.AddBatch = new TableListenerEvent(getTable, 'add');
+        this.UpdateBatch = new TableListenerEvent(getTable, 'update');
+        this.RemoveBatch = new TableListenerEvent(getTable, 'remove');
+        this.Add = this.createBatchSubscriber('add');
+        this.Update = this.createBatchSubscriber('update');
+        this.Remove = this.createBatchSubscriber('remove');
+        this.Clear = new TableListenerEvent(getTable, 'clear');
         this.wrappers = {};
     }
 
@@ -50,20 +64,14 @@ export class TableEvent<T> extends ListenerEvent<[Map<string, T>]> {
     }
 
     private createBatchSubscriber(
-        getListener: (table: Table<T>) => EventEmitter<[Map<string, T>]>,
+        event: 'add' | 'update' | 'remove',
     ): EventSource<[T]> {
-        let batchWrapper: EventHandler<[Map<string, T>]> | null = null;
-
         const subscribe = (emit: EventHandler<[T]>, chat: Chat): Unlisten => {
             const table = this.getTable(chat);
-            const listener = getListener(table);
-            batchWrapper = TableEvent.createBatchWrapper((item) => emit(item));
-            const stopListen = table.listen();
-            const clearEvent = listener.listen(batchWrapper);
-            return () => {
-                stopListen();
-                clearEvent();
-            };
+            const batchWrapper = TableEvent.createBatchWrapper<T>((item) => emit(item));
+            const unlistenEvent = table.on(event, batchWrapper);
+            table.listen();
+            return unlistenEvent;
         };
 
         return {
@@ -86,7 +94,7 @@ export class EventRegistry {
         this.events = new Map();
     }
 
-    public register<P extends Array<any>>(event: EventSource<P>, handler: EventHandler<P>): void {
+    public register<P extends Array<any>>(event: EventSource<P>, handler: EventHandler<P>): Unlisten {
         let entry = this.events.get(event) as Entry<P> | null;
         if (!entry) {
             const newEntry: Entry<P> = {
@@ -97,6 +105,6 @@ export class EventRegistry {
             this.events.set(event, newEntry);
             event.subscribe((...args) => newEntry.listeners.emit(...args), this.chat);
         }
-        entry.listeners.listen((...args) => handler(...args));
+        return entry.listeners.listen(handler);
     }
 }

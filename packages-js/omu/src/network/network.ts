@@ -8,7 +8,7 @@ import {
     PermissionDenied,
     ServerRestart,
 } from '../errors.js';
-import { EventEmitter } from '../event';
+import { EventEmitter, EventHub } from '../event';
 import { IdentifierMap } from '../identifier';
 import { Omu } from '../omu.js';
 import type { SessioTokenProvider } from '../token.js';
@@ -41,14 +41,16 @@ export type NetworkStatus = StatusType<'connecting'> | StatusType<'connected'> |
     cancel: () => void;
 };
 
+type NetworkEvents = {
+    connected: [];
+    disconnected: [DisconnectReason | undefined];
+    packet: [Packet<unknown>];
+    status: [NetworkStatus];
+};
+
 export class Network {
     public status: NetworkStatus = { type: 'disconnected' };
-    public readonly event: { connected: EventEmitter<[]>; disconnected: EventEmitter<[DisconnectReason | undefined]>; packet: EventEmitter<[Packet<unknown>]>; status: EventEmitter<[NetworkStatus]> } = {
-        connected: new EventEmitter(),
-        disconnected: new EventEmitter(),
-        packet: new EventEmitter(),
-        status: new EventEmitter(),
-    };
+    private readonly events = new EventHub<NetworkEvents>();
     private readonly tasks: Array<() => Promise<void> | void> = [];
     private readonly packetMapper = new PacketMapper();
     private readonly packetHandlers = new IdentifierMap<PacketHandler<unknown>>();
@@ -105,6 +107,14 @@ export class Network {
             this.setStatus({ type: 'ready' });
             this.attempt = 0;
         });
+    }
+
+    public on<K extends keyof NetworkEvents>(event: K, listener: (...args: NetworkEvents[K]) => Promise<void> | void): () => void {
+        return this.events.on(event, listener);
+    }
+
+    public off<K extends keyof NetworkEvents>(event: K, listener: (...args: NetworkEvents[K]) => Promise<void> | void): void {
+        this.events.off(event, listener);
     }
 
     public setConnection(connection: Connection): void {
@@ -205,7 +215,7 @@ export class Network {
                 }, this.packetMapper);
                 this.listenTask = this.listen();
                 await this.setStatus({ type: 'connected' });
-                await this.event.connected.emit();
+                await this.events.emit('connected');
                 this.dispatchTasks().then(() => {
                     this.send({
                         type: PACKET_TYPES.READY,
@@ -221,7 +231,7 @@ export class Network {
                     throw error;
                 }
             } finally {
-                this.event.disconnected.emit(this.reason);
+                this.events.emit('disconnected', this.reason);
                 if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting') {
                     this.setStatus({ type: 'disconnected', attempt: this.attempt, reason: this.reason });
                 }
@@ -282,7 +292,7 @@ export class Network {
             const decrypted = await this.aes.decrypt(packet);
             packet = this.packetMapper.deserialize(decrypted);
         }
-        await this.event.packet.emit(packet);
+        await this.events.emit('packet', packet);
         const packetHandler = this.packetHandlers.get(packet.type.id);
         if (!packetHandler) {
             return;
@@ -295,7 +305,10 @@ export class Network {
     }
 
     public removeTask(task: () => Promise<void> | void): void {
-        this.tasks.splice(this.tasks.indexOf(task), 1);
+        const index = this.tasks.indexOf(task);
+        if (index !== -1) {
+            this.tasks.splice(index, 1);
+        }
     }
 
     private async dispatchTasks(): Promise<void> {
@@ -309,7 +322,7 @@ export class Network {
             throw new Error(`Cannot set status to ${status} when already ${status}`);
         }
         this.status = status;
-        await this.event.status.emit(status);
+        await this.events.emit('status', status);
     }
 
     public close(): void {

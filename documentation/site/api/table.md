@@ -93,3 +93,70 @@ const users = await users.fetchRange({
     end: 'user10'
 });
 ```
+
+## イベントを受け取る
+
+`on(event, listener)`で追加、更新、削除などを監視できます。戻り値の関数を呼び出すと、そのリスナーを解除できます。
+
+```typescript
+const unlisten = users.on('add', (items) => {
+    for (const user of items.values()) {
+        console.log('追加:', user);
+    }
+});
+
+unlisten();
+```
+
+利用できるイベントは次のとおりです。
+
+| イベント | 内容 |
+| --- | --- |
+| `add` | アイテムが追加された |
+| `update` | アイテムが更新された |
+| `remove` | アイテムが削除された |
+| `clear` | テーブルが空になった |
+| `cache` | ローカルキャッシュが更新された |
+
+同じ関数を指定して`off()`から解除することもできます。
+
+```typescript
+const onUpdate = (items: Map<string, User>) => {
+    console.log(items);
+};
+
+users.on('update', onUpdate);
+users.off('update', onUpdate);
+```
+
+## 継続的に購読する
+
+`listen()`を呼ぶとサーバーからの変更を継続的に受信し、テーブルのキャッシュへ反映します。コールバックを渡すと、キャッシュ更新時にも呼び出されます。
+
+```typescript
+const unlisten = users.listen((cache) => {
+    console.log([...cache.values()]);
+});
+
+unlisten();
+```
+
+## すべてのアイテムを順番に処理する
+
+データ量が多い場合は`iterate()`を使うと、すべてのアイテムを一度に読み込まず順番に処理できます。
+
+```typescript
+for await (const user of users.iterate({ backward: false })) {
+    console.log(user);
+}
+```
+
+## キャッシュ
+
+`cache`からローカルに読み込まれている値を同期的に取得できます。キャッシュにない値もあるため、確実に取得する場合は`get()`や`fetchItems()`を使ってください。
+
+```typescript
+const cachedUser = users.cache.get('user0');
+
+users.setCacheSize(500);
+```

@@ -27,7 +27,7 @@
 
     load();
 
-    let animation = Date.now() - entry.createdAt.getTime() < 5000;
+    let animation = Date.now() - entry.createdAt.getTime() < 300;
 </script>
 
 <HeightTransition duration={animation ? 150 : 0}>
@@ -35,11 +35,16 @@
         <div class="left">
             {#if author?.avatarUrl}
                 <span class="avatar">
-                    <a href={author.metadata.url} title={author.metadata.screen_id} target="_blank" rel="noopener noreferrer">
+                    <a
+                        href={author.metadata.url}
+                        title={author.metadata.screen_id}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         <Tooltip>
                             {author.metadata.url}
                         </Tooltip>
-                        <img src={author.avatarUrl} alt="">
+                        <img src={author.avatarUrl} alt="" />
                     </a>
                 </span>
             {/if}
@@ -47,7 +52,9 @@
         <div class="body">
             {#if author}
                 <span class="name">
-                    {author.name ?? author.metadata.screen_id ?? author.id.path.at(-1)}
+                    {author.name ??
+                        author.metadata.screen_id ??
+                        author.id.path.at(-1)}
                 </span>
             {/if}
             {#if entry.content}

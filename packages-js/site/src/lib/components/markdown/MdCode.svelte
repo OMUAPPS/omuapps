@@ -47,7 +47,7 @@
         margin: 1rem 0;
         overflow-x: auto;
         padding: 0 0.25em;
-        font-size: 0.8em;
+        font-size: 0.9em;
         font-weight: 500;
         font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
         line-height: 1.45;

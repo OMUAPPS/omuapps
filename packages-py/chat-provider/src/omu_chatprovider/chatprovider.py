@@ -7,7 +7,7 @@ from omu.api.endpoint.endpoint import EndpointType
 from omu.app import AppType
 from omu_chat import Channel, Chat, Message, Room, events
 
-from .errors import ProviderError
+from .controller import ChannelController
 from .service import ProviderContext, ProviderService, retrieve_services
 from .version import VERSION
 
@@ -34,6 +34,8 @@ chat = Chat(omu)
 
 provider_services: dict[Identifier, ProviderService] = {}
 ctx = ProviderContext()
+controller = ChannelController(ctx, provider_services)
+recheck: asyncio.Task[None] | None = None
 
 
 async def register_services():
@@ -44,60 +46,19 @@ async def register_services():
         await chat.providers.add(service.provider)
 
 
-def get_provider(channel: Channel | Room) -> ProviderService | None:
-    if channel.provider_id not in provider_services:
-        return None
-    return provider_services[channel.provider_id]
-
-
-async def update_channel(channel: Channel, service: ProviderService):
-    try:
-        if not channel.active:
-            await stop_channel(channel, service)
-            return
-        await start_channel(channel, service)
-    except ProviderError as e:
-        logger.opt(exception=e).error(f"Error updating channel {channel.key()}")
-    except Exception as e:
-        logger.opt(exception=e).error(f"Error updating channel {channel.key()}")
-
-
-async def start_channel(channel: Channel, service: ProviderService):
-    try:
-        await service.start_channel(ctx, channel)
-    except Exception as e:
-        logger.opt(exception=e).error(f"Error starting channel {channel.key()}")
-
-
-async def stop_channel(channel: Channel, service: ProviderService):
-    try:
-        await service.stop_channel(ctx, channel)
-    except Exception as e:
-        logger.opt(exception=e).error(f"Error stopping channel {channel.key()}")
-
-
 @chat.on(events.channel.add)
 async def on_channel_create(channel: Channel):
-    provider = get_provider(channel)
-    if provider is not None:
-        await provider.start_channel(ctx, channel)
-        await update_channel(channel, provider)
+    await controller.update(channel)
 
 
 @chat.on(events.channel.remove)
 async def on_channel_remove(channel: Channel):
-    provider = get_provider(channel)
-    if provider is not None:
-        channel.active = False
-        await provider.stop_channel(ctx, channel)
-        await update_channel(channel, provider)
+    await controller.remove(channel)
 
 
 @chat.on(events.channel.update)
 async def on_channel_update(channel: Channel):
-    provider = get_provider(channel)
-    if provider is not None:
-        await update_channel(channel, provider)
+    await controller.update(channel)
 
 
 @chat.on(events.room.remove)
@@ -107,28 +68,16 @@ async def on_room_removed(room: Room):
 
 async def add_channels():
     all_channels = await chat.channels.fetch_all()
-    for channel in all_channels.values():
-        if not channel.active:
-            continue
-        provider = get_provider(channel)
-        if provider is None:
-            continue
-        await start_channel(channel, provider)
+    await controller.bootstrap(all_channels)
 
 
 async def check_channels():
-    all_channels = await chat.channels.fetch_all()
-    for channel in all_channels.values():
-        provider = get_provider(channel)
-        if provider is None:
-            continue
-        await update_channel(channel, provider)
+    await controller.refresh()
 
 
 async def should_remove(room: Room, provider_service: ProviderService):
     if room.channel_id:
-        channel = await chat.channels.get(room.channel_id.key())
-        if channel and not channel.active:
+        if not controller.is_active(room.channel_id):
             return True
     try:
         online = await provider_service.is_online(room)
@@ -178,10 +127,11 @@ async def on_message_create(message: Message):
 
 @omu.event.ready.listen
 async def on_ready():
+    global recheck
     await register_services()
     await add_channels()
-    await check_channels()
-    asyncio.create_task(recheck_task())
+    if recheck is None or recheck.done():
+        recheck = asyncio.create_task(recheck_task())
     logger.info("Chat provider is ready")
 
 

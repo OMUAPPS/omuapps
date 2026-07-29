@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { DocsData } from './server';
+import type { DocsData } from './docs-data';
 
 export const docs = writable<DocsData | null>(null);
 
