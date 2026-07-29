@@ -165,7 +165,7 @@ export class WebviewAPI {
             return { type: 'ok', value: undefined };
         };
 
-        this.omu.server.apps.event.remove.listen(async (apps) => {
+        this.omu.server.apps.on('remove', async (apps) => {
             for (const app of apps.values()) {
                 const hosts = await this.allowedHosts.get(app.id.key());
                 if (!hosts) continue;

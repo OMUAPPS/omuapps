@@ -170,19 +170,19 @@ export class BufferedMap<T extends object> implements State {
     ) {
         if (listen) {
             this.unlisten.push(
-                table.event.add.listen((items) => {
+                table.on('add', (items) => {
                     for (const [id, item] of items) {
                         this.map.set(id, item);
                         this.proxies.delete(id); // 元データが変わったらキャッシュを無効化
                     }
                 }),
-                table.event.update.listen((items) => {
+                table.on('update', (items) => {
                     for (const [id, item] of items) {
                         this.map.set(id, item);
                         this.proxies.delete(id); // キャッシュ無効化
                     }
                 }),
-                table.event.remove.listen((items) => {
+                table.on('remove', (items) => {
                     for (const [id] of items) {
                         this.map.delete(id);
                         this.proxies.delete(id);
@@ -1163,4 +1163,3 @@ export class ItemPack {
         a.remove();
     }
 }
-

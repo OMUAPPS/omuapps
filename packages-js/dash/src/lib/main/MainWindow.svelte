@@ -73,7 +73,7 @@
                 };
             }
         };
-        omu.server.apps.event.cacheUpdate.listen((newApps) => update(newApps));
+        omu.server.apps.on('cache', (newApps) => update(newApps));
         update(await omu.server.apps.fetchAll());
     }
 
@@ -81,7 +81,7 @@
 
     onMount(async () => {
         omu.onReady(async () => {
-            omu.server.apps.event.remove.listen((removedItems) => {
+            omu.server.apps.on('remove', (removedItems) => {
                 removedItems.forEach((item) => {
                     delete $pages[`app-${item.id.key()}`];
                     unregisterPage(`app-${item.id.key()}`);

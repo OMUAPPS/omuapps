@@ -84,7 +84,7 @@
     table.listen((items) => {
         updateItems(items);
     });
-    table.event.remove.listen((removedItems) => {
+    table.on('remove', (removedItems) => {
         for (const key of removedItems.keys()) {
             items.delete(key);
         }
