@@ -3,7 +3,7 @@ index: 10
 icon: brand-coffee
 title: 配信喫茶
 description: 雑談のお供にあなただけのカフェを
-image: /img/discord-overlay.png
+image: /img/omucafe.png
 ---
 
 # 配信喫茶
