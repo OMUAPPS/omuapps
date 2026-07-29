@@ -58,10 +58,9 @@ class EventEmitter[**P]:
             raise ValueError("EventEmitter is closed")
         for listener in tuple(self._listeners):
             try:
-                if asyncio.iscoroutinefunction(listener):
-                    await listener(*args, **kwargs)
-                else:
-                    listener(*args, **kwargs)
+                result = listener(*args, **kwargs)
+                if asyncio.iscoroutine(result):
+                    await result
             except Exception as e:
                 if self.catch_errors:
                     logger.opt(exception=e).error("Error in listener")
