@@ -16,11 +16,11 @@ export interface AppIndexEntry {
     url: string;
     meta?: AppIndexRegistryMeta;
     added_at: string;
-};
+}
 
 export interface AppIndex {
     indexes: Record<string, AppIndexEntry>;
-};
+}
 
 export const SERVER_APPS_READ_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('apps', 'read');
 export const SERVER_APPS_WRITE_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('apps', 'write');
@@ -74,7 +74,7 @@ export class ServerExtension implements Extension {
     public async shutdown(restart?: boolean): Promise<boolean> {
         this.omu.endpoints.call(SHUTDOWN_ENDPOINT_TYPE, restart ?? false);
         await new Promise<void>((resolve) => {
-            const unlisten = this.omu.network.event.disconnected.listen(() => {
+            const unlisten = this.omu.network.on('disconnected', () => {
                 resolve();
                 unlisten();
             });

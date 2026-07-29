@@ -15,7 +15,9 @@
 
     let networkState = $state('');
 
-    omu.network.event.status.listen((newState) => networkState = JSON.stringify(newState));
+    omu.network.on('status', (newState) => {
+        networkState = JSON.stringify(newState);
+    });
 
 </script>
 

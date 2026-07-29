@@ -113,7 +113,7 @@ export class AssetExtension {
     private assetToken: string | undefined = undefined;
 
     constructor(private readonly omu: Omu) {
-        omu.network.event.disconnected.listen(() => {
+        omu.network.on('disconnected', () => {
             this.assetToken = undefined;
         });
         omu.onReady(async () => {

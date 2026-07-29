@@ -269,7 +269,7 @@ class TableImpl<T> implements Table<T> {
             this.event.clear.emit();
             this.event.cacheUpdate.emit(this.cache);
         });
-        omu.event.ready.listen(() => this.onReady());
+        omu.on('ready', () => this.onReady());
     }
 
     private updateCache(items: Map<string, T>): void {
