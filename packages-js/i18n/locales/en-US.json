@@ -69,6 +69,7 @@
         "connecting": "Connecting...",
         "reconnecting": "Reconnecting...",
         "connected": "Connected",
+        "ready": "Ready",
         "disconnected": "Disconnected",
         "connect_attempt_count": "Connect Attempt Count: {count}"
     },

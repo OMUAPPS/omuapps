@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Tooltip } from '@omujs/ui';
-    import type { DocsMeta } from '../server';
+    import type { DocsMeta } from '../docs-data';
 
     interface Props {
         section:

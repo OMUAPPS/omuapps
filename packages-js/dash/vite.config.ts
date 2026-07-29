@@ -3,13 +3,6 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
     plugins: [sveltekit() as any],
-    css: {
-        preprocessorOptions: {
-            scss: {
-                api: 'modern',
-            },
-        },
-    },
     test: {
         include: ['src/**/*.{test,spec}.{js,ts}'],
     },

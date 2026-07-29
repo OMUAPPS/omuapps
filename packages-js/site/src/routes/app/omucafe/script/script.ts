@@ -327,6 +327,7 @@ export function testScripting() {
         endpoints: {
             'debug:log': (ctx: ScriptContext, task: Task, data: Data) => {
                 console.log(data);
+                return undefined;
             },
             'int:gt': (ctx: ScriptContext, task: Task, data: Data) => {
                 if (typeof data !== 'object') {

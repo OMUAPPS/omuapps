@@ -7,7 +7,7 @@
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
     import { config, GROUP_NAMES } from './constants.js';
-    import type { DocsSection } from './server';
+    import type { DocsSection } from './docs-data';
     import { docs, menuOpen, openedGroups } from './stores.js';
 
     interface Props {

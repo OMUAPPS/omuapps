@@ -1,5 +1,6 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
+    import type { Keys } from '@omujs/i18n';
     import { Tooltip } from '@omujs/ui';
     import { currentPage, menuOpen } from '../settings.js';
     import { type PageItem } from './page.js';
@@ -11,9 +12,9 @@
 
     let { entry, badge = undefined }: Props = $props();
 
-    let title = $derived($t(`page.${entry.id}.title`));
-    let tooltip = $derived($t(`page.${entry.id}.tooltip`));
-    let icon = $derived($t(`page.${entry.id}.icon`));
+    let title = $derived($t(`page.${entry.id}.title` as Keys));
+    let tooltip = $derived($t(`page.${entry.id}.tooltip` as Keys));
+    let icon = $derived($t(`page.${entry.id}.icon` as Keys));
 </script>
 
 <button

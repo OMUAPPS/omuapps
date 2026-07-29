@@ -68,6 +68,7 @@
     "status": {
         "connecting": "接続中...",
         "connected": "認証中...",
+        "ready": "接続しました",
         "reconnecting": "再接続中...",
         "disconnected": "切断されました",
         "attempt": "{count} 回目の接続。 {date} に再接続を試みます"

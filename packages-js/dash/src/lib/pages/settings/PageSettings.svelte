@@ -3,6 +3,7 @@
     import {
         currentSettingsCategory,
         devMode,
+        type SettingsCategory,
     } from '$lib/settings';
     import { Header, Tooltip } from '@omujs/ui';
     import About from './SettingAbout.svelte';
@@ -20,7 +21,7 @@
     />
     <div class="content">
         <div class="categories">
-            {#snippet category(id: string, set: () => void)}
+            {#snippet category(id: SettingsCategory, set: () => void)}
                 <button
                     class:selected={$currentSettingsCategory == id}
                     onclick={set}

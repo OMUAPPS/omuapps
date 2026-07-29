@@ -2,7 +2,7 @@
 
     import Markdown from '$lib/components/markdown/Markdown.svelte';
     import { config, replaceConstants } from '../constants.js';
-    import type { DocsData } from '../server.js';
+    import type { DocsData } from '../docs-data.js';
     import { docs } from '../stores.js';
 
     interface Props {
