@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { browser } from '$app/environment';
     import { linkOpenHandler } from './stores';
     import Tooltip from './Tooltip.svelte';
 
@@ -16,7 +17,7 @@
         children,
     }: Props = $props();
 
-    if (href?.length && !href.startsWith('http')) {
+    if (browser && href?.length && !href.startsWith('http')) {
         href = new URL(href, window.location.href).toString();
     }
 </script>
