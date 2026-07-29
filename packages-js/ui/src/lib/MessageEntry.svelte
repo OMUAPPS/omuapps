@@ -36,7 +36,8 @@
     }
 
     function handleRemove() {
-        $chat.messages.remove(entry);
+        entry.deleted = true;
+        $chat.messages.update(entry);
     }
 </script>
 
