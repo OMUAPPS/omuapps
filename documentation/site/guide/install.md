@@ -39,11 +39,11 @@ OMUAPPSは、アプリを安心して利用できるよう、個人開発でも[
 
 特別な理由がない限り、入力欄はそのままで変更しないことをおすすめします
 
-![インストーラー](/img/installer_setup_1.png)
-![インストーラー](/img/installer_setup_2.png)
-![インストーラー](/img/installer_setup_3.png)
-![インストーラー](/img/installer_setup_4.png)
-![インストーラー](/img/installer_setup_5.png)
+![OMUAPPSインストーラーの手順1](/img/installer_setup_1.png)
+![OMUAPPSインストーラーの手順2](/img/installer_setup_2.png)
+![OMUAPPSインストーラーの手順3](/img/installer_setup_3.png)
+![OMUAPPSインストーラーの手順4](/img/installer_setup_4.png)
+![OMUAPPSインストーラーの手順5](/img/installer_setup_5.png)
 
 ## 3. セットアップ
 

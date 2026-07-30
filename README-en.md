@@ -2,8 +2,8 @@
 <p align="center">
     <a href="https://omuapps.com">
         <picture>
-            <source srcset="https://github.com/OMUAPPS/omuapps/raw/refs/heads/develop/assets/title.svg">
-            <img width="200" alt="OMUAPPS" src="https://github.com/OMUAPPS/omuapps/raw/refs/heads/develop/assets/title.svg">
+            <source srcset=".github/splash.svg">
+            <img width="200" alt="OMUAPPS" src=".github/splash.svg">
         </picture>
     </a>
 </p>
@@ -51,4 +51,4 @@ bun i
 
 ### Start
 
-In vscode, select [ Server/Client ] from the startup configuration and start.
+In VS Code, select the [ All ] compound configuration from Run and Debug.

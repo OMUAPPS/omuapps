@@ -1,5 +1,5 @@
 ---
-index: 10
+index: 11
 icon: brand-discord
 title: Discordオーバーレイ
 description: 安定して表示されるPNGTuber+の使えるオーバーレイ
@@ -20,7 +20,7 @@ image: /img/discord-overlay.png
 
 このアプリでは通常のアイコンだけでなく、あなたの持っているPNGTuber+アバターも使うことができるので、今まで不可能だったPNGTuber+でのコラボ配信ができます
 
-<iframe src="https://store.steampowered.com/widget/2596880/" frameborder="0" width="100%" height="190"></iframe>
+<iframe src="https://store.steampowered.com/widget/2596880/" title="PNGTuber Plus on Steam" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" frameborder="0" width="100%" height="190"></iframe>
 
 ## 使うには
 
