@@ -29,7 +29,7 @@ export interface Serializable<T, D> {
 
 ```typescript
 import type { Serializable } from '@omujs/omu';
-import { ByteReader, ByteWriter } from '@omujs/omu'; // バイト列を扱うためのユーティリティ
+import { ByteReader, ByteWriter } from '@omujs/omu/serialize'; // バイト列を扱うためのユーティリティ
 
 type MyData = {
     byteArray: Uint8Array;
