@@ -17,10 +17,26 @@ description: セッションを管理
 
 ```typescript
 // 子アプリケーションの定義
-const CHILD_APP = new App('com.omuapps:child', {
+const CHILD_APP = new App(PARENT_APP.id.join('child'), {
     parentId: PARENT_APP, // 親アプリケーションを指定（必須）
-    url: 'omuapps.com/app/child', // 子アプリケーションのURL
+    url: 'https://omuapps.com/app/child', // 子アプリケーションのURL
 });
+```
+
+子アプリのIDは、親アプリのIDの配下に置く必要があります。例えば親が`com.omuapps:parent`なら、上記の子は`com.omuapps:parent/child`になります。
+
+## 必要な権限
+
+トークンの生成には`GENERATE_TOKEN_PERMISSION_ID`、接続状態の監視には`SESSIONS_READ_PERMISSION_ID`が必要です。どちらも`omu.start()`より前に要求します。
+
+```typescript
+import { OmuPermissions } from '@omujs/omu';
+import { SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/api/session';
+
+omu.permissions.require(
+    OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
+    SESSIONS_READ_PERMISSION_ID,
+);
 ```
 
 ## トークンの生成と接続
@@ -32,7 +48,7 @@ const CHILD_APP = new App('com.omuapps:child', {
 const params = await omu.sessions.generateToken({
     app: CHILD_APP,
     permissions: [
-        OmuPermissions.ASSET_PERMISSION_ID, // 必要な権限を指定することで権限の確認をスキップできます
+        OmuPermissions.ASSET_PERMISSION_ID, // 親が保有する範囲内で子へ引き継ぐ権限
         // その他の権限...
     ],
 });
@@ -51,7 +67,8 @@ console.log(url.toString());
 
 ### 注意点
 
-- トークンを生成できるのは子の親アプリであるかつ、子のIDは親のIDより下にある必要があります
+- トークンを生成できるのは子の親アプリだけです
+- 子のIDは親のIDの配下にある必要があります
 - 子は親が持っている権限以上の権限を持つことができません
 
 ## セッションの要求と監視
@@ -59,6 +76,7 @@ console.log(url.toString());
 子アプリケーションのセッションを管理するには、以下のメソッドを使用します
 
 ```typescript
+// require()はomu.start()より前に呼びます
 // 子アプリケーションのセッションを要求
 omu.sessions.require(CHILD_APP);
 

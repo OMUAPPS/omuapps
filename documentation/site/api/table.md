@@ -77,7 +77,7 @@ await users.update({
 
 ```typescript
 // 全取得
-const users = await users.fetchAll();
+const allUsers = await users.fetchAll();
 
 // 最初・最後から指定した数だけ
 const lastUsers = await users.fetchItems({
@@ -88,7 +88,7 @@ const lastUsers = await users.fetchItems({
 });
 
 // 2つの範囲をすべて取得
-const users = await users.fetchRange({
+const usersInRange = await users.fetchRange({
     start: 'user0',
     end: 'user10'
 });
