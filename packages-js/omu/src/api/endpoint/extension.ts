@@ -15,7 +15,14 @@ export const ENDPOINT_EXTENSION_TYPE: ExtensionType<EndpointExtension> = new Ext
 type CallPromise = {
     resolve: (data: Uint8Array) => void;
     reject: (error: Error) => void;
+    timeout: ReturnType<typeof setTimeout>;
 };
+
+export type EndpointCallOptions = {
+    timeout?: number;
+};
+
+const DEFAULT_CALL_TIMEOUT = 30_000;
 
 type EndpointHandler = {
     type: EndpointType;
@@ -47,6 +54,7 @@ export class EndpointExtension {
                 );
             }
             this.responsePromises.delete(packet.params.key);
+            clearTimeout(promise.timeout);
             if (packet.params.error) {
                 promise.reject(new Error(packet.params.error));
                 return;
@@ -54,9 +62,14 @@ export class EndpointExtension {
             promise.resolve(packet.buffer);
         });
         omu.network.addTask(() => this.onTask());
+        omu.network.on('disconnected', (reason) => {
+            this.rejectPendingCalls(
+                reason ?? new Error('Disconnected before endpoint responded'),
+            );
+        });
     }
 
-    private async handleInvoked(packet: EndpointInvokedPacket) {
+    private async handleInvoked(packet: EndpointInvokedPacket): Promise<void> {
         const endpoint = this.boundEndpoints.get(packet.params.id);
         if (!endpoint) {
             throw new Error(`Received invocation for unknown endpoint ${packet.params.id.key()} (${packet.params.key})`);
@@ -69,7 +82,7 @@ export class EndpointExtension {
             ));
         } catch (error) {
             this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
-                new ResponseParams(packet.params.id, packet.params.key, JSON.stringify(error)),
+                new ResponseParams(packet.params.id, packet.params.key, formatError(error)),
                 new Uint8Array(),
             ));
         }
@@ -101,18 +114,53 @@ export class EndpointExtension {
         } });
     }
 
-    public async call<Req, Res>(endpoint: EndpointType<Req, Res>, data: Req): Promise<Res> {
+    public async call<Req, Res>(
+        endpoint: EndpointType<Req, Res>,
+        data: Req,
+        options?: EndpointCallOptions,
+    ): Promise<Res> {
         const key = this.callId++;
+        const timeoutMs = options?.timeout ?? DEFAULT_CALL_TIMEOUT;
         const promise = new Promise<Uint8Array>((resolve, reject) => {
-            this.responsePromises.set(key, { resolve, reject });
+            const timeout = setTimeout(() => {
+                this.responsePromises.delete(key);
+                reject(new Error(
+                    `Endpoint ${endpoint.id.key()} timed out after ${timeoutMs}ms`,
+                ));
+            }, timeoutMs);
+            this.responsePromises.set(key, { resolve, reject, timeout });
         });
-        this.omu.send(ENDPOINT_INVOKE_PACKET, new EndpointInvokePacket(
-            new InvokeParams(endpoint.id, key),
-            endpoint.requestSerializer.serialize(data),
-        ));
-        const response = await promise;
-        return endpoint.responseSerializer.deserialize(response);
+        try {
+            await this.omu.send(ENDPOINT_INVOKE_PACKET, new EndpointInvokePacket(
+                new InvokeParams(endpoint.id, key),
+                endpoint.requestSerializer.serialize(data),
+            ));
+            const response = await promise;
+            return endpoint.responseSerializer.deserialize(response);
+        } catch (error) {
+            const pending = this.responsePromises.get(key);
+            if (pending) {
+                clearTimeout(pending.timeout);
+                this.responsePromises.delete(key);
+            }
+            throw error;
+        }
     }
+
+    private rejectPendingCalls(error: Error): void {
+        for (const promise of this.responsePromises.values()) {
+            clearTimeout(promise.timeout);
+            promise.reject(error);
+        }
+        this.responsePromises.clear();
+    }
+}
+
+function formatError(error: unknown): string {
+    if (error instanceof Error) {
+        return `${error.name}: ${error.message}`;
+    }
+    return String(error);
 }
 
 const ENDPOINT_REGISTER_PACKET = PacketType.createSerialized<EndpointRegisterPacket>(ENDPOINT_EXTENSION_TYPE, {
