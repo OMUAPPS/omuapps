@@ -6,7 +6,12 @@ export * as network from './network';
 export { Omu } from './omu.js';
 export { Serializer } from './serialize';
 export type { Serializable } from './serialize';
-export { BrowserSession, type SessionParam, type SessioTokenProvider } from './token';
+export {
+    BrowserSession,
+    type SessionParam,
+    type SessionTokenProvider,
+    type SessioTokenProvider,
+} from './token';
 
 import { ASSET_PERMISSION_ID } from './api/asset';
 import {

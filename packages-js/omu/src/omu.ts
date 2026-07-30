@@ -21,7 +21,7 @@ import { Transport } from './network/connection.js';
 import { PACKET_TYPES } from './network/packet/packet-types.js';
 import type { PacketType } from './network/packet/packet.js';
 import { WebsocketTransport } from './network/websocket-transport';
-import { BrowserSession, type SessioTokenProvider } from './token.js';
+import { BrowserSession, type SessionTokenProvider } from './token.js';
 
 export type ClientEvents = {
     started: [];
@@ -33,7 +33,7 @@ export class Omu {
     public ready: boolean;
     public running: boolean;
     private readonly events = new EventHub<ClientEvents>();
-    readonly token: SessioTokenProvider;
+    readonly token: SessionTokenProvider;
     readonly address: Address;
     readonly sessions: SessionExtension;
     readonly network: Network;
@@ -55,7 +55,7 @@ export class Omu {
         public readonly app: App,
         options?: {
             address?: Address;
-            token?: SessioTokenProvider | string;
+            token?: SessionTokenProvider | string;
             transport?: Transport;
             connection?: Connection;
         },

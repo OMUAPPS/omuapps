@@ -3,16 +3,19 @@ import type { Address } from './address.js';
 import type { App } from './app.js';
 import { tryCatch } from './helper.js';
 
-export interface SessioTokenProvider {
+export interface SessionTokenProvider {
     get(serverAddress: Address, app: App): Promise<string | undefined>;
 }
+
+/** @deprecated Use SessionTokenProvider instead. */
+export type SessioTokenProvider = SessionTokenProvider;
 
 export type SessionParam = {
     address: Address;
     token: string;
 };
 
-export class BrowserSession implements SessioTokenProvider {
+export class BrowserSession implements SessionTokenProvider {
     public static readonly PARAM_NAME = '_omu_session';
 
     public async get(address: Address): Promise<string | undefined> {
