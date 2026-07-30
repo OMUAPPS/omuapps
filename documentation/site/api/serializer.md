@@ -39,13 +39,13 @@ type MyData = {
 const mySerializer: Serializable<MyData, Uint8Array> = {
     serialize(data) {
         const writer = new ByteWriter();
-        writer.writeByteArray(data.byteArray);
+        writer.writeUint8Array(data.byteArray);
         writer.writeString(data.date.toISOString());
         return writer.finish(); // バイト列を返す
     },
     deserialize(data) {
         const reader = new ByteReader(data);
-        const byteArray = reader.readByteArray();
+        const byteArray = reader.readUint8Array();
         const date = new Date(reader.readString());
         reader.finish(); // 読み切ったことを確認
         return { byteArray, date };
@@ -58,19 +58,14 @@ const mySerializer: Serializable<MyData, Uint8Array> = {
 例としてsignal機能をシリアライザと組み合わせて使う方法を示します。
 
 ```typescript
-const DEFAULT_MY_DATA: MyData = {
-    byteArray: new Uint8Array(),
-    date: new Date(),
-};
-
-const mySignal = omu.signals.create<MyData>('my_data', {
+const mySignal = omu.signals.serialized<MyData>('my_data', {
     serializer: mySerializer,
 });
 
-await mySignal.notify({
+mySignal.notify({
     byteArray: new Uint8Array([1, 2, 3]),
     date: new Date(),
-})
+});
 
 mySignal.listen((data: MyData) => {
     console.log(data.byteArray);

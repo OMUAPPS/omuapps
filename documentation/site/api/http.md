@@ -11,6 +11,18 @@ description: HTTPやWebSocketを使って接続
 
 ブラウザの制限を超えてHTTPリクエストを送信したりWebSocketを開く事ができます
 
+## 必要な権限
+
+HTTPリクエストとWebSocket接続には`HTTP_REQUEST_PERMISSION_ID`が必要です。`omu.start()`より前に要求します。
+
+```typescript
+import { OmuPermissions } from '@omujs/omu';
+
+omu.permissions.require(
+    OmuPermissions.HTTP_REQUEST_PERMISSION_ID,
+);
+```
+
 ## HTTPリクエスト
 
 `fetch()`メソッドを使用してHTTPリクエストを送信できます。このメソッドは標準の`window.fetch`と同じ引数を受け取り、返り値も同様の扱いができます

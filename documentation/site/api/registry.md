@@ -59,11 +59,11 @@ const myData = omu.registries.serialized<MyData>('my_data', {
 `.get()`メソッドを使って値を取得します
 
 ```typescript
-// データの取得
-const data = myData.value;
+// 現在ローカルに保持している値を同期的に取得
+const currentData = myData.value;
 
-// .get() メソッドを使って値を取得することもできます
-const data = await myData.get();
+// サーバーから最新の値を取得
+const fetchedData = await myData.get();
 ```
 
 ## データの更新

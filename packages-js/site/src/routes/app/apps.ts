@@ -32,7 +32,6 @@ apps.push(
     marshmallow,
     timer,
     roulette,
-    reaction,
     DISCORD_PLUGIN_APP,
     VIDEO_OVERLAY_APP,
     clock,

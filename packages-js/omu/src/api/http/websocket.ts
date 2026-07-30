@@ -211,10 +211,11 @@ export class OmuWebSocket implements WebSocket {
     }
 
     private async receiveLoop() {
-        while (this.readyState === WebSocket.CLOSED) {
+        while (this.readyState !== this.CLOSED) {
             const { data, type } = await this.ws.receive();
             switch (type) {
                 case 'close':
+                    this.readyState = this.CLOSED;
                     this.dispatchEvent(new CloseEvent('close', {
                         code: data.code,
                         reason: data.reason ?? undefined,
@@ -223,6 +224,7 @@ export class OmuWebSocket implements WebSocket {
                 case 'open':
                     this.url = data.url;
                     this.protocol = data.protocol ?? '';
+                    this.readyState = this.OPEN;
                     this.dispatchEvent(new Event('open', {}));
                     break;
                 case 'error':
@@ -266,6 +268,10 @@ export class OmuWebSocket implements WebSocket {
     }
 
     close(code?: number, reason?: string): void {
+        if (this.readyState === this.CLOSED || this.readyState === this.CLOSING) {
+            return;
+        }
+        this.readyState = this.CLOSING;
         this.ws.close(code, reason);
     }
 

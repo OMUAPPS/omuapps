@@ -1,5 +1,5 @@
 ---
-index: 1
+index: 0
 icon: book
 title: 導入ガイド
 description: アプリを使うまでの説明一覧
@@ -17,7 +17,7 @@ description: アプリを使うまでの説明一覧
 
 ## アプリ
 
-[アプリ一覧\\使いたいアプリがあるかも](%DOCS_ROOT%/app?_style=large)
+[主なアプリ\\使いたいアプリがあるかも](%DOCS_ROOT%/app?_style=large)
 
 ## サポート・フィードバック
 

@@ -54,7 +54,7 @@ cd example
 このチュートリアルで必要になる依存関係をインストールしましょう
 
 ```bash
-%PACKAGE_MANAGER% install @omujs/omu @omujs/obs
+%PACKAGE_ADD% @omujs/omu @omujs/obs
 ```
 
 それぞれ
@@ -126,7 +126,7 @@ export const NAMESPACE = 'io.github.omuapps' // 公開先の逆順ドメイン
 
 `new App(id, options)`
 
-- `id`: 識別子となるIDです。`https://omuapps.github.io/`に公開する場合、逆順ドメイン名で`io.github.omuapps/name`と入力
+- `id`: 識別子となるIDです。`https://omuapps.github.io/`に公開する場合、逆順ドメイン名で`io.github.omuapps:name`と入力
 - `options`: 名前や説明などアプリの情報を設定
 
 管理画面用とアセット用の２つを設定します
