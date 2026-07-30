@@ -70,4 +70,31 @@ describe('EndpointExtension', () => {
             'Endpoint com.example:test/wait timed out after 1ms',
         );
     });
+
+    test('allows calls without a timeout', async () => {
+        const { omu, disconnect } = createOmu();
+        const endpoints = new EndpointExtension(omu);
+        const call = endpoints.call(ENDPOINT, null, {
+            timeout: null,
+        });
+
+        disconnect();
+
+        await expect(call).rejects.toThrow(
+            'Disconnected before endpoint responded',
+        );
+    });
+
+    for (const timeout of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+        test(`rejects invalid timeout ${timeout}`, async () => {
+            const { omu } = createOmu();
+            const endpoints = new EndpointExtension(omu);
+
+            await expect(endpoints.call(ENDPOINT, null, {
+                timeout,
+            })).rejects.toThrow(
+                'Endpoint timeout must be a positive finite number or null',
+            );
+        });
+    }
 });

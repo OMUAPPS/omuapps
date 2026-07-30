@@ -47,6 +47,16 @@ const response = await omu.endpoints.call(GREETING, {
 console.log(response.message);
 ```
 
+呼び出しは既定で30秒経過するとタイムアウトします。処理時間に上限を
+設けない場合は`timeout`に`null`を指定します。タイムアウトを無効にしても、
+接続が切れた場合は呼び出しが失敗します。
+
+```typescript
+const response = await omu.endpoints.call(LONG_RUNNING_ENDPOINT, request, {
+    timeout: null,
+});
+```
+
 ## 権限を設定する
 
 `permissionId`を指定すると、呼び出し元に権限を要求できます。

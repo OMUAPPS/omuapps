@@ -15,11 +15,15 @@ export const ENDPOINT_EXTENSION_TYPE: ExtensionType<EndpointExtension> = new Ext
 type CallPromise = {
     resolve: (data: Uint8Array) => void;
     reject: (error: Error) => void;
-    timeout: ReturnType<typeof setTimeout>;
+    timeout?: ReturnType<typeof setTimeout>;
 };
 
 export type EndpointCallOptions = {
-    timeout?: number;
+    /**
+     * Timeout in milliseconds. Set to null to disable the timeout.
+     * @default 30000
+     */
+    timeout?: number | null;
 };
 
 const DEFAULT_CALL_TIMEOUT = 30_000;
@@ -54,7 +58,7 @@ export class EndpointExtension {
                 );
             }
             this.responsePromises.delete(packet.params.key);
-            clearTimeout(promise.timeout);
+            clearCallTimeout(promise);
             if (packet.params.error) {
                 promise.reject(new Error(packet.params.error));
                 return;
@@ -120,14 +124,26 @@ export class EndpointExtension {
         options?: EndpointCallOptions,
     ): Promise<Res> {
         const key = this.callId++;
-        const timeoutMs = options?.timeout ?? DEFAULT_CALL_TIMEOUT;
+        const timeoutMs = options?.timeout === undefined
+            ? DEFAULT_CALL_TIMEOUT
+            : options.timeout;
+        if (
+            timeoutMs !== null
+            && (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
+        ) {
+            throw new RangeError(
+                'Endpoint timeout must be a positive finite number or null',
+            );
+        }
         const promise = new Promise<Uint8Array>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                this.responsePromises.delete(key);
-                reject(new Error(
-                    `Endpoint ${endpoint.id.key()} timed out after ${timeoutMs}ms`,
-                ));
-            }, timeoutMs);
+            const timeout = timeoutMs === null
+                ? undefined
+                : setTimeout(() => {
+                    this.responsePromises.delete(key);
+                    reject(new Error(
+                        `Endpoint ${endpoint.id.key()} timed out after ${timeoutMs}ms`,
+                    ));
+                }, timeoutMs);
             this.responsePromises.set(key, { resolve, reject, timeout });
         });
         try {
@@ -140,7 +156,7 @@ export class EndpointExtension {
         } catch (error) {
             const pending = this.responsePromises.get(key);
             if (pending) {
-                clearTimeout(pending.timeout);
+                clearCallTimeout(pending);
                 this.responsePromises.delete(key);
             }
             throw error;
@@ -149,10 +165,16 @@ export class EndpointExtension {
 
     private rejectPendingCalls(error: Error): void {
         for (const promise of this.responsePromises.values()) {
-            clearTimeout(promise.timeout);
+            clearCallTimeout(promise);
             promise.reject(error);
         }
         this.responsePromises.clear();
+    }
+}
+
+function clearCallTimeout(promise: CallPromise): void {
+    if (promise.timeout !== undefined) {
+        clearTimeout(promise.timeout);
     }
 }
 
