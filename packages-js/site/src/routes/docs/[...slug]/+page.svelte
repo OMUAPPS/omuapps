@@ -15,17 +15,20 @@
     });
     let source = $derived(replaceConstants(data.page.content, $config));
     let meta = $derived(data.page.meta);
+    let ogImage = $derived(meta.image
+        ? new URL(meta.image, 'https://omuapps.com').href
+        : undefined);
 </script>
 
 <svelte:head>
     <title>{meta.title || 'ドキュメント'} | OMUAPPS</title>
     <meta name="description" content={meta.description} />
-    <meta name="og:description" content={meta.description} />
-    <meta name="og:title" content={meta.title}>
-    {#if data.page.meta}
-        <meta name="og:image" content={meta.image}>
+    <meta property="og:description" content={meta.description} />
+    <meta property="og:title" content={meta.title}>
+    {#if ogImage}
+        <meta property="og:image" content={ogImage}>
     {/if}
-    <meta name="og:url" content={`https://omuapps.com/docs/${data.page.slug}`} />
+    <meta property="og:url" content={`https://omuapps.com/docs/${data.page.slug}`} />
     <link rel="canonical" href={`https://omuapps.com/docs/${data.page.slug}`} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={meta.title} />
