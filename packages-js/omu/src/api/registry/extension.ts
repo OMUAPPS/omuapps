@@ -95,7 +95,7 @@ class RegistryImpl<T> implements Registry<T> {
     }
 
     async #set(value: T): Promise<void> {
-        this.omu.send(REGISTRY_UPDATE_PACKET, {
+        await this.omu.send(REGISTRY_UPDATE_PACKET, {
             id: this.type.id,
             value: this.type.serializer.serialize(value),
         });

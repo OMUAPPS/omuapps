@@ -62,7 +62,7 @@ const mySignal = omu.signals.serialized<MyData>('my_data', {
     serializer: mySerializer,
 });
 
-mySignal.notify({
+await mySignal.notify({
     byteArray: new Uint8Array([1, 2, 3]),
     date: new Date(),
 });

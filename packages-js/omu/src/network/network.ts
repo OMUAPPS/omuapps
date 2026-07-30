@@ -326,7 +326,9 @@ export class Network {
     }
 
     public close(): void {
-        this.setStatus({ type: 'disconnected' });
+        void this.setStatus({ type: 'disconnected' });
         this.attempt = 0;
+        this.connection?.close();
+        this.connection = undefined;
     }
 }

@@ -83,9 +83,9 @@ class SignalImpl<T> implements Signal<T> {
         omu.network.addTask(() => this.onTask());
     }
 
-    public notify(body: T): void {
+    public async notify(body: T): Promise<void> {
         const data = this.type.serializer.serialize(body);
-        this.omu.send(SIGNAL_NOTIFY_PACKET, {
+        await this.omu.send(SIGNAL_NOTIFY_PACKET, {
             id: this.type.id,
             body: data,
         });

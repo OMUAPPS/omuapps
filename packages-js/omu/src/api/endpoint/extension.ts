@@ -76,12 +76,12 @@ export class EndpointExtension {
         }
         try {
             const result = await endpoint.handler(packet);
-            this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
+            await this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
                 new ResponseParams(packet.params.id, packet.params.key, null),
                 result,
             ));
         } catch (error) {
-            this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
+            await this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
                 new ResponseParams(packet.params.id, packet.params.key, formatError(error)),
                 new Uint8Array(),
             ));

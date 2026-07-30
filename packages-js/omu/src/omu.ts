@@ -108,8 +108,8 @@ export class Omu {
         this.http = this.extensions.register(HTTP_EXTENSION_TYPE);
     }
 
-    public send<T>(packetType: PacketType<T>, data: T): void {
-        this.network.send({
+    public send<T>(packetType: PacketType<T>, data: T): Promise<void> {
+        return this.network.send({
             type: packetType,
             data,
         });
@@ -122,7 +122,12 @@ export class Omu {
         this.running = true;
         const connect = this.network.connect();
         this.events.emit('started');
-        await connect;
+        try {
+            await connect;
+        } finally {
+            this.running = false;
+            this.ready = false;
+        }
     }
 
     public stop(): void {
@@ -153,11 +158,21 @@ export class Omu {
 
     public async waitForReady(): Promise<void> {
         if (this.ready) return;
-        return new Promise<void>((resolve) => {
-            let unlisten: Unlisten = () => {};
-            unlisten = this.events.on('ready', () => {
-                unlisten();
+        if (!this.running) {
+            throw new Error('Cannot wait for ready before the client has started');
+        }
+        return new Promise<void>((resolve, reject) => {
+            const cleanup = () => {
+                unlistenReady();
+                unlistenStopped();
+            };
+            const unlistenReady = this.events.on('ready', () => {
+                cleanup();
                 resolve();
+            });
+            const unlistenStopped = this.events.on('stopped', () => {
+                cleanup();
+                reject(new Error('Client stopped before becoming ready'));
             });
         });
     }

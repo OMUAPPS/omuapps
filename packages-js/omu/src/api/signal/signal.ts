@@ -64,5 +64,5 @@ export class SignalType<T> {
 export interface Signal<T> {
     readonly type: SignalType<T>;
     listen(handler: (value: T) => void): Unlisten;
-    notify(body: T): void;
+    notify(body: T): Promise<void>;
 }
