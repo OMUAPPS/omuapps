@@ -27,7 +27,7 @@ const SIGNAL_NOTIFY_PACKET = PacketType.createSerialized<SignalPacket>(SIGNAL_EX
 
 export class SignalExtension implements Extension {
     public readonly type: ExtensionType<SignalExtension> = SIGNAL_EXTENSION_TYPE;
-    private readonly signals = new IdentifierMap<SignalType<unknown>>();
+    private readonly signals = new IdentifierMap<Signal<unknown>>();
 
     constructor(private readonly omu: Omu) {
         omu.network.registerPacket(
@@ -39,14 +39,15 @@ export class SignalExtension implements Extension {
 
     private createSignal<T>(signalType: SignalType<T>): Signal<T> {
         if (this.signals.has(signalType.id)) {
-            throw new Error(`Signal for key ${signalType.id} already created`);
+            throw new Error(`Signal with identifier '${signalType.id.key()}' already exists`);
         }
-        return new SignalImpl(this.omu, signalType);
+        const signal = new SignalImpl(this.omu, signalType);
+        this.signals.set(signalType.id, signal as Signal<unknown>);
+        return signal;
     }
 
     public json<T, D extends JsonType = JsonType>(name: string, options?: { serializer?: Serializable<T, D> }): Signal<T> {
-        const id = this.omu.app.id.base.join(name);
-        const type = SignalType.createJson<T>(id, {
+        const type = SignalType.createJson<T>(this.omu.app.id.base, {
             name,
             serializer: options?.serializer,
         });
@@ -54,8 +55,7 @@ export class SignalExtension implements Extension {
     }
 
     public serialized<T>(name: string, options: { serializer: Serializable<T, Uint8Array> }): Signal<T> {
-        const id = this.omu.app.id.base.join(name);
-        const type = SignalType.createSerialized<T>(id, {
+        const type = SignalType.createSerialized<T>(this.omu.app.id.base, {
             name,
             serializer: options?.serializer,
         });
@@ -63,6 +63,10 @@ export class SignalExtension implements Extension {
     }
 
     public get<T>(signalType: SignalType<T>): Signal<T> {
+        const signal = this.signals.get(signalType.id);
+        if (signal) {
+            return signal as Signal<T>;
+        }
         return this.createSignal(signalType);
     }
 }
@@ -73,7 +77,7 @@ class SignalImpl<T> implements Signal<T> {
 
     constructor(
         private readonly omu: Omu,
-        private readonly type: SignalType<T>,
+        public readonly type: SignalType<T>,
     ) {
         omu.network.addPacketHandler(SIGNAL_NOTIFY_PACKET, (data) => this.handleBroadcast(data));
         omu.network.addTask(() => this.onTask());
