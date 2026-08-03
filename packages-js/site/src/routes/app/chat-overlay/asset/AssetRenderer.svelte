@@ -12,8 +12,11 @@
     let onlineRoomIds = $state<Set<string>>(new Set());
 
     let filteredMessages: Models.Message[] = $derived.by(() => {
-        if (!$config.chat.filter.onlyConnected) return messages;
-        return messages.filter((msg) => onlineRoomIds.has(msg.roomId.key()));
+        if (!$config.chat.filter.onlyConnected) return messages.filter((msg) => !msg.deleted);
+        return messages.filter((msg) => {
+            if (msg.deleted) return false;
+            return onlineRoomIds.has(msg.roomId.key());
+        });
     });
     let sortedMessages: Models.Message[] = $derived.by(() => {
         return [...filteredMessages].sort(
@@ -40,6 +43,15 @@
 
     chat.on(ChatEvents.Message.Add, (message) => {
         messages = [...messages.slice(-(MAX_MESSAGES - 1)), message];
+    });
+
+    chat.on(ChatEvents.Message.Update, (message) => {
+        messages = messages.map((msg) => {
+            if (msg.id.key() === message.id.key()) {
+                return message;
+            }
+            return msg;
+        });
     });
 
     const unlistenRooms = chat.rooms.listen(updateOnlineRooms);
