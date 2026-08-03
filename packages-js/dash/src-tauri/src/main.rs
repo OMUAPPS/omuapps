@@ -17,12 +17,15 @@ use crate::{
     server::{Server, ServerConfig},
 };
 use directories::ProjectDirs;
-use log::info;
+use log::{error, info};
 use once_cell::sync::Lazy;
 use options::AppConfig;
 use serde_json::Value;
 use std::{
+    backtrace::Backtrace,
     env,
+    panic::{self, set_hook},
+    process::exit,
     sync::{Arc, Mutex},
 };
 use tauri::{Emitter, Manager};
@@ -75,6 +78,21 @@ fn main() {
         config: Arc::new(Mutex::new(app_config.clone())),
         server_config: server_config,
     };
+
+    let default_hook = panic::take_hook();
+
+    set_hook(Box::new(move |panic_info| {
+        // Log the panic information to the console
+        error!(
+            "Panic occurred: {:?}\nBacktrace:\n{:?}",
+            panic_info,
+            Backtrace::force_capture()
+        );
+
+        default_hook(panic_info);
+
+        exit(1);
+    }));
 
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::new().build())
