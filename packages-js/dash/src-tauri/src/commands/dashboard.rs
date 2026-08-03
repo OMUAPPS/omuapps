@@ -29,18 +29,17 @@ pub async fn get_cookies(
     state: tauri::State<'_, AppState>,
     options: GetCookiesOptions,
 ) -> Result<Vec<Cookie>, GetCookiesError> {
-    let app_handle_mutex =
-        state
-            .app_handle
-            .lock()
-            .map_err(|_| GetCookiesError::AppHandleError {
-                msg: "Failed to lock app handle".to_string(),
-            })?;
-    let app_handle = app_handle_mutex
+    let app_handle = state
+        .app_handle
+        .lock()
+        .map_err(|_| GetCookiesError::AppHandleError {
+            msg: "Failed to lock app handle".to_string(),
+        })?
         .as_ref()
         .ok_or_else(|| GetCookiesError::NoAppHandle {
             msg: "App handle is not initialized".to_string(),
-        })?;
+        })?
+        .clone();
     let window = app_handle
         .get_webview_window(&options.label)
         .ok_or_else(|| GetCookiesError::NoWindow {
@@ -142,7 +141,8 @@ pub async fn create_webview_window(
                 if !url.scheme().eq_ignore_ascii_case("webview") {
                     return true;
                 }
-                if let Some(handle) = &*handle.lock().unwrap() {
+                let app_handle = handle.lock().unwrap().clone();
+                if let Some(handle) = app_handle {
                     if url.host_str() == Some("close") {
                         if let Some(view) = handle.get_webview_window(&label) {
                             let _ = view.close();

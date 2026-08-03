@@ -5,6 +5,7 @@
     import '@omujs/ui';
     import { Theme } from '@omujs/ui';
     import '@tabler/icons-webfont/dist/tabler-icons.scss';
+    import { error, warn } from '@tauri-apps/plugin-log';
     import { onMount } from 'svelte';
     import FatalErrorWindow from './_components/FatalErrorWindow.svelte';
     import './styles.scss';
@@ -37,13 +38,38 @@
         return String(e);
     }
 
-    onMount(async () => {
-        try {
-            await init();
+    onMount(() => {
+        void init().then(() => {
             loadingState = { type: 'loaded' };
-        } catch (err) {
+        }).catch((err) => {
             loadingState = { type: 'failed', message: formatError(err) };
-        }
+        });
+
+        const logUnhandledError = (event: ErrorEvent) => {
+            void error(`Unhandled renderer error: ${event.message}\n${event.error?.stack ?? ''}`);
+        };
+        const logUnhandledRejection = (event: PromiseRejectionEvent) => {
+            void error(`Unhandled renderer rejection: ${formatError(event.reason)}`);
+        };
+
+        let lastHeartbeat = performance.now();
+        const heartbeat = window.setInterval(() => {
+            const now = performance.now();
+            const delay = now - lastHeartbeat;
+            lastHeartbeat = now;
+            if (delay > 5_000) {
+                void warn(`Renderer event loop stalled for ${Math.round(delay)}ms`);
+            }
+        }, 1_000);
+
+        window.addEventListener('error', logUnhandledError);
+        window.addEventListener('unhandledrejection', logUnhandledRejection);
+
+        return () => {
+            window.clearInterval(heartbeat);
+            window.removeEventListener('error', logUnhandledError);
+            window.removeEventListener('unhandledrejection', logUnhandledRejection);
+        };
     });
 
     let loadingState: {

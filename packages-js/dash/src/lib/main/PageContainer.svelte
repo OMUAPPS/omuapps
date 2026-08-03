@@ -4,14 +4,29 @@
     import { currentPage } from '$lib/settings';
     import { Button } from '@omujs/ui';
     import * as tauriLog from '@tauri-apps/plugin-log';
+    import type { Action } from 'svelte/action';
     import { pages } from './page';
+
+    const log: Action<HTMLElement, { id: string }> = (node, params) => {
+        tauriLog.info(`Rendering page '${params.id}'`);
+        return {
+            update(newParams) {
+                if (newParams.id !== params.id) {
+                    tauriLog.info(`Rendering page '${newParams.id}'`);
+                }
+            },
+            destroy() {
+                tauriLog.info(`Destroying page '${params.id}'`);
+            },
+        };
+    };
 </script>
 
 <div class="page-container">
     {#each Object.entries($pages) as [id, entry] (id)}
         {#key id}
             {#if entry.type === 'loaded'}
-                <div class="page" class:visible={$currentPage === id} data-page-id={id}>
+                <div class="page" class:visible={$currentPage === id} data-page-id={id} use:log={{ id }}>
                     <svelte:boundary onerror={(error) => {
                         tauriLog.error(`Error loading page '${id}': ${JSON.stringify(error)}`);
                         console.error(`Error loading page '${id}':`, error);

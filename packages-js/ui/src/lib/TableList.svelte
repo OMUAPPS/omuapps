@@ -52,15 +52,17 @@
             ? Math.pow(itemsInSeconds, 0.98) + Math.log(itemsInSeconds)
             : 0;
         const limit = Math.ceil(Math.max(chunkSize, dynamicLimit));
+        const cursor = fetchedKeys.at(-1);
         try {
             const newItems = await table.fetchItems({
                 limit,
                 backward: true,
-                cursor: fetchedKeys.at(-1),
+                cursor,
             });
             updateItems(newItems);
-            fetchedKeys.push(...newItems.keys());
-            hasMore = newItems.size >= limit;
+            const newKeys = [...newItems.keys()];
+            fetchedKeys.push(...newKeys);
+            hasMore = newItems.size >= limit && newKeys.at(-1) !== cursor;
             lastScroll.time = performance.now();
             lastScroll.y = scrollTop;
         } finally {
@@ -112,7 +114,10 @@
 
     $effect(() => {
         if (items.size > 0 && filtered.length === 0 && hasMore && !loading) {
-            fetch();
+            const frame = requestAnimationFrame(() => {
+                void fetch();
+            });
+            return () => cancelAnimationFrame(frame);
         }
     });
 

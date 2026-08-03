@@ -375,7 +375,8 @@ impl Server {
             "Starting server with args: {:?} in {:?}",
             cmd, self.config.workdir
         );
-        if let Some(app) = self.app_handle.lock().unwrap().as_ref() {
+        let app_handle = self.app_handle.lock().unwrap().clone();
+        if let Some(app) = app_handle {
             let _ = app.emit(
                 "server_state",
                 ServerState::ServerStarting {
@@ -447,7 +448,8 @@ impl Server {
             };
 
             if let Some(state) = state {
-                if let Some(app) = app_handle.lock().unwrap().as_ref() {
+                let app = app_handle.lock().unwrap().clone();
+                if let Some(app) = app {
                     if let Err(err) = app.emit("server_state", state) {
                         warn!("Failed to emit server_state event: {}", err);
                     }
