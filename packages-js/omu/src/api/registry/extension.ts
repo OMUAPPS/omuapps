@@ -25,9 +25,11 @@ export class RegistryExtension implements Extension {
 
     private createRegistry<T>(registryType: RegistryType<T>): Registry<T> {
         if (this.registries.has(registryType.id)) {
-            throw new Error(`Registry with identifier '${registryType.id}' already exists`);
+            throw new Error(`Registry with identifier '${registryType.id.key()}' already exists`);
         }
-        return new RegistryImpl(this.omu, registryType);
+        const registry = new RegistryImpl(this.omu, registryType);
+        this.registries.set(registryType.id, registry as Registry<unknown>);
+        return registry;
     }
 
     public get<T>(registryType: RegistryType<T>): Registry<T> {
@@ -35,7 +37,6 @@ export class RegistryExtension implements Extension {
         let registry = this.registries.get(identifier);
         if (registry === undefined) {
             registry = this.createRegistry(registryType);
-            this.registries.set(identifier, registry);
         }
         return registry as Registry<T>;
     }
@@ -94,7 +95,7 @@ class RegistryImpl<T> implements Registry<T> {
     }
 
     async #set(value: T): Promise<void> {
-        this.omu.send(REGISTRY_UPDATE_PACKET, {
+        await this.omu.send(REGISTRY_UPDATE_PACKET, {
             id: this.type.id,
             value: this.type.serializer.serialize(value),
         });

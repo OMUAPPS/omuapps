@@ -376,7 +376,7 @@ class TableImpl<T> implements Table<T> {
 
     public async add(...items: T[]): Promise<void> {
         const data = this.serializeItems(items);
-        this.omu.send(TABLE_ITEM_ADD_PACKET, {
+        await this.omu.send(TABLE_ITEM_ADD_PACKET, {
             id: this.id,
             items: data,
         });
@@ -384,7 +384,7 @@ class TableImpl<T> implements Table<T> {
 
     public async update(...items: T[]): Promise<void> {
         const data = this.serializeItems(items);
-        this.omu.send(TABLE_ITEM_UPDATE_PACKET, {
+        await this.omu.send(TABLE_ITEM_UPDATE_PACKET, {
             id: this.id,
             items: data,
         });
@@ -394,14 +394,14 @@ class TableImpl<T> implements Table<T> {
         const data = this.serializeItems(items);
         const keys = Object.keys(data);
         this.cache = new Map([...this.cache].filter(([key]) => !keys.includes(key)));
-        this.omu.send(TABLE_ITEM_REMOVE_PACKET, {
+        await this.omu.send(TABLE_ITEM_REMOVE_PACKET, {
             id: this.id,
             items: data,
         });
     }
 
     public async clear(): Promise<void> {
-        this.omu.send(TABLE_ITEM_CLEAR_PACKET, {
+        await this.omu.send(TABLE_ITEM_CLEAR_PACKET, {
             id: this.id,
         });
     }

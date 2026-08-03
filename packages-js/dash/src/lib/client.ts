@@ -4,7 +4,7 @@ import type { Address } from '@omujs/omu/network';
 
 import { Chat, ChatPermissions } from '@omujs/chat';
 import { OBSPlugin } from '@omujs/obs';
-import { App, Identifier, Omu, OmuPermissions, type SessioTokenProvider } from '@omujs/omu';
+import { App, Identifier, Omu, OmuPermissions, type SessionTokenProvider } from '@omujs/omu';
 import type { Locale } from '@omujs/omu/localization';
 import { setGlobal } from '@omujs/ui';
 import { invoke } from '@tauri-apps/api/core';
@@ -24,7 +24,7 @@ const address: Address = {
     secure: false,
 };
 
-class DashboardSession implements SessioTokenProvider {
+class DashboardSession implements SessionTokenProvider {
     async get(): Promise<string | undefined> {
         const token = await invoke('get_token');
         if (token) {

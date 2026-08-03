@@ -29,7 +29,7 @@ export interface Serializable<T, D> {
 
 ```typescript
 import type { Serializable } from '@omujs/omu';
-import { ByteReader, ByteWriter } from '@omujs/omu'; // バイト列を扱うためのユーティリティ
+import { ByteReader, ByteWriter } from '@omujs/omu/serialize'; // バイト列を扱うためのユーティリティ
 
 type MyData = {
     byteArray: Uint8Array;
@@ -62,7 +62,7 @@ const mySignal = omu.signals.serialized<MyData>('my_data', {
     serializer: mySerializer,
 });
 
-mySignal.notify({
+await mySignal.notify({
     byteArray: new Uint8Array([1, 2, 3]),
     date: new Date(),
 });

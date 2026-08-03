@@ -15,7 +15,18 @@ export const ENDPOINT_EXTENSION_TYPE: ExtensionType<EndpointExtension> = new Ext
 type CallPromise = {
     resolve: (data: Uint8Array) => void;
     reject: (error: Error) => void;
+    timeout?: ReturnType<typeof setTimeout>;
 };
+
+export type EndpointCallOptions = {
+    /**
+     * Timeout in milliseconds. Set to null to disable the timeout.
+     * @default 30000
+     */
+    timeout?: number | null;
+};
+
+const DEFAULT_CALL_TIMEOUT = 30_000;
 
 type EndpointHandler = {
     type: EndpointType;
@@ -47,6 +58,7 @@ export class EndpointExtension {
                 );
             }
             this.responsePromises.delete(packet.params.key);
+            clearCallTimeout(promise);
             if (packet.params.error) {
                 promise.reject(new Error(packet.params.error));
                 return;
@@ -54,22 +66,27 @@ export class EndpointExtension {
             promise.resolve(packet.buffer);
         });
         omu.network.addTask(() => this.onTask());
+        omu.network.on('disconnected', (reason) => {
+            this.rejectPendingCalls(
+                reason ?? new Error('Disconnected before endpoint responded'),
+            );
+        });
     }
 
-    private async handleInvoked(packet: EndpointInvokedPacket) {
+    private async handleInvoked(packet: EndpointInvokedPacket): Promise<void> {
         const endpoint = this.boundEndpoints.get(packet.params.id);
         if (!endpoint) {
             throw new Error(`Received invocation for unknown endpoint ${packet.params.id.key()} (${packet.params.key})`);
         }
         try {
             const result = await endpoint.handler(packet);
-            this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
+            await this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
                 new ResponseParams(packet.params.id, packet.params.key, null),
                 result,
             ));
         } catch (error) {
-            this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
-                new ResponseParams(packet.params.id, packet.params.key, JSON.stringify(error)),
+            await this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
+                new ResponseParams(packet.params.id, packet.params.key, formatError(error)),
                 new Uint8Array(),
             ));
         }
@@ -101,18 +118,71 @@ export class EndpointExtension {
         } });
     }
 
-    public async call<Req, Res>(endpoint: EndpointType<Req, Res>, data: Req): Promise<Res> {
+    public async call<Req, Res>(
+        endpoint: EndpointType<Req, Res>,
+        data: Req,
+        options?: EndpointCallOptions,
+    ): Promise<Res> {
         const key = this.callId++;
+        const timeoutMs = options?.timeout === undefined
+            ? DEFAULT_CALL_TIMEOUT
+            : options.timeout;
+        if (
+            timeoutMs !== null
+            && (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
+        ) {
+            throw new RangeError(
+                'Endpoint timeout must be a positive finite number or null',
+            );
+        }
         const promise = new Promise<Uint8Array>((resolve, reject) => {
-            this.responsePromises.set(key, { resolve, reject });
+            const timeout = timeoutMs === null
+                ? undefined
+                : setTimeout(() => {
+                    this.responsePromises.delete(key);
+                    reject(new Error(
+                        `Endpoint ${endpoint.id.key()} timed out after ${timeoutMs}ms`,
+                    ));
+                }, timeoutMs);
+            this.responsePromises.set(key, { resolve, reject, timeout });
         });
-        this.omu.send(ENDPOINT_INVOKE_PACKET, new EndpointInvokePacket(
-            new InvokeParams(endpoint.id, key),
-            endpoint.requestSerializer.serialize(data),
-        ));
-        const response = await promise;
-        return endpoint.responseSerializer.deserialize(response);
+        try {
+            await this.omu.send(ENDPOINT_INVOKE_PACKET, new EndpointInvokePacket(
+                new InvokeParams(endpoint.id, key),
+                endpoint.requestSerializer.serialize(data),
+            ));
+            const response = await promise;
+            return endpoint.responseSerializer.deserialize(response);
+        } catch (error) {
+            const pending = this.responsePromises.get(key);
+            if (pending) {
+                clearCallTimeout(pending);
+                this.responsePromises.delete(key);
+            }
+            throw error;
+        }
     }
+
+    private rejectPendingCalls(error: Error): void {
+        for (const promise of this.responsePromises.values()) {
+            clearCallTimeout(promise);
+            promise.reject(error);
+        }
+        this.responsePromises.clear();
+    }
+}
+
+function clearCallTimeout(promise: CallPromise): void {
+    if (promise.timeout !== undefined) {
+        clearTimeout(promise.timeout);
+    }
+}
+
+function formatError(error: unknown): string {
+    if (error instanceof Error) {
+        return `${error.name}: ${error.message}`;
+    }
+    return String(error);
 }
 
 const ENDPOINT_REGISTER_PACKET = PacketType.createSerialized<EndpointRegisterPacket>(ENDPOINT_EXTENSION_TYPE, {
