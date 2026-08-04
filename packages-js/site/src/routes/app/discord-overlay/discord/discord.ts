@@ -29,7 +29,6 @@ class DiscordRPC {
     ) {
         this.receiveLoop();
         this.onCmd('DISPATCH', (payload) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const handlers = this.evtHandlers[payload.evt] as any;
             if (!handlers) {
                 throw Error(`No handler found for ${payload.cmd}: ${JSON.stringify(payload)}`);
@@ -42,7 +41,6 @@ class DiscordRPC {
     }
 
     private onCmd<K extends PayloadMap['cmd'], PayloadMap extends Payloads = Payloads>(cmd: K, handler: (payload: Extract<Payloads, { cmd: K }>) => void): () => void {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const handlers = this.cmdHandlers[cmd] ??= [] as any[];
         handlers.push(handler);
         return () => {
@@ -60,7 +58,6 @@ class DiscordRPC {
         handler: (payload: Payload['data']) => void,
         args?: Payload extends WithArg<infer Args> ? Args : undefined,
     ): () => void {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const handlers = this.evtHandlers[evt] ??= [] as any[];
         handlers.push(handler);
         const nonce = this.nonce();
@@ -129,7 +126,6 @@ class DiscordRPC {
         return {
             wait: () => new Promise<Data>((resolve) => {
                 const unlistenCmd = this.onCmd(cmd, (received) => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const rec = received as any;
                     if (rec.nonce !== nonce) return;
                     resolve(rec.data);
@@ -154,7 +150,7 @@ class DiscordRPC {
                     throw new Error(`Excepted text but got ${msg.type}: ${msg.data}`);
                 }
                 const payload: Payloads = JSON.parse(msg.data);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
                 const handlers = this.cmdHandlers[payload.cmd] as any;
                 if (!handlers) {
                     throw Error(`No handler found for ${payload.cmd}: ${JSON.stringify(payload)}`);
@@ -367,27 +363,27 @@ class DiscordRPCClient {
 
 export interface TokenRegistry {
     ports: Record<number, { token: string } | undefined>;
-};
+}
 
 export interface ChannelReference {
     guild_id: string;
     channel_id: string;
-};
+}
 
 export type SelectedVoiceChannel = {
     ref: ChannelReference;
     channel: Channel;
-    guild: Omit<Guild, 'afk_timeout' | 'owner_id' | 'afk_timeout' | 'verification_level' | 'explicit_content_filter' | 'roles' | 'emojis' | 'features' | 'mfa_level' | 'system_channel_flags' | 'premium_tier' | 'preferred_locale' | 'nsfw_level' | 'premium_progress_bar_enabled'>;
+    guild: Guild;
 };
 
 export interface RPCSession {
     port: number;
     user: User;
     selected_voice_channel?: SelectedVoiceChannel | null;
-};
+}
 export interface RPCVoiceStates {
     states: Record<string, VoiceStateCreatePayload['data']>;
-};
+}
 
 export interface SpeakingState {
     speaking: boolean;
@@ -397,7 +393,7 @@ export interface SpeakingState {
 
 export interface RPCSpeakingStates {
     states: Record<string, SpeakingState>;
-};
+}
 
 export interface RPCMessage {
     port: number;
