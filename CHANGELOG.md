@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.10.11 (2026-08-04)
+
+
+### Bug Fixes
+
+* **dash:** unstableフラグを消す ([5ea6dbe](https://github.com/OMUAPPS/omuapps/commit/5ea6dbe7130b9d9bc44e089ee9da26978c76dca2))
+
+
+
+
+
+## 0.10.10 (2026-08-03)
+
+
+### Bug Fixes
+
+* **dash:** 重くなっているときにログを残す ([06867c3](https://github.com/OMUAPPS/omuapps/commit/06867c38ac042a9580286d32b0bca6a53eb3c090))
+
+
+
+
+
 ## 0.10.9 (2026-08-03)
 
 **Note:** Version bump only for package omuapps

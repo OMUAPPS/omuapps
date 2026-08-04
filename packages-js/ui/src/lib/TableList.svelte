@@ -92,9 +92,16 @@
             const removedKeys = new Set(removedItems.keys());
             fetchedKeys = fetchedKeys.filter((key) => !removedKeys.has(key));
         });
+        const unlistenClear = table.on('clear', () => {
+            items.clear();
+            fetchedKeys = [];
+            hasMore = true;
+            fetch();
+        });
         return () => {
             unlistenCache();
             unlistenRemove();
+            unlistenClear();
         };
     });
 

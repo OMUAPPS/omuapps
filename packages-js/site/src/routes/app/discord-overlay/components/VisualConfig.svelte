@@ -28,7 +28,7 @@
     </label>
     <label>
         間隔
-        <Slider bind:value={$config.align.spacing} min={1} max={600} step={1} />
+        <Slider bind:value={$config.align.spacing} min={1} max={1600} step={1} clamp={false} />
     </label>
     <label>
         アバターの大きさの倍率
