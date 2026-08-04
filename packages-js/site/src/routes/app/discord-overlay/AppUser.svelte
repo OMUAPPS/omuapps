@@ -122,7 +122,7 @@
                 {speakingState}
             />
         {:else}
-            {#if resolution}
+            {#if resolution && (!$dragState || $dragState.type === 'user')}
                 {#each Object.entries(voiceState.states)
                     .filter(([id]) => $config.users[id])
                     .sort(comparator(([id]) => {

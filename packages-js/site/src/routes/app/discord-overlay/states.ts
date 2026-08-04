@@ -9,6 +9,9 @@ type DragState = {
     time: number;
     x: number;
     y: number;
+} | {
+    type: 'object';
+    objectId: string;
 };
 
 export const selectedAvatar = writable<string | null>(null);

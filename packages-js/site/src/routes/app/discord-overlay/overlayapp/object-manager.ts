@@ -6,7 +6,9 @@ import { AABB2 } from '$lib/math/aabb2';
 import { Mat4 } from '$lib/math/mat4';
 import { clamp } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
+import { get } from 'svelte/store';
 import { PALETTE_RGB } from '../consts';
+import { dragState } from '../states';
 import type { AppRenderer } from './app-renderer';
 import type { AttachedObject, ContactCandidate } from './avatar';
 import type { GameObject } from './object';
@@ -29,16 +31,22 @@ type HoveredObject = {
     render: RenderedObject;
 };
 
+type ObjectAttachCandidate = {
+    type: 'attach';
+    id: string;
+    candidate: ContactCandidate;
+    matrix: Mat4;
+    offset: Vec2;
+} | {
+    type: 'remove';
+    id: string;
+    objectId: string;
+};
+
 export class ObjectManager {
     private renderedObjects: Map<string, AttachedObjectRenders> = new Map();
     hoveredObject: HoveredObject | undefined;
-    heldObject: string | undefined;
-    objectAttachCandidate: {
-        id: string;
-        candidate: ContactCandidate;
-        matrix: Mat4;
-        offset: Vec2;
-    } | undefined;
+    objectAttachCandidate: ObjectAttachCandidate | undefined;
 
     constructor(
         private readonly app: AppRenderer,
@@ -57,7 +65,7 @@ export class ObjectManager {
     private onMouseDown() {
         if (this.hoveredObject) {
             if (this.hoveredObject.type === 'detached') {
-                this.heldObject = this.hoveredObject.objectId;
+                dragState.set({ type: 'object', objectId: this.hoveredObject.objectId });
             } else if (this.hoveredObject.type === 'attached') {
                 const { objectId, userId, render } = this.hoveredObject;
                 const object = this.app.world.attahed[userId]?.find(({ object }) => object.id === objectId);
@@ -66,20 +74,32 @@ export class ObjectManager {
                 this.app.world.objects[object.object.id] = object.object;
                 const center = render.worldBounds.center;
                 object.object.position = center;
-                this.heldObject = objectId;
+                dragState.set({ type: 'object', objectId: object.object.id });
             }
         }
+    }
+
+    get heldObject() {
+        const state = get(dragState);
+        if (state?.type === 'object') {
+            return state.objectId;
+        }
+        return undefined;
     }
 
     private onMouseUp() {
         const object = this.heldObject && this.app.world.objects[this.heldObject];
         if (this.objectAttachCandidate && object) {
-            const attached = this.objectAttachCandidate.candidate.attach(object, this.objectAttachCandidate.matrix, this.objectAttachCandidate.offset);
-            const objects = this.app.world.attahed[this.objectAttachCandidate.id] ??= [];
-            objects.push(attached);
-            delete this.app.world.objects[attached.object.id];
+            if (this.objectAttachCandidate.type === 'attach') {
+                const attached = this.objectAttachCandidate.candidate.attach(object, this.objectAttachCandidate.matrix, this.objectAttachCandidate.offset);
+                const objects = this.app.world.attahed[this.objectAttachCandidate.id] ??= [];
+                objects.push(attached);
+                delete this.app.world.objects[attached.object.id];
+            } else if (this.objectAttachCandidate.type === 'remove') {
+                this.deleteObject(this.objectAttachCandidate.objectId);
+            }
         }
-        this.heldObject = undefined;
+        dragState.set(null);
     }
 
     private onMouseMove(event: EventMouseMove) {
@@ -116,20 +136,28 @@ export class ObjectManager {
     private onKeyDown(event: EventKeyDown) {
         if (!this.hoveredObject) return;
         if (event.key !== 'Backspace') return;
-        if (this.hoveredObject.type === 'detached' && this.app.world.objects[this.hoveredObject.objectId]) {
-            delete this.app.world.objects[this.hoveredObject.objectId];
-        } else if (this.hoveredObject.type === 'attached') {
-            const { objectId, userId } = this.hoveredObject;
-            this.app.world.attahed[userId] = this.app.world.attahed[userId].filter(({ object }) => {
-                return object.id !== objectId;
-            });
+        this.deleteObject(this.hoveredObject.objectId);
+    }
+
+    private deleteObject(objectId: string) {
+        if (this.app.world.objects[objectId]) {
+            delete this.app.world.objects[objectId];
+        } else {
+            for (const [userId, attached] of Object.entries(this.app.world.attahed)) {
+                this.app.world.attahed[userId] = attached.filter(({ object }) => object.id !== objectId);
+            }
         }
     }
 
-    async drawObjects() {
+    public async drawObjects() {
         const { input, matrices, draw } = this.app.pipeline;
 
         this.objectAttachCandidate = undefined;
+
+        let deleteCandidate: ObjectAttachCandidate | undefined = undefined;
+        if (this.heldObject) {
+            deleteCandidate = await this.drawDeleteHighlight();
+        }
         let newHoveredObject: HoveredObject | undefined = undefined;
 
         const mouseWorld = matrices.getViewToWorld().transform2(input.mouse.pos);
@@ -167,6 +195,43 @@ export class ObjectManager {
 
         this.renderedObjects.clear();
         this.hoveredObject = newHoveredObject;
+
+        if (deleteCandidate) {
+            this.objectAttachCandidate = deleteCandidate;
+        }
+    }
+
+    private async drawDeleteHighlight(): Promise<ObjectAttachCandidate | undefined> {
+        // Draw rect at bottom of screen
+        const { draw, matrices, input } = this.app.pipeline;
+        matrices.view.push();
+        matrices.view.identity();
+        const { width, height } = matrices;
+        const size = new Vec2(300, 100);
+        const bounds = new AABB2(
+            new Vec2(width / 2 - size.x / 2, height - 100),
+            new Vec2(width / 2 + size.x / 2, height - 10),
+        );
+        const hovered = bounds.contains(input.mouse.pos);
+        draw.roundedRect(bounds.min, bounds.max, 10, hovered ? PALETTE_RGB.ACCENT : PALETTE_RGB.BACKGROUND_1);
+        draw.roundedRect(bounds.shrink({ x: 2, y: 2 }).min, bounds.shrink({ x: 2, y: 2 }).max, 8, PALETTE_RGB.ACCENT, 2);
+        draw.fontSize = 16;
+        draw.fontFamily = 'Noto Sans JP';
+        draw.fontWeight = '500';
+        await draw.textAlign(
+            bounds.center,
+            hovered ? '離して削除' : 'ここへドラッグして削除',
+            Vec2.ONE.scale(0.5),
+            hovered ? PALETTE_RGB.BACKGROUND_2 : PALETTE_RGB.ACCENT,
+        );
+        matrices.view.pop();
+        if (hovered) {
+            return {
+                type: 'remove',
+                id: 'delete',
+                objectId: this.heldObject!,
+            };
+        }
     }
 
     private processObject(id: string, object: GameObject, mouseWorld: Vec2): string | undefined {
@@ -255,6 +320,7 @@ export class ObjectManager {
                 draw.roundedRect(expanded.min, expanded.max, 10, PALETTE_RGB.ACCENT, 4);
 
                 this.objectAttachCandidate = {
+                    type: 'attach',
                     id: avatarId,
                     candidate,
                     matrix: worldToModel,

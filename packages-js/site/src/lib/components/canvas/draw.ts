@@ -743,12 +743,14 @@ export class Draw {
         return data;
     }
 
-    private generateTextTexture(text: string): GlTexture | null {
+    private async generateTextTexture(text: string): Promise<GlTexture | null> {
         const key = JSON.stringify({ font: this.font, text });
         const existing = this.textRenderPool.get(key);
         if (existing) {
             return existing;
         }
+        const font = `${this.fontStyle} ${this.fontWeight} ${this.fontSize}px ${this.fontFamily}`;
+        await document.fonts.load(font, text);
         this.textContext.font = this.font;
         const bounds = this.measureTextActual(text);
         const dimensions = bounds.dimensions().max(Vec2.ZERO);
@@ -786,7 +788,7 @@ export class Draw {
 
     public async text(left: number, top: number, text: string, color: Vec4Like): Promise<boolean> {
         this.textContext.font = this.font;
-        const texture = this.generateTextTexture(text);
+        const texture = await this.generateTextTexture(text);
         if (!texture) {
             return false;
         }
@@ -796,7 +798,7 @@ export class Draw {
 
     public async textAlign(anchor: Vec2Like, text: string, align: Vec2Like, color?: Vec4Like, stroke?: { width: number; color: Vec4 }): Promise<boolean> {
         this.textContext.font = this.font;
-        const texture = this.generateTextTexture(text);
+        const texture = await this.generateTextTexture(text);
         if (!texture) {
             return false;
         }
