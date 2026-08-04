@@ -24,7 +24,7 @@
         overlayApp,
     }: Props = $props();
 
-    const { config, world, discord } = overlayApp;
+    const { channelConfigs, config, world, discord } = overlayApp;
     const { sessions } = discord;
     let session = $derived(Object.entries($sessions).find(([, session]) => session.user.id === $config.user_id)?.[1]);
 
@@ -44,6 +44,23 @@
         for (const id of Object.keys(voiceState.states)) {
             getUser(id);
         }
+    });
+    let lastChannelId: string | undefined = $state();
+    $effect(() => {
+        const id = session?.selected_voice_channel?.channel.id;
+        if (id === lastChannelId) {
+            return;
+        }
+        lastChannelId = id;
+        if (!id) {
+            return;
+        }
+        channelConfigs.get(id).then((existingConfig) => {
+            if (!existingConfig) {
+                return;
+            }
+            overlayApp.applyChannelConfig(existingConfig);
+        });
     });
     let takeScreenshot: () => Promise<void> = $state(async () => {});
 
@@ -323,6 +340,7 @@
             width: 30rem;
             height: min(30rem, calc(100% - 10rem));
             overflow: auto;
+            z-index: 4;
         }
     }
 

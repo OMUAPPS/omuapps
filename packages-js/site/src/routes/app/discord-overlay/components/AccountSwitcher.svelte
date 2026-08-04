@@ -118,7 +118,11 @@
                     <small>
                         {user.global_name ?? user.id}
                     </small>
-                    <i class="ti ti-chevron-up"></i>
+                    {#if !open}
+                        <i class="ti ti-chevron-up"></i>
+                    {:else}
+                        <i class="ti ti-chevron-down"></i>
+                    {/if}
                 </button>
             {/if}
         {/if}

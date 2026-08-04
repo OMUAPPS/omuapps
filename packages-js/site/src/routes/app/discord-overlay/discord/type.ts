@@ -47,7 +47,7 @@ export interface RPCServerConfiguration {
     cdn_host: string;
     api_endpoint: string;
     environment: string;
-};
+}
 
 export type snowflake = string;
 
@@ -56,18 +56,18 @@ export type integer = number;
 export interface AvatarDecorationData {
     asset: string;
     sku_id: snowflake;
-};
+}
 
 export interface Collectibles {
     nameplate?: string;
-};
+}
 
 export interface UserPrimaryGuild {
     identity_guild_id?:	snowflake;
     identity_enabled?:	boolean;
     tag?:	string;
     badge?:	string;
-};
+}
 
 export interface User {
     id: snowflake;
@@ -89,13 +89,13 @@ export interface User {
     avatar_decoration_data?: AvatarDecorationData;
     collectibles?: Collectibles;
     primary_guild?: UserPrimaryGuild;
-};
+}
 
 export interface RoleColors {
     primary_color: integer;
     secondary_color?: integer;
     tertiary_color?: integer;
-};
+}
 
 export interface RoleTags {
     bot_id?: snowflake;
@@ -104,7 +104,7 @@ export interface RoleTags {
     subscription_listing_id?: snowflake;
     available_for_purchase?: null;
     guild_connections?: null;
-};
+}
 
 export interface Role {
     id: snowflake;
@@ -120,7 +120,7 @@ export interface Role {
     mentionable: boolean;
     tags?: RoleTags;
     flags: integer;
-};
+}
 
 export interface Emoji {
     id?:	snowflake;
@@ -131,7 +131,7 @@ export interface Emoji {
     managed?:	boolean;
     animated?:	boolean;
     available?:	boolean;
-};
+}
 
 export type GuildFeatures =
     | 'ANIMATED_BANNER'
@@ -172,12 +172,12 @@ export interface WelcomeScreenChannel {
     description: string;
     emoji_id?: snowflake;
     emoji_name?: string;
-};
+}
 
 export interface WelcomeScreen {
     description?: string;
     welcome_channels: WelcomeScreenChannel[];
-};
+}
 
 export type int = number;
 
@@ -195,16 +195,17 @@ export interface Sticker {
     guild_id?: snowflake;
     user?: User;
     sort_value?: integer;
-};
+}
 
 export interface IncidentsData {
     invites_disabled_until?: ISO8601;
     dms_disabled_until?: ISO8601;
     dm_spam_detected_at?: ISO8601;
     raid_detected_at?: ISO8601;
-};
+}
 
 export interface Guild {
+    // Optional: 'afk_timeout' | 'owner_id' | 'afk_timeout' | 'verification_level' | 'explicit_content_filter' | 'roles' | 'emojis' | 'features' | 'mfa_level' | 'system_channel_flags' | 'premium_tier' | 'preferred_locale' | 'nsfw_level' | 'premium_progress_bar_enabled'
     id: snowflake;
     name: string;
     icon?: string;
@@ -213,44 +214,44 @@ export interface Guild {
     splash?: string;
     discovery_splash?: string;
     owner?: boolean;
-    owner_id: snowflake;
+    owner_id?: snowflake;
     permissions?: string;
     region?: string;
     afk_channel_id?: snowflake;
-    afk_timeout: integer;
+    afk_timeout?: integer;
     widget_enabled?: boolean;
     widget_channel_id?: snowflake;
-    verification_level: integer;
+    verification_level?: integer;
     default_message_notifications?: integer;
-    explicit_content_filter: integer;
-    roles: Role[];
-    emojis: Emoji[];
-    features: GuildFeatures[];
-    mfa_level: integer;
+    explicit_content_filter?: integer;
+    roles?: Role[];
+    emojis?: Emoji[];
+    features?: GuildFeatures[];
+    mfa_level?: integer;
     application_id?: snowflake;
     system_channel_id?: snowflake;
-    system_channel_flags: integer;
+    system_channel_flags?: integer;
     rules_channel_id?: snowflake;
     max_presences?: integer;
     max_members?: integer;
     vanity_url_code?: string;
     description?: string;
     banner?: string;
-    premium_tier: integer;
+    premium_tier?: integer;
     premium_subscription_count?: integer;
-    preferred_locale: string;
+    preferred_locale?: string;
     public_updates_channel_id?: snowflake;
     max_video_channel_users?: integer;
     max_stage_video_channel_users?: integer;
     approximate_member_count?: integer;
     approximate_presence_count?: integer;
     welcome_screen?: WelcomeScreen;
-    nsfw_level: integer;
+    nsfw_level?: integer;
     stickers?: Sticker[];
-    premium_progress_bar_enabled: boolean;
+    premium_progress_bar_enabled?: boolean;
     safety_alerts_channel_id?: snowflake;
     incidents_data?: IncidentsData;
-};
+}
 
 export interface ChannelMention {
     id: snowflake;

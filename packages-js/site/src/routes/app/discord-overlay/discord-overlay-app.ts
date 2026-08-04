@@ -1,8 +1,10 @@
 import { type Vec2Like } from '$lib/math/vec2.js';
 import { Identifier, Serializer, type Omu } from '@omujs/omu';
+import type { Table } from '@omujs/omu/api/table';
 import { BROWSER } from 'esm-env';
 import { type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
+import type { Channel, Guild } from './discord/type.js';
 import { DEFAULT_SHADOW_EFFECT_OPTIONS } from './effects/shadow.js';
 import { DEFAULT_SPEECH_EFFECT_OPTIONS } from './effects/speech.js';
 import type { AttachedObject } from './overlayapp/avatar.js';
@@ -96,15 +98,28 @@ export type Config = {
     show_name_tags: boolean;
     align: {
         alignSide?: AlignSide;
-        margin: number;
+        margin: {
+            x: number;
+            y: number;
+        };
         spacing: number;
         base_scale: number;
         default_scale: number;
         border_radius: number;
     };
 };
+
+export interface ChannelConfig {
+    version: 0;
+    channel_id: string;
+    channel: Channel;
+    guild: Guild;
+    config: Config;
+    world: World;
+}
+
 export const DEFAULT_CONFIG: Config = {
-    version: 12,
+    version: 13,
     users: {},
     avatars: {},
     effects: {
@@ -121,7 +136,7 @@ export const DEFAULT_CONFIG: Config = {
             align: { x: 0, y: 1 },
             side: 'end',
         },
-        margin: 100,
+        margin: { x: 100, y: 100 },
         spacing: 300,
         base_scale: 1,
         default_scale: 1,
@@ -141,6 +156,7 @@ export class DiscordOverlayApp {
     public readonly discord: DiscordRPCAPI;
     public readonly config: Writable<Config>;
     public readonly world: Writable<World>;
+    public readonly channelConfigs: Table<ChannelConfig>;
 
     private constructor(
         public readonly omu: Omu,
@@ -155,7 +171,7 @@ export class DiscordOverlayApp {
                 } else if (config.version === 10) {
                     config.version = 11;
                     config.align = {
-                        margin: 100,
+                        margin: { x: 100, y: 100 },
                         spacing: 300,
                         base_scale: 1,
                         default_scale: 1,
@@ -169,7 +185,11 @@ export class DiscordOverlayApp {
                         default_scale: 1,
                         border_radius: 0,
                     };
+                } else if (config.version === 12) {
+                    config.version = 13;
                 }
+                const margin = typeof config.align.margin === 'number' ? { x: config.align.margin, y: config.align.margin } : config.align.margin;
+                config.align.margin = margin;
                 return config;
             }),
         }).compatSvelte();
@@ -184,6 +204,13 @@ export class DiscordOverlayApp {
                 return world;
             }),
         }).compatSvelte();
+        this.channelConfigs = omu.tables.json<ChannelConfig>('channel_configs', {
+            key: (config) => config.channel_id,
+            serializer: Serializer.transform((config: ChannelConfig): ChannelConfig => {
+                config.version ??= 0;
+                return config;
+            }),
+        });
     }
 
     public static getInstance(): DiscordOverlayApp {
@@ -242,5 +269,19 @@ export class DiscordOverlayApp {
 
     public resetConfig(): void {
         this.config.set(DEFAULT_CONFIG);
+    }
+
+    public applyChannelConfig(channelConfig: ChannelConfig) {
+        this.config.update((config) => {
+            return {
+                ...config,
+                align: channelConfig.config.align,
+                avatars: channelConfig.config.avatars,
+                users: channelConfig.config.users,
+                effects: channelConfig.config.effects,
+                show_name_tags: channelConfig.config.show_name_tags,
+            };
+        });
+        this.world.set(channelConfig.world);
     }
 }

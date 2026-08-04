@@ -72,13 +72,13 @@ export class LayoutEngine {
     public calculateAlignPosition(alignSide: AlignSide, index: number, total: number): Vec2 {
         const MARGIN = this.app.config.align.margin;
         const { align, side } = alignSide;
-        const align01 = Vec2.from(align).add(Vec2.ONE).mul({ x: this.app.dimensions.x / 2 - MARGIN, y: this.app.dimensions.y / 2 - MARGIN }).add({ x: MARGIN, y: MARGIN });
+        const align01 = Vec2.from(align).add(Vec2.ONE).mul({ x: this.app.dimensions.x / 2 - MARGIN.x, y: this.app.dimensions.y / 2 - MARGIN.y }).add({ x: MARGIN.x, y: MARGIN.y });
         const dirPerp = this.getAlignPerpendicularOffset(align);
         const sideScalar = { start: -1, middle: 0, end: 1 }[side];
         const origin = align01.add(dirPerp.scale(Math.abs(align.x) > Math.abs(align.y) ? this.app.dimensions.y / 2 : this.app.dimensions.x / 2).scale(sideScalar));
 
-        const spacing = Math.min(this.app.config.align.spacing, (this.app.dimensions.x - MARGIN * 2) / total);
-        let offsetScale = index * spacing + MARGIN * 2;
+        const spacing = Math.min(this.app.config.align.spacing, (this.app.dimensions.x * 2 - MARGIN.x * 2) / total);
+        let offsetScale = index * spacing + MARGIN.x * 2;
         if (side === 'middle') {
             offsetScale = (index - (total - 1) / 2) * spacing;
         }
@@ -90,7 +90,7 @@ export class LayoutEngine {
     public getFitScaleFactor(): number {
         const MARGIN = this.app.config.align.margin;
         const total = Object.keys(this.alignDistanceCache).length;
-        const spacing = this.app.config.align.spacing / Math.min(this.app.config.align.spacing, (this.app.dimensions.x - MARGIN * 2) / total);
+        const spacing = this.app.config.align.spacing / Math.min(this.app.config.align.spacing, (this.app.dimensions.x * 2 - MARGIN.x * 2) / total);
         return spacing;
     }
 
