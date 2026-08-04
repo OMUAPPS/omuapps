@@ -67,21 +67,19 @@
         if (!vc) {
             return;
         }
-        const id = vc.channel.id;
-        if (!id) {
-            return;
-        }
-        const existing = channelConfigs.has(id);
-        if (!existing) {
-            return;
-        }
-        channelConfigs.update({
-            channel: vc.channel,
-            channel_id: id,
-            guild: vc.guild,
-            config: $config,
-            world: $world,
-            version: 0,
+        const currentConfig = $config;
+        const currentWorld = $world;
+        channelConfigs.has(vc.channel.id).then((exists) => {
+            if (exists) {
+                channelConfigs.update({
+                    channel: vc.channel,
+                    channel_id: vc.channel.id,
+                    guild: vc.guild,
+                    config: currentConfig,
+                    world: currentWorld,
+                    version: 0,
+                });
+            }
         });
     });
     let takeScreenshot: () => Promise<void> = $state(async () => {});
