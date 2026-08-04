@@ -63,6 +63,7 @@ export class ScreenRenderer {
 
         for (const { line, color } of decorations) {
             draw.circle(0, 0, LayoutEngine.AVATAR_FACE_RADIUS - line * 2, LayoutEngine.AVATAR_FACE_RADIUS + line * 2, color);
+
             draw.rectangle(-LayoutEngine.AVATAR_FACE_RADIUS - 150, -line, -LayoutEngine.AVATAR_FACE_RADIUS - 50, line, PALETTE_RGB.ACCENT);
 
             const triangleSize = 20;
@@ -73,5 +74,7 @@ export class ScreenRenderer {
                 color,
             );
         }
+
+        draw.textAlign({ x: 0, y: LayoutEngine.AVATAR_FACE_RADIUS + 10 }, '名前はここに出ます', { x: 0.5, y: 0 }, PALETTE_RGB.ACCENT, { color: PALETTE_RGB.BACKGROUND_2, width: 2 });
     }
 }

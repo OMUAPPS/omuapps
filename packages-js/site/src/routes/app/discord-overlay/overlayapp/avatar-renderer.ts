@@ -194,10 +194,12 @@ export class AvatarRenderer {
         for (const entry of names) {
             const { pos, name, userConfig: user } = entry;
             const align = user.align ? alignSide?.align : undefined;
+            let drawPos = horizontal ? pos.add({ x: 0, y: align ? LayoutEngine.POSITION_OFFSET * 2 : 0 }) : pos;
+            drawPos = drawPos.add({ x: 0, y: draw.fontSize * 1.5 });
             await draw.textAlign(
-                horizontal ? pos.add({ x: 0, y: align ? LayoutEngine.POSITION_OFFSET * 2 : 0 }) : pos,
+                drawPos,
                 name,
-                { x: align ? (align.x + 1) / 2 : 0.5, y: 1 },
+                { x: align ? (align.x + 1) / 2 : 0.5, y: 0 },
                 { x: 1, y: 1, z: 1, w: 1 },
                 { width: offsetScale, color: new Vec4(0, 0, 0, 1) },
             );

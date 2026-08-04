@@ -62,6 +62,28 @@
             overlayApp.applyChannelConfig(existingConfig);
         });
     });
+    $effect(() => {
+        const vc = session?.selected_voice_channel;
+        if (!vc) {
+            return;
+        }
+        const id = vc.channel.id;
+        if (!id) {
+            return;
+        }
+        const existing = channelConfigs.has(id);
+        if (!existing) {
+            return;
+        }
+        channelConfigs.update({
+            channel: vc.channel,
+            channel_id: id,
+            guild: vc.guild,
+            config: $config,
+            world: $world,
+            version: 0,
+        });
+    });
     let takeScreenshot: () => Promise<void> = $state(async () => {});
 
     onMount(async () => {
