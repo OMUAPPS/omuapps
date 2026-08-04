@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, Spinner, TableList, Tooltip } from '@omujs/ui';
+    import { ButtonMini, Spinner, TableList, Tooltip } from '@omujs/ui';
     import { DiscordOverlayApp } from '../discord-overlay-app.js';
     import type { RPCSession } from '../discord/discord.js';
 
@@ -29,15 +29,40 @@
     const { channelConfigs, config, world } = DiscordOverlayApp.getInstance();
 
     let open = $state(false);
+
+    let configExists = $state(false);
+
+    $effect(() => {
+        if (!session.selected_voice_channel) {
+            configExists = false;
+            return;
+        }
+        channelConfigs.has(session.selected_voice_channel.channel.id).then((exists) => {
+            configExists = exists;
+        });
+    });
 </script>
 
 {#if session.selected_voice_channel && !vcState}
     {@const { guild, channel } = session.selected_voice_channel}
     {#if open}
+        <small>
+            チャンネルごとに設定を保存できます。設定がない場合は最後に入ったチャンネルの設定が使用されます。
+        </small>
         <h4>
             過去の設定
-            <div class="actions">
-                <Button onclick={() => {
+        </h4>
+        <div class="config-list">
+            {#if !configExists}
+                {@const guildName = {
+                    [CHANNEL_TYPE.DM]: 'DM',
+                    [CHANNEL_TYPE.GROUP_DM]: 'Group DM',
+                }[channel.type] || guild?.name || 'Unknown'}
+                {@const channelName = {
+                    [CHANNEL_TYPE.DM]: null,
+                    [CHANNEL_TYPE.GROUP_DM]: null,
+                }[channel.type] || channel.name}
+                <button class="new-config" onclick={() => {
                     channelConfigs.add({
                         channel_id: channel.id,
                         channel,
@@ -46,52 +71,88 @@
                         config: $config,
                         world: $world,
                     });
-                }} primary>
+                    configExists = true;
+                }}>
                     <Tooltip>
-                        位置やサイズなどの設定を保存します
+                        このチャンネルに独自の設定を追加します
                     </Tooltip>
-                    保存
-                    <i class="ti ti-upload"></i>
-                </Button>
-            </div>
-        </h4>
-        <div class="config-list">
-            <TableList table={channelConfigs}>
-                {#snippet component({ entry })}
-                    {@const guildName = {
-                        [CHANNEL_TYPE.DM]: 'DM',
-                        [CHANNEL_TYPE.GROUP_DM]: 'Group DM',
-                    }[entry.channel.type] || entry.guild?.name || 'Unknown'}
-                    {@const channelName = {
-                        [CHANNEL_TYPE.DM]: null,
-                        [CHANNEL_TYPE.GROUP_DM]: null,
-                    }[entry.channel.type] || entry.channel.name}
-                    <div class="item">
-                        <div class="name">
-                            <small>{guildName}</small>
-                            <p>{channelName}</p>
-                        </div>
-                        <div class="actions">
-                            <button onclick={() => {
-                                channelConfigs.remove(entry);
-                            }}>
-                                <Tooltip>
-                                    このチャンネルの設定を削除します
-                                </Tooltip>
-                                <i class="ti ti-trash"></i>
-                            </button>
-                            <button onclick={() => {
-                                DiscordOverlayApp.getInstance().applyChannelConfig(entry);
-                            }}>
-                                <Tooltip>
-                                    このチャンネルの設定を現在の設定に適用します
-                                </Tooltip>
-                                <i class="ti ti-check"></i>
-                            </button>
-                        </div>
+                    <div class="icon">
+                        {#if guild?.icon_url}
+                            <img src={guild.icon_url} alt="" />
+                        {:else if channel.type === CHANNEL_TYPE.DM}
+                            <i class="ti ti-user"></i>
+                        {:else if channel.type === CHANNEL_TYPE.GROUP_DM}
+                            <i class="ti ti-users"></i>
+                        {:else}
+                            <i class="ti ti-server"></i>
+                        {/if}
                     </div>
-                {/snippet}
-            </TableList>
+                    <div class="info">
+                        <div class="name">
+                            {#if guildName}
+                                <small>
+                                    {guildName}
+                                    {#if channelName}
+                                        <i class="ti ti-slash"></i>
+                                        {channelName}
+                                    {/if}
+                                </small>
+                            {/if}
+                        </div>
+                        <p>
+                            の専用の設定を追加
+                        </p>
+                    </div>
+                    <i class="ti ti-plus"></i>
+                </button>
+            {/if}
+            <div class="list">
+                <TableList table={channelConfigs} reverse>
+                    {#snippet component({ entry })}
+                        {@const guildName = {
+                            [CHANNEL_TYPE.DM]: 'DM',
+                            [CHANNEL_TYPE.GROUP_DM]: 'Group DM',
+                        }[entry.channel.type] || entry.guild?.name || 'Unknown'}
+                        {@const channelName = {
+                            [CHANNEL_TYPE.DM]: null,
+                            [CHANNEL_TYPE.GROUP_DM]: null,
+                        }[entry.channel.type] || entry.channel.name}
+                        {@const active = entry.channel_id === channel.id}
+                        <div class="item" class:active>
+                            <div class="info">
+                                <div class="icon">
+                                    {#if entry.guild?.icon_url}
+                                        <img src={entry.guild.icon_url} alt="" />
+                                    {:else if channel.type === CHANNEL_TYPE.DM}
+                                        <i class="ti ti-user"></i>
+                                    {:else if channel.type === CHANNEL_TYPE.GROUP_DM}
+                                        <i class="ti ti-users"></i>
+                                    {:else}
+                                        <i class="ti ti-server"></i>
+                                    {/if}
+                                </div>
+                                <div class="name">
+                                    <small>{guildName}</small>
+                                    <p>{channelName}</p>
+                                </div>
+                            </div>
+                            <div class="actions">
+                                <ButtonMini onclick={() => {
+                                    channelConfigs.remove(entry);
+                                    if (active) {
+                                        configExists = false;
+                                    }
+                                }} primary>
+                                    <Tooltip>
+                                        このチャンネルの設定を削除します
+                                    </Tooltip>
+                                    <i class="ti ti-trash"></i>
+                                </ButtonMini>
+                            </div>
+                        </div>
+                    {/snippet}
+                </TableList>
+            </div>
         </div>
     {/if}
     <button class="server" onclick={() => open = !open}>
@@ -144,9 +205,9 @@
             </p>
             <div class="open">
                 {#if open}
-                    <i class="ti ti-dots-vertical"></i>
-                {:else}
                     <i class="ti ti-chevron-down"></i>
+                {:else}
+                    <i class="ti ti-dots-vertical"></i>
                 {/if}
             </div>
         {/if}
@@ -205,36 +266,95 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        font-size: 1rem;
+        font-size: 1.2rem;
         font-weight: 600;
         color: var(--color-1);
+    }
+
+    small {
+        font-size: 0.8rem;
+        color: var(--color-text);
     }
 
     .config-list {
         height: 20rem;
         background: var(--color-bg-2);
+        display: flex;
+        flex-direction: column;
+
+        .new-config {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            height: 4rem;
+            color: var(--color-1);
+            background: none;
+            border: none;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            background: var(--color-bg-1);
+            outline: 1px solid var(--color-1);
+            outline-offset: -3px;
+            font-weight: 600;
+            font-size: 0.9rem;
+
+            .icon {
+                margin-right: 0.5rem;
+            }
+
+            .info {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                margin-right: auto;
+            }
+
+            > i {
+                margin-right: 1.2rem;
+            }
+        }
+
+        .list {
+            overflow-y: auto;
+            position: relative;
+            flex: 1;
+        }
 
         .item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            cursor: pointer;
-            height: 3rem;
-            padding-left: 0.5rem;
+            height: 4rem;
+            padding-left: 1rem;
+            color: var(--color-1);
+            background: none;
+            border: none;
+            width: 100%;
 
             &:hover {
                 background: var(--color-bg-1);
                 outline: 1px solid var(--color-1);
-                outline-offset: -1px;
+                outline-offset: -3px;
+            }
+
+            &.active {
+                background: var(--color-bg-1);
+                border-left: 4px solid var(--color-1);
+            }
+
+            .info {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
             }
 
             .name {
                 font-weight: 600;
-                color: var(--color-1);
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                padding: 0.5rem;
+                text-align: left;
 
                 > p {
                     font-size: 0.9rem;
@@ -245,31 +365,38 @@
 
                 > small {
                     font-size: 0.7rem;
-                    color: var(--color-1);
                 }
             }
 
             .actions {
                 display: flex;
                 align-items: center;
-
-                button {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: none;
-                    border: none;
-                    color: var(--color-1);
-                    cursor: pointer;
-                    height: 3rem;
-                    width: 3rem;
-
-                    &:hover {
-                        background: var(--color-1);
-                        color: var(--color-bg-1);
-                    }
-                }
+                gap: 0.5rem;
+                margin-right: 1rem;
             }
+        }
+    }
+
+    .icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 100%;
+        object-fit: cover;
+        width: 2rem;
+        height: 2rem;
+        background: var(--color-bg-2);
+
+        > img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 100%;
+        }
+
+        > i {
+            font-size: 1rem;
+            color: var(--color-1);
         }
     }
 
@@ -287,28 +414,8 @@
         border: none;
         border-bottom: 2px solid var(--color-1);
 
-        > .icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 100%;
-            object-fit: cover;
-            width: 2rem;
-            height: 2rem;
+        .icon {
             margin-right: 0.5rem;
-            background: var(--color-bg-2);
-
-            > img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                border-radius: 100%;
-            }
-
-            > i {
-                font-size: 1rem;
-                color: var(--color-1);
-            }
         }
 
         > p {
