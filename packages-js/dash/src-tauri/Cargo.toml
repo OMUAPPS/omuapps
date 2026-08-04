@@ -58,4 +58,4 @@ tauri-plugin-updater = "2"
 tauri-plugin-window-state = "2"
 
 [target."cfg(target_os = \"windows\")".dependencies]
-tauri = { version = "2", features = ["devtools", "tray-icon", "unstable"] }
+tauri = { version = "2", features = ["devtools", "tray-icon"] }
