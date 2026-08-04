@@ -54,21 +54,21 @@ export class HTMLInput implements Input {
         while (this.queue.length > 0) {
             const event = this.queue.shift();
             if (!event) break;
+            let entered = true;
+            if (event.ev.target && event.ev.target instanceof HTMLElement) {
+                let element: HTMLElement | null = event.ev.target;
+                while (element) {
+                    // [data-input]
+                    if (element.hasAttribute('data-input')) {
+                        entered = false;
+                        break;
+                    }
+                    element = element.parentElement;
+                }
+            }
             if (event.type === 'mouse') {
                 const pos = new Vec2(event.ev.clientX, event.ev.clientY);
                 const delta = pos.sub(this.prev);
-                let entered = true;
-                if (event.ev.target && event.ev.target instanceof HTMLElement) {
-                    let element: HTMLElement | null = event.ev.target;
-                    while (element) {
-                        // [data-input]
-                        if (element.hasAttribute('data-input')) {
-                            entered = false;
-                            break;
-                        }
-                        element = element.parentElement;
-                    }
-                }
                 this.prev = pos;
                 if (this.mouse.entered !== entered) {
                     this.mouse.entered = entered;
@@ -130,6 +130,9 @@ export class HTMLInput implements Input {
                     };
                 }
             } else if (event.type == 'wheel') {
+                if (!entered) {
+                    continue;
+                }
                 yield {
                     timestamp: event.ev.timeStamp,
                     kind: 'mouse-wheel',
