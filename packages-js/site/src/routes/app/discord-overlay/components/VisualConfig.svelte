@@ -22,9 +22,14 @@
     整列
 </h2>
 <section>
+    <h3>余白</h3>
     <label>
-        余白
-        <Slider bind:value={$config.align.margin} min={0} max={600} step={1} />
+        横
+        <Slider bind:value={$config.align.margin.x} min={0} max={600} step={1} />
+    </label>
+    <label>
+        縦
+        <Slider bind:value={$config.align.margin.y} min={0} max={600} step={1} />
     </label>
     <label>
         間隔
