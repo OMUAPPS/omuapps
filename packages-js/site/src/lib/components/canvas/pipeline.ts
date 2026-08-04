@@ -93,6 +93,10 @@ export class HTMLInput implements Input {
                     buttons,
                 };
 
+                if (!entered) {
+                    continue;
+                }
+
                 if (event.ev.type === 'pointermove') {
                     if ((event.ev as unknown as TouchEvent).touches?.length === 0) {
                         return;

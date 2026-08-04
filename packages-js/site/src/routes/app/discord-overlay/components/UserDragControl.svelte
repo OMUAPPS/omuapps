@@ -216,6 +216,7 @@
     onwheel={handleWheel}
     draggable="false"
     style:opacity={$dragState?.type === 'user' && $dragState.id != id ? 0.2 : 1}
+    data-input
 >
     {#if !isDragging}
         <Tooltip>
