@@ -61,11 +61,11 @@
                     {@const guildName = {
                         [CHANNEL_TYPE.DM]: 'DM',
                         [CHANNEL_TYPE.GROUP_DM]: 'Group DM',
-                    }[channel.type] || guild?.name || 'Unknown'}
+                    }[entry.channel.type] || entry.guild?.name || 'Unknown'}
                     {@const channelName = {
                         [CHANNEL_TYPE.DM]: null,
                         [CHANNEL_TYPE.GROUP_DM]: null,
-                    }[channel.type] || channel.name}
+                    }[entry.channel.type] || entry.channel.name}
                     <div class="item">
                         <div class="name">
                             <small>{guildName}</small>
