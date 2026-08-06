@@ -11,6 +11,35 @@ description: 管理画面API
 
 ブラウザの音声認識やブラウザ操作をし認証情報を管理することができます
 
+## アプリ管理
+
+```typescript
+// アプリを開く
+// DASHBOARD_OPEN_APP_PERMISSION_IDが必要
+await omu.dashboard.apps.open(APP);
+
+// アプリをインストール
+// DASHBOARD_APP_INSTALL_PERMISSION_IDが必要
+await omu.dashboard.apps.install(APP);
+
+// アプリを閉じる
+// DASHBOARD_APP_CLOSE_PERMISSION_IDが必要
+```
+
+## アプリの自動起動
+
+指定したアプリを自動で起動させる事ができます
+
+```typescript
+// スタートアップに登録
+// DASHBOARD_APP_STARTUP_PERMISSION_IDが必要
+await omu.dashboard.apps.addStartup(APP);
+
+// スタートアップから削除
+// DASHBOARD_APP_STARTUP_PERMISSION_IDが必要
+await omu.dashboard.apps.removeStartup(APP);
+```
+
 ## ドラッグ＆ドロップ
 
 ファイルのドラッグ＆ドロップを処理するには、`requestDragDrop()`メソッドを使用します
