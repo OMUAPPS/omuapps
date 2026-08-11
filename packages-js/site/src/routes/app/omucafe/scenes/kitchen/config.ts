@@ -27,8 +27,10 @@ export const SCENE_CONFIG = {
         },
         OVERLAY: {
             KITCHEN_Y: 50,
-            KITCHEN_TEX_Y: 100,
-            COUNTER_Y: 200,
+            KITCHEN_TEX_Y_VERTICAL: 100,
+            KITCHEN_TEX_Y_HORIZONTAL: 100,
+            COUNTER_Y_VERTICAL: 200,
+            COUNTER_Y_HORIZONTAL: 1080 - 400,
             TRASHBIN_X: 400,
         },
         CLIENT: {

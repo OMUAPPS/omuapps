@@ -11,12 +11,13 @@ import type { CanvasOptions } from '../../canvas/canvas';
 import { PALETTE_RGB } from '../../colors';
 import type { Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
-import { ASSET_RESOLUTION, ASSET_WORLD_BOUNDS } from '../../core/game-renderer';
+import { ASSET_VERTICAL_RESOLUTION, ASSET_VERTICAL_WORLD_BOUNDS } from '../../core/game-renderer';
 import type { Order, Receipt } from '../../core/game-state';
 import { createTransform } from '../../core/transform';
 import type { Item, ItemPool, PoolOptions } from '../../item/item';
 import client_background from '../../resources/client_background.png';
 import type { SceneHandler } from '../scene';
+import asset_horizontal_background from './img/asset_horizontal_background.png';
 import asset_vertical_background from './img/asset_vertical_background.png';
 import asset_vertical_overlay from './img/asset_vertical_overlay.png';
 import background from './img/background.png';
@@ -232,7 +233,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
 
         // 写真フレームのセットアップ
         const container = bounds.with({ max: { x: 0 } }).shrink(LAYOUT.CLIENT_CONTAINER_SHRINK);
-        const overlayBounds = container.fit(ASSET_RESOLUTION);
+        const overlayBounds = container.fit(ASSET_VERTICAL_RESOLUTION);
         const { photoTex, frameBounds, poolOptions } = await this.setupPhotoFrame(scene.pool, overlayBounds);
 
         const bgAsset2 = await this.game.asset.getTextureByUrl(asset_vertical_background).promise;
@@ -257,8 +258,8 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
 
         // キャンバスの描画
         const mouse = matrices.getViewToModel().transform2(pipelineInput.mouse.pos);
-        const localPos = overlayBounds.unmap(mouse).mul(ASSET_RESOLUTION);
-        const canvasOptions: CanvasOptions = { pos: localPos, mouse, size: ASSET_RESOLUTION };
+        const localPos = overlayBounds.unmap(mouse).mul(ASSET_VERTICAL_RESOLUTION);
+        const canvasOptions: CanvasOptions = { pos: localPos, mouse, size: ASSET_VERTICAL_RESOLUTION };
 
         await this.renderCanvas(overlayBounds, canvasOptions, localPos, photoTex, scene.photo == null);
 
@@ -276,7 +277,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         } else if (canvas.tool?.type === 'move') {
             state.value.tool = { type: 'move' };
         }
-        state.value.pos = overlayBounds.unmap(mouse).sub({ x: 0.5, y: 0.5 }).mul(ASSET_RESOLUTION);
+        state.value.pos = overlayBounds.unmap(mouse).sub({ x: 0.5, y: 0.5 }).mul(ASSET_VERTICAL_RESOLUTION);
 
         return poolOptions;
     }
@@ -285,17 +286,23 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         const { draw } = this.game.pipeline;
         const { containBounds } = this.game.renderer;
 
-        const bgAsset = await this.game.asset.getTextureByUrl(asset_vertical_background).promise;
-        draw.texture(...containBounds.toArray(), bgAsset.unwrap.texture);
+        if (this.game.renderer.isVertical()) {
+            const bgAsset = await this.game.asset.getTextureByUrl(asset_vertical_background).promise;
+            draw.texture(...containBounds.toArray(), bgAsset.unwrap.texture);
+        } else {
+            const bgAsset = await this.game.asset.getTextureByUrl(asset_horizontal_background).promise;
+            draw.texture(...containBounds.toArray(), bgAsset.unwrap.texture);
+        }
     }
 
     private async renderOverlaySide(scene: ScenePhotoData) {
         const { bloom } = this.game.states.config.value.photo.effects;
-        const { context, draw, matrices } = this.game.pipeline;
+        const { context, draw } = this.game.pipeline;
         const { bounds } = this.game.renderer;
         const { itemRenderer } = this.game;
+        const overlayBounds = bounds.fit(ASSET_VERTICAL_RESOLUTION);
 
-        const { photoTex, poolOptions } = await this.setupPhotoFrame(scene.pool, bounds);
+        const { photoTex, poolOptions } = await this.setupPhotoFrame(scene.pool, overlayBounds);
 
         // エフェクトテクスチャのサイズ同期
         [this.effectA, this.effectB, this.effectC].forEach(effect => {
@@ -311,10 +318,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
             stateManager.pushViewport(bounds.size);
 
             const bgAsset = await this.game.asset.getTextureByUrl(asset_vertical_overlay).promise;
-            matrices.model.scope(() => {
-                matrices.model.scale(LAYOUT.PHOTO_SCALE, LAYOUT.PHOTO_SCALE, 1);
-                draw.texture(...bounds.offset({ x: 0, y: 200 }).toArray(), bgAsset.unwrap.texture);
-            });
+            draw.texture(...this.game.renderer.bounds.offset({ x: 0, y: 200 }).toArray(), bgAsset.unwrap.texture);
 
             itemRenderer.initPass();
             await itemRenderer.renderPool(scene.pool, poolOptions);
@@ -358,22 +362,24 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         await this.renderFlashes(this.game.renderer.bounds, 1);
 
         // 共通のアイテム＆フレーム描画
-        await this.drawPhotoFrame(scene, bounds, photoTex, FONT.OVERLAY_DATE_SIZE);
+        await this.drawPhotoFrame(scene, overlayBounds, photoTex, FONT.OVERLAY_DATE_SIZE);
 
         // キャンバスの描画 (非インタラクティブ)
-        const canvasOptions: CanvasOptions = { pos: Vec2.ZERO, mouse: Vec2.ZERO, size: ASSET_RESOLUTION };
-        await this.renderCanvas(ASSET_WORLD_BOUNDS, canvasOptions, Vec2.ZERO, photoTex, false);
+        const canvasOptions: CanvasOptions = { pos: Vec2.ZERO, mouse: Vec2.ZERO, size: ASSET_VERTICAL_RESOLUTION };
+        await this.renderCanvas(overlayBounds, canvasOptions, Vec2.ZERO, photoTex, false);
 
         // render cursor
         const state = this.game.states.canvasStates;
+        const cursorPos = overlayBounds.map(ASSET_VERTICAL_WORLD_BOUNDS.unmap(state.value.pos));
+        const cursorScale = overlayBounds.width / ASSET_VERTICAL_RESOLUTION.x;
         if (state.value.tool?.type === 'brush') {
             const penAsset = await this.game.asset.getTextureByUrl(pen).promise;
             const penTex = penAsset.unwrap.texture;
             draw.texture(
-                state.value.pos.x,
-                state.value.pos.y,
-                state.value.pos.x + penTex.width,
-                state.value.pos.y + penTex.height,
+                cursorPos.x,
+                cursorPos.y,
+                cursorPos.x + penTex.width * cursorScale,
+                cursorPos.y + penTex.height * cursorScale,
                 penTex,
                 state.value.tool.color,
             );
@@ -381,10 +387,10 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
             const eraserAsset = await this.game.asset.getTextureByUrl(eraser).promise;
             const eraserTex = eraserAsset.unwrap.texture;
             draw.texture(
-                state.value.pos.x - 26,
-                state.value.pos.y - 26,
-                state.value.pos.x + eraserTex.width - 26,
-                state.value.pos.y + eraserTex.height - 26,
+                cursorPos.x - 26 * cursorScale,
+                cursorPos.y - 26 * cursorScale,
+                cursorPos.x + (eraserTex.width - 26) * cursorScale,
+                cursorPos.y + (eraserTex.height - 26) * cursorScale,
                 eraserTex,
             );
         }
@@ -513,7 +519,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         draw.texture(...frameBounds.toArray(), canvasRender);
 
         if (isInteractive) {
-            const isHovered = localPos.x > 0 && localPos.y > 0 && localPos.x < ASSET_RESOLUTION.x && localPos.y < ASSET_RESOLUTION.y;
+            const isHovered = localPos.x > 0 && localPos.y > 0 && localPos.x < ASSET_VERTICAL_RESOLUTION.x && localPos.y < ASSET_VERTICAL_RESOLUTION.y;
             if (isHovered) {
                 canvas.renderCursor(options);
             }
