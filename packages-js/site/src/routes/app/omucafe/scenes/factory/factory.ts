@@ -13,6 +13,7 @@ import client_background from '../../resources/client_background.png';
 import asset_background from '../../scenes/kitchen/img/asset_vertical_background.png';
 import type { SceneHandler } from '../scene';
 import factory_bg from './img/factory.png';
+import factory_overlay from './img/factory_overlay.png';
 import ScreenCreator from './ScreenFactory.svelte';
 
 export type FactorySelection = {
@@ -50,6 +51,7 @@ export const attributeClipboard = writable<AttributeClipboard | undefined>();
 interface SceneAssets {
     texBackground: GlTexture;
     texFactory: GlTexture;
+    texFactoryOverlay: GlTexture;
 }
 
 /** 描画用の定数 */
@@ -82,14 +84,16 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
             return this.cachedAssets;
         }
 
-        const [bg, factory] = await Promise.all([
+        const [bg, factory, factoryOverlay] = await Promise.all([
             this.game.asset.getTextureByUrl(this.game.side === 'client' ? client_background : asset_background).promise,
             this.game.asset.getTextureByUrl(factory_bg).promise,
+            this.game.asset.getTextureByUrl(factory_overlay).promise,
         ]);
 
         this.cachedAssets = {
             texBackground: bg.unwrap.texture,
             texFactory: factory.unwrap.texture,
+            texFactoryOverlay: factoryOverlay.unwrap.texture,
         };
 
         return this.cachedAssets;
@@ -213,14 +217,15 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         const { draw } = this.game.pipeline;
         const { renderer, itemRenderer, boardRenderer } = this.game;
 
-        // 1. 背景の描画
-        draw.texture(...renderer.bounds.fit(assets.texFactory.size).offset(layout.offset).toArray(), assets.texFactory);
+        if (renderer.isVertical()) {
+            draw.texture(...renderer.bounds.fit(assets.texFactory.size).offset(layout.offset).toArray(), assets.texFactory);
+        } else {
+            draw.texture(...renderer.bounds.fit(assets.texFactory.size).offset(layout.offset).toArray(), assets.texFactoryOverlay);
+        }
 
-        // 2. アイテムプールの描画
         itemRenderer.initPass();
         await itemRenderer.renderPool(this.pool, options);
 
-        // 4. 手に持っているアイテムの描画 (共通)
         await itemRenderer.renderHeld();
 
         await boardRenderer.render();

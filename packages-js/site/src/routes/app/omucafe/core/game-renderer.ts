@@ -18,8 +18,10 @@ import { getTransform, validateTransform, type Transform } from './transform';
 export const CLIENT_RESOLUTION = new Vec2(1920, 1080).scale(1.5);
 export const CLIENT_WORLD_BOUNDS = new AABB2(CLIENT_RESOLUTION.scale(-0.5), CLIENT_RESOLUTION.scale(0.5));
 
-export const ASSET_RESOLUTION = new Vec2(1080, 1920).scale(1.5);
-export const ASSET_WORLD_BOUNDS = new AABB2(ASSET_RESOLUTION.scale(-0.5), ASSET_RESOLUTION.scale(0.5));
+export const ASSET_VERTICAL_RESOLUTION = new Vec2(1080, 1920).scale(1.5);
+export const ASSET_VERTICAL_WORLD_BOUNDS = new AABB2(ASSET_VERTICAL_RESOLUTION.scale(-0.5), ASSET_VERTICAL_RESOLUTION.scale(0.5));
+export const ASSET_HORIZONTAL_RESOLUTION = new Vec2(1920, 1080).scale(1.5);
+export const ASSET_HORIZONTAL_WORLD_BOUNDS = new AABB2(ASSET_HORIZONTAL_RESOLUTION.scale(-0.5), ASSET_HORIZONTAL_RESOLUTION.scale(0.5));
 
 const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'];
 
@@ -109,6 +111,10 @@ export class GameRenderer {
         context.stateManager.setViewport({ x: matrices.width, y: matrices.height });
     }
 
+    public isVertical() {
+        return this.bounds.size.y > this.bounds.size.x;
+    }
+
     private setupMatrices() {
         const { matrices } = this.game.pipeline;
 
@@ -117,8 +123,13 @@ export class GameRenderer {
             this.resolution = CLIENT_RESOLUTION;
             this.worldBounds = CLIENT_WORLD_BOUNDS;
         } else {
-            this.resolution = ASSET_RESOLUTION;
-            this.worldBounds = ASSET_WORLD_BOUNDS;
+            if (this.isVertical()) {
+                this.resolution = ASSET_VERTICAL_RESOLUTION;
+                this.worldBounds = ASSET_VERTICAL_WORLD_BOUNDS;
+            } else {
+                this.resolution = ASSET_HORIZONTAL_RESOLUTION;
+                this.worldBounds = ASSET_HORIZONTAL_WORLD_BOUNDS;
+            }
         }
 
         matrices.identity();

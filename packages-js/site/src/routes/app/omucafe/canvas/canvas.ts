@@ -4,7 +4,7 @@ import { Vec2 } from '$lib/math/vec2';
 import { Vec4 } from '$lib/math/vec4';
 import { PALETTE_RGB } from '../colors';
 import type { Game } from '../core/game';
-import { ASSET_RESOLUTION } from '../core/game-renderer';
+import { ASSET_VERTICAL_RESOLUTION } from '../core/game-renderer';
 import type { BrushCommand, CanvasCommand } from '../core/game-state';
 
 export class Palette {}
@@ -16,8 +16,6 @@ export interface CanvasOptions {
 }
 
 const CONFIG = {
-    WIDTH: ASSET_RESOLUTION.x,
-    HEIGHT: ASSET_RESOLUTION.y,
     CHUNK_SIZE_LIMIT: 100,
     DUMPING_FACTOR: 0.4,
     WIDTH_DUMPING_FACTOR: 0.6,
@@ -56,8 +54,8 @@ export class Canvas {
 
         this.texture.use(() => {
             this.texture.setImage(null, {
-                width: CONFIG.WIDTH,
-                height: CONFIG.HEIGHT,
+                width: ASSET_VERTICAL_RESOLUTION.x,
+                height: ASSET_VERTICAL_RESOLUTION.y,
                 internalFormat: 'rgba',
                 format: 'rgba',
             });
@@ -99,8 +97,8 @@ export class Canvas {
 
         matrices.push();
         matrices.identity();
-        matrices.projection.orthographic(0, CONFIG.HEIGHT, CONFIG.WIDTH, 0, -1, 1);
-        context.stateManager.pushViewport({ x: CONFIG.WIDTH, y: CONFIG.HEIGHT });
+        matrices.projection.orthographic(0, ASSET_VERTICAL_RESOLUTION.y, ASSET_VERTICAL_RESOLUTION.x, 0, -1, 1);
+        context.stateManager.pushViewport({ x: ASSET_VERTICAL_RESOLUTION.x, y: ASSET_VERTICAL_RESOLUTION.y });
 
         await this.buffer.useAsync(async () => {
             this.dispatchPaintCommands();

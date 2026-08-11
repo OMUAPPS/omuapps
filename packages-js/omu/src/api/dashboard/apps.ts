@@ -26,7 +26,7 @@ const ENDPOINT_INSTALL = EndpointType.createJson<App, AppInstallResponse>(DASHBO
 const ENDPOINT_CLOSE = EndpointType.createJson<Identifier, null>(DASHBOARD_EXTENSION_TYPE, {
     name: 'close_app',
     requestSerializer: Identifier,
-    permissionId: DASHBOARD_APP_INSTALL_PERMISSION_ID,
+    permissionId: DASHBOARD_APP_CLOSE_PERMISSION_ID,
 });
 interface RequestStartup {
     type: 'register' | 'unregister';

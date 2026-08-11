@@ -15,6 +15,7 @@ import { CustomerRenderer } from './component/customer';
 import { Display } from './component/display';
 import { ParticleRenderer } from './component/particle';
 import { SCENE_CONFIG, type SceneKitchenData } from './config';
+import asset_horizontal_background from './img/asset_horizontal_background.png';
 import asset_vertical_background from './img/asset_vertical_background.png';
 import asset_vertical_counter from './img/asset_vertical_counter.png';
 import asset_vertical_kitchen from './img/asset_vertical_kitchen.png';
@@ -55,11 +56,12 @@ class KitchenLayoutCalculator {
         const counterHeight = assets.texCounter.height / renderer.scale;
         const counterOffsetY = renderer.bounds.max.y - counterHeight;
         const centerX = CLIENT_RESOLUTION.x / 2 - DESIGN.COUNTER_WIDTH / 2;
+        const isVertical = renderer.isVertical();
 
         return {
             center: Vec2.ZERO,
             kitchenOptions: this.createPoolOptions('キッチン', states.kitchen.value, DESIGN.WIDTH, DESIGN.HEIGHT, { x: centerX, y: OFFSETS.OVERLAY.KITCHEN_Y }),
-            counterOptions: this.createPoolOptions('カウンター', states.counter.value, DESIGN.COUNTER_WIDTH, DESIGN.COUNTER_HEIGHT, { x: centerX, y: counterOffsetY + OFFSETS.OVERLAY.COUNTER_Y }),
+            counterOptions: this.createPoolOptions('カウンター', states.counter.value, DESIGN.COUNTER_WIDTH, DESIGN.COUNTER_HEIGHT, { x: centerX, y: counterOffsetY + (isVertical ? OFFSETS.OVERLAY.COUNTER_Y_VERTICAL : OFFSETS.OVERLAY.COUNTER_Y_HORIZONTAL) }),
         };
     }
 
@@ -100,11 +102,11 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
     private async loadAssets(): Promise<SceneAssetsCommon> {
         if (this.cachedAssets) return this.cachedAssets;
 
-        const { asset: assetManager, side } = this.game;
+        const { asset: assetManager, side, renderer } = this.game;
         const isClient = side === 'client';
 
         const [bg, kitchen, counter] = await Promise.all([
-            assetManager.getTextureByUrl(isClient ? client_background : asset_vertical_background).promise,
+            assetManager.getTextureByUrl(isClient ? client_background : (renderer.isVertical() ? asset_vertical_background : asset_horizontal_background)).promise,
             assetManager.getTextureByUrl(isClient ? client_kitchen : asset_vertical_kitchen).promise,
             assetManager.getTextureByUrl(isClient ? client_counter : asset_vertical_counter).promise,
         ]);
@@ -124,7 +126,11 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
                 await this.renderClientSide(assets, layout, scene);
                 break;
             case 'overlay':
-                await this.renderOverlaySide(assets, layout);
+                if (this.game.renderer.isVertical()) {
+                    await this.renderOverlaySideVertical(assets, layout);
+                } else {
+                    await this.renderOverlaySideHorizontal(assets, layout);
+                }
                 break;
             case 'background':
                 await this.renderBackgroundSide(assets);
@@ -188,22 +194,42 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         await draw.textAlign(bounds.min.add({ x: 250, y: 124 }), 'すべてのものを動かせます', Vec2.ZERO, color);
     }
 
-    private async renderOverlaySide(assets: SceneAssetsCommon, layout: SceneLayout) {
+    private async renderOverlaySideVertical(assets: SceneAssetsCommon, layout: SceneLayout) {
         const { draw } = this.game.pipeline;
-        const { itemRenderer, states, fridge, renderer } = this.game;
+        const { itemRenderer, states, renderer } = this.game;
         const { OFFSETS } = SCENE_CONFIG;
 
         const counterHeight = assets.texCounter.height / renderer.scale;
         const { min, max } = layout.kitchenOptions.bounds;
 
-        draw.texture(min.x, min.y + OFFSETS.OVERLAY.KITCHEN_TEX_Y, max.x, max.y + OFFSETS.OVERLAY.KITCHEN_TEX_Y, assets.texKitchen);
+        draw.texture(min.x, min.y + OFFSETS.OVERLAY.KITCHEN_TEX_Y_VERTICAL, max.x, max.y + OFFSETS.OVERLAY.KITCHEN_TEX_Y_VERTICAL, assets.texKitchen);
         itemRenderer.initPass();
         await itemRenderer.renderPool(states.kitchen.value, layout.kitchenOptions);
 
-        draw.texture(renderer.bounds.min.x, renderer.bounds.max.y - counterHeight + OFFSETS.OVERLAY.COUNTER_Y, renderer.bounds.max.x, renderer.bounds.max.y + OFFSETS.OVERLAY.COUNTER_Y, assets.texCounter);
+        draw.texture(renderer.bounds.min.x, renderer.bounds.max.y - counterHeight + OFFSETS.OVERLAY.COUNTER_Y_VERTICAL, renderer.bounds.max.x, renderer.bounds.max.y + OFFSETS.OVERLAY.COUNTER_Y_VERTICAL, assets.texCounter);
         await itemRenderer.renderPool(states.counter.value, layout.counterOptions);
 
-        await fridge.render();
+        await itemRenderer.renderHeld();
+
+        await this.game.boardRenderer.render();
+        this.particleRenderer.render();
+    }
+
+    private async renderOverlaySideHorizontal(assets: SceneAssetsCommon, layout: SceneLayout) {
+        const { draw } = this.game.pipeline;
+        const { itemRenderer, states, renderer } = this.game;
+        const { OFFSETS } = SCENE_CONFIG;
+
+        const counterHeight = assets.texCounter.height / renderer.scale;
+        const { min, max } = layout.kitchenOptions.bounds;
+
+        draw.texture(min.x, min.y + OFFSETS.OVERLAY.KITCHEN_TEX_Y_HORIZONTAL, max.x, max.y + OFFSETS.OVERLAY.KITCHEN_TEX_Y_HORIZONTAL, assets.texKitchen);
+        itemRenderer.initPass();
+        await itemRenderer.renderPool(states.kitchen.value, layout.kitchenOptions);
+
+        draw.texture(renderer.bounds.min.x, renderer.bounds.max.y - counterHeight + OFFSETS.OVERLAY.COUNTER_Y_HORIZONTAL, renderer.bounds.max.x, renderer.bounds.max.y + OFFSETS.OVERLAY.COUNTER_Y_HORIZONTAL, assets.texCounter);
+        await itemRenderer.renderPool(states.counter.value, layout.counterOptions);
+
         await itemRenderer.renderHeld();
 
         await this.game.boardRenderer.render();

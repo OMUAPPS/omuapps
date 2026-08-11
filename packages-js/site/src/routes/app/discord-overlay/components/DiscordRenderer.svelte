@@ -60,12 +60,4 @@
         position: absolute;
         inset: 0;
     }
-
-    .debug {
-        position: absolute;
-        right: 0.25rem;
-        bottom: 0.25rem;
-        color: var(--color-outline);
-        font-size: 0.8rem;
-    }
 </style>

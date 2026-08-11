@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { Chat, ChatPermissions } from "@omujs/chat";
-    import { OBSPermissions, OBSPlugin } from "@omujs/obs";
-    import { Omu, OmuPermissions } from "@omujs/omu";
-    import { AppHeader, AppPage, setGlobal } from "@omujs/ui";
-    import { BROWSER } from "esm-env";
-    import { CHAT_OVERLAY_APP } from "./app.js";
-    import App from "./App.svelte";
-    import { ChatOverlayApp } from "./chat-app.js";
+    import { Chat, ChatPermissions } from '@omujs/chat';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
+    import { AppHeader, AppPage, setGlobal } from '@omujs/ui';
+    import { BROWSER } from 'esm-env';
+    import { CHAT_OVERLAY_APP } from './app.js';
+    import App from './App.svelte';
+    import { ChatOverlayApp } from './chat-app.js';
 
     const omu = new Omu(CHAT_OVERLAY_APP);
     const chat = Chat.create(omu);

@@ -16,15 +16,25 @@ const CONFIG = {
 export class BoardRenderer {
     constructor(private readonly game: Game) {}
 
+    private getBounds(size: Vec2): AABB2 {
+        if (this.game.renderer.isVertical()) {
+            return new AABB2(Vec2.ZERO, size).scale(1.4).setAt({ x: 0.5, y: 1 }, this.game.renderer.bounds.at({ x: 0.5, y: 1 })).offset({ x: 0, y: 100 });
+        }
+        return new AABB2(Vec2.ZERO, size).scale(1).setAt({ x: 0.25, y: 0.25 }, this.game.renderer.bounds.at({ x: 0.1, y: 0.1 }));
+    }
+
     async render() {
         const { draw } = this.game.pipeline;
-        const { asset, renderer, states } = this.game;
+        const { asset, states } = this.game;
 
         const boardTex = (await asset.getTextureByUrl(board).promise).unwrap.texture;
-        const bounds = AABB2.fromSize(boardTex).scale(1.4).setAt({ x: 0.5, y: 1 }, renderer.bounds.at({ x: 0.5, y: 1 })).offset({ x: 0, y: 100 });
+        const bounds = this.getBounds(boardTex.size);
         draw.texture(...bounds.toArray(), boardTex);
 
-        const innerBounds = bounds.shrink({ x: (100 + 20) * 1.4, y: (100 + 30) * 1.4 }).offset({ x: 0, y: -10 * 1.4 }).shrink({ x: 40, y: 40 });
+        const vertical = this.game.renderer.isVertical();
+        const innerBounds = vertical
+            ? bounds.shrink({ x: (100 + 20) * 1.4, y: (100 + 30) * 1.4 }).offset({ x: 0, y: -10 * 1.4 }).shrink({ x: 40, y: 40 })
+            : bounds.shrink({ x: (100 + 20) * 1.4, y: (100 + 30) * 1.4 }).offset({ x: 0, y: -10 * 1.4 });
         const products = Array.from(states.products.values()).filter((product) => !product.hidden);
         const pageCount = Math.ceil(products.length / CONFIG.ITEMS_PER_PAGE);
         const [timer, listBounds] = innerBounds.split({ direction: 'y', ratio: pageCount > 1 ? 0.05 : 0, gap: 10 });
