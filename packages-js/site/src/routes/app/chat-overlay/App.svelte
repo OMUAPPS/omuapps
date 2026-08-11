@@ -76,14 +76,10 @@
                     primary
                     onclick={async () => {
                         if ($config.hud.startup) {
-                            await omu.dashboard.apps.removeStartup(
-                                CHAT_OVERLAY_APP,
-                            );
+                            await omu.dashboard.apps.removeStartup(CHAT_OVERLAY_APP);
                             await closeHud();
                         } else {
-                            await omu.dashboard.apps.addStartup(
-                                CHAT_OVERLAY_APP,
-                            );
+                            await omu.dashboard.apps.addStartup(CHAT_OVERLAY_APP);
                             await createHud();
                         }
                         $config.hud.startup = !$config.hud.startup;

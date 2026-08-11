@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal, TypedDict
 
 from aiohttp import web
+from loguru import logger
 from omu.api.permission.permission import PermissionType
 from omu.app import App, AppJson, AppType
 from omu.errors import DisconnectReason, InvalidOrigin
@@ -158,20 +159,36 @@ class PermissionManager:
         return PermissionManager(
             server,
             {Identifier.from_key(k): v for k, v in apps.items()},
-            {Identifier.from_key(k): PermissionType.from_json(v) for k, v in permissions.items()},
+            {
+                Identifier.from_key(k): PermissionType.from_json(v)
+                for k, v in permissions.items()
+            },
         )
 
     def store(self):
         security_dir = self.server.directories.get("security")
-        apps_json = json.dumps({k.key(): v for k, v in self.apps.items()}, ensure_ascii=False)
-        permissions_json = json.dumps({k.key(): v.to_json() for k, v in self.permissions.items()}, ensure_ascii=False)
+        apps_json = json.dumps(
+            {k.key(): v for k, v in self.apps.items()}, ensure_ascii=False
+        )
+        permissions_json = json.dumps(
+            {k.key(): v.to_json() for k, v in self.permissions.items()},
+            ensure_ascii=False,
+        )
         (security_dir / "apps.json").write_text(apps_json, encoding="utf-8")
-        (security_dir / "permissions.json").write_text(permissions_json, encoding="utf-8")
+        (security_dir / "permissions.json").write_text(
+            permissions_json, encoding="utf-8"
+        )
 
-    def register_permission(self, *permissions: PermissionType, overwrite: bool = True) -> None:
-        existing_permissions = list(filter(lambda perm: perm.id in self.permissions, permissions))
+    def register_permission(
+        self, *permissions: PermissionType, overwrite: bool = True
+    ) -> None:
+        existing_permissions = list(
+            filter(lambda perm: perm.id in self.permissions, permissions)
+        )
         if existing_permissions and not overwrite:
-            raise ValueError(f"Permissions already registered: {', '.join(map(str, existing_permissions))}")
+            raise ValueError(
+                f"Permissions already registered: {', '.join(map(str, existing_permissions))}"
+            )
         for permission in permissions:
             self.permissions[permission.id] = permission
 
@@ -220,7 +237,9 @@ class PermissionManager:
         del self.apps[id]
         self.store()
 
-    def match_token(self, entry: AppEntry, token: InputToken) -> Result[HashedToken, str]:
+    def match_token(
+        self, entry: AppEntry, token: InputToken
+    ) -> Result[HashedToken, str]:
         expected_token = entry["token"]
         hash_obj = hashlib.sha256()
         hash_obj.update((entry["salt"] + token).encode("utf-8"))
@@ -230,7 +249,9 @@ class PermissionManager:
             return Err("Token does not match")
         return Ok(expected_token)
 
-    def verify_frame_token(self, request: web.Request) -> Result[None, DisconnectReason]:
+    def verify_frame_token(
+        self, request: web.Request
+    ) -> Result[None, DisconnectReason]:
         query = request.query
         frame_token = query.get("frame_token")
         url = query.get("url")
@@ -249,7 +270,9 @@ class PermissionManager:
             return Err(InvalidOrigin("Invalid frame token"))
         return Ok(None)
 
-    async def verify_app(self, app: App, token: InputToken) -> Result[tuple[PermissionHandle, InputToken], str]:
+    async def verify_app(
+        self, app: App, token: InputToken
+    ) -> Result[tuple[PermissionHandle, InputToken], str]:
         if app.type == AppType.DASHBOARD:
             token_matched = self.server.config.dashboard_token == token
             if not token_matched:
@@ -262,7 +285,9 @@ class PermissionManager:
             return Ok((FullPermissionHandle(), token))
         return await self.verify_generic_app(app, token)
 
-    async def verify_generic_app(self, app: App, token: InputToken) -> Result[tuple[PermissionHandle, InputToken], str]:
+    async def verify_generic_app(
+        self, app: App, token: InputToken
+    ) -> Result[tuple[PermissionHandle, InputToken], str]:
         found_entry = self.apps.get(app.id)
         if found_entry is None:
             return Err(f"App {app.id} not found")
@@ -272,6 +297,7 @@ class PermissionManager:
 
         match_result = self.match_app(found_entry["app_json"], app)
         if match_result.is_err is True:
+            logger.warning(f"App data mismatch for app {app.id}: {match_result.err}")
             if found_entry["app_json"].get("metadata") is not None:
                 dependencies = await self.server.dashboard.resolve_dependencies(app)
                 accepted = await self.server.dashboard.notify_update_app(
@@ -280,7 +306,9 @@ class PermissionManager:
                     dependencies=dependencies,
                 )
                 if not accepted:
-                    return Err(f"App data mismatch for app {app.id} and not accepted this change: {match_result.err}")
+                    return Err(
+                        f"App data mismatch for app {app.id} and not accepted this change: {match_result.err}"
+                    )
                 await self.server.server.apps.add(*dependencies.values())
             self.apps[app.id]["app_json"] = app.to_json()
             self.store()
@@ -312,8 +340,13 @@ class PermissionManager:
         if json.dumps(existing.get("metadata")) != json.dumps(new_app.metadata):
             return Err("App metadata does not match")
         needed_dependencies = list(
-            filter(lambda id: Identifier.from_key(id) not in self.apps, (new_app.dependencies or {}).keys())
+            filter(
+                lambda id: Identifier.from_key(id) not in self.apps,
+                (new_app.dependencies or {}).keys(),
+            )
         )
         if needed_dependencies:
-            return Err(f"App's dependencies are not satisfied: {', '.join(needed_dependencies)}")
+            return Err(
+                f"App's dependencies are not satisfied: {', '.join(needed_dependencies)}"
+            )
         return Ok(...)
