@@ -60,4 +60,4 @@ dist-ssr
 
 # Cloudflare
 
-**/.wrangler/cache/cf.json
+**/.wrangler
