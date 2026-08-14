@@ -5,6 +5,7 @@ import { APP as caption } from './caption/app.js';
 import { CHAT_OVERLAY_APP } from './chat-overlay/app.js';
 import { APP as chatSubtitle } from './chatsubtitle/app.js';
 import { APP as clock } from './clock/app.js';
+import { APP as commentCounter } from './comment-counter/app.js';
 import { DISCORD_PLUGIN_APP, APP as discordOverlay } from './discord-overlay/app.js';
 import { APP as lipsynctest } from './lipsynctest/app.js';
 import { APP as marshmallow } from './marshmallow/app.js';
@@ -34,6 +35,7 @@ apps.push(
     roulette,
     DISCORD_PLUGIN_APP,
     VIDEO_OVERLAY_APP,
+    commentCounter,
     clock,
     tester,
     TRANSLATOR_APP,
