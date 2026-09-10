@@ -215,6 +215,10 @@
             label: '上にあるほど前へ',
             value: 'upper',
         },
+        latest: {
+            label: '最後に置いたアイテム',
+            value: 'latest',
+        },
     }} />
     <small>前後関係の基準点</small>
     <Combobox bind:value={attr.orderingAnchor} options={{

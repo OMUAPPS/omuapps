@@ -19,7 +19,7 @@ export interface AttrContainer {
     cover?: AssetTransform;
     mask?: AssetTransform;
     maskInverted?: boolean;
-    layerOrder: 'upper' | 'lower';
+    layerOrder: 'upper' | 'lower' | 'latest';
     orderingAnchor: 'top' | 'center' | 'bottom';
     dropShadow?: {
         distance: number;
@@ -500,18 +500,20 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
         const anchorYLevel = attr.orderingAnchor === 'top' ? 0 : attr.orderingAnchor === 'bottom' ? 1 : 0.5;
 
-        children.sort((a, b) => {
-            const aBounds = renderData[a.id]?.bounds;
-            const bBounds = renderData[b.id]?.bounds;
+        if (attr.layerOrder !== 'latest') {
+            children.sort((a, b) => {
+                const aBounds = renderData[a.id]?.bounds;
+                const bBounds = renderData[b.id]?.bounds;
 
-            if (!aBounds || !bBounds) return 0; // 描画データがない場合は順序を変えない
+                if (!aBounds || !bBounds) return 0; // 描画データがない場合は順序を変えない
 
-            const aCenterY = a.transform.offset.y + lerp(aBounds.min.y, aBounds.max.y, anchorYLevel);
-            const bCenterY = b.transform.offset.y + lerp(bBounds.min.y, bBounds.max.y, anchorYLevel);
+                const aCenterY = a.transform.offset.y + lerp(aBounds.min.y, aBounds.max.y, anchorYLevel);
+                const bCenterY = b.transform.offset.y + lerp(bBounds.min.y, bBounds.max.y, anchorYLevel);
 
-            const delta = (bCenterY - aCenterY);
-            return attr.layerOrder === 'upper' ? delta : -delta;
-        });
+                const delta = (bCenterY - aCenterY);
+                return attr.layerOrder === 'upper' ? delta : -delta;
+            });
+        }
 
         item.children = children.map(child => child.id);
     }
