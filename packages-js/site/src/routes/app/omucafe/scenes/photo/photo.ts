@@ -51,7 +51,7 @@ const LAYOUT = {
     ITEM_Y_OFFSET: 400,
     CLIENT_CONTAINER_SHRINK: { x: 20, y: 20 },
     CLIENT_DUMMY_Y_OFFSET: -50,
-    DATE_TEXT_POSITION: { x: 0.25, y: 0.85 },
+    DATE_TEXT_POSITION: { x: 0.9, y: 1.05 },
     DATE_TEXT_SHADOW_OFFSET: { x: 2, y: 2 },
 } as const;
 
@@ -488,7 +488,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         matrices.model.translate(-center.x, -center.y, 0);
 
         const photoBounds = frameBounds.fit(photoTex.size).setAt({ x: 0.5, y: -0.1 }, { x: frameBounds.center.x, y: frameBounds.min.y });
-        draw.texture(...photoBounds.scaleAt(1.25, photoBounds.center).toArray(), photoTex, Vec4.ONE.with({ w: this.game.side === 'client' ? 0.8 : 1 }));
+        draw.texture(...photoBounds.scaleAt(1.75, photoBounds.at({ x: 0.5, y: 0.25 })).toArray(), photoTex, Vec4.ONE.with({ w: this.game.side === 'client' ? 0.8 : 1 }));
 
         // 日付テキストの描画
         draw.fontFamily = FONT.DATE_FAMILY;
