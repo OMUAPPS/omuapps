@@ -14,6 +14,13 @@ export default defineConfig({
         include: ['src/**/*.{test,spec}.{js,ts}'],
     },
     optimizeDeps: {
+        exclude: [
+            '@omujs/omu',
+            '@omujs/chat',
+            '@omujs/i18n',
+            '@omujs/obs',
+            '@omujs/ui',
+        ],
     },
     server: {
         host: '0.0.0.0',
