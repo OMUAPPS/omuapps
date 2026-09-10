@@ -5,7 +5,8 @@
             "name": "Dashboard",
             "type": "chrome",
             "request": "launch",
-            "preLaunchTask": "dev-dash"
+            "preLaunchTask": "dev-dash",
+            "postDebugTask": "stop-dev"
         },
         {
             "name": "Apps",
@@ -13,7 +14,8 @@
             "request": "launch",
             "url": "http://localhost:5173",
             "webRoot": "${workspaceFolder}",
-            "preLaunchTask": "dev-apps"
+            "preLaunchTask": "dev-apps",
+            "postDebugTask": "stop-dev"
         },
         {
             "name": "Server",
@@ -82,7 +84,8 @@
                 "Apps",
                 "DashboardDebug",
             ],
-            "preLaunchTask": "prelaunch",
+            "preLaunchTask": "dev-apps",
+            "stopAll": true,
             "presentation": {
                 "group": "Main",
                 "order": 0,
@@ -95,7 +98,8 @@
                 "Apps",
                 "DashboardDebug",
             ],
-            "preLaunchTask": "prelaunch",
+            "preLaunchTask": "dev-apps",
+            "stopAll": true,
             "presentation": {
                 "group": "Main",
                 "order": 1,
@@ -108,7 +112,8 @@
                 "Apps",
                 "Dashboard",
             ],
-            "preLaunchTask": "prelaunch",
+            "preLaunchTask": "dev-apps",
+            "stopAll": true,
             "presentation": {
                 "group": "Main",
                 "order": 2,

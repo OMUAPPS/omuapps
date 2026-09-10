@@ -3,80 +3,70 @@
     "tasks": [
         {
             "label": "prelaunch",
-            "type": "shell",
-            "command": "uv run ./scripts/py-prelaunch.py",
-            "isBackground": false,
-            "problemMatcher": [],
-        },
-        {
-            "label": "dev-dash",
-            "type": "shell",
-            "isBackground": true,
-            "command": "${workspaceFolder}/.venv/Scripts/python",
-            "args": [
-                "./scripts/py-dev.py",
-                "--dash"
-            ],
-            "dependsOn": [
-                "prelaunch",
-                "dev-package-index"
-            ],
-            "problemMatcher": [
-                {
-                    "applyTo": "allDocuments",
-                    "pattern": {
-                        "regexp": "Starting",
-                    },
-                    "background": {
-                        "beginsPattern": "Starting",
-                        "endsPattern": "Starting"
-                    },
-                },
-            ],
-        },
-        {
-            "label": "dev-apps",
-            "type": "shell",
-            "isBackground": true,
-            "command": "${workspaceFolder}/.venv/Scripts/python",
-            "args": [
-                "./scripts/py-dev.py",
-                "--apps"
-            ],
-            "dependsOn": [
-                "prelaunch",
-                "dev-package-index"
-            ],
-            "problemMatcher": [
-                {
-                    "applyTo": "allDocuments",
-                    "pattern": {
-                        "regexp": "Starting",
-                    },
-                    "background": {
-                        "beginsPattern": "Starting",
-                        "endsPattern": "Starting"
-                    },
-                },
-            ],
+            "type": "process",
+            "command": "bun",
+            "args": ["./scripts/js-prelaunch.ts"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
         },
         {
             "label": "dev-package-index",
-            "type": "shell",
+            "type": "process",
+            "command": "bun",
+            "args": ["./scripts/js-upload-dev-index.ts"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "dependsOn": "prelaunch",
             "isBackground": true,
-            "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-upload-dev-index.py",
-            "problemMatcher": [
-                {
-                    "applyTo": "allDocuments",
-                    "pattern": {
-                        "regexp": "starting",
-                    },
-                    "background": {
-                        "beginsPattern": "starting",
-                        "endsPattern": "Listening"
-                    }
+            "problemMatcher": [{
+                "base": "$tsc",
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^Index starting$",
+                    "endsPattern": "^Index ready$"
                 }
-            ]
+            }]
         },
+        {
+            "label": "dev-apps",
+            "type": "process",
+            "command": "bun",
+            "args": ["./scripts/js-dev.ts", "--apps"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "dependsOn": "dev-package-index",
+            "isBackground": true,
+            "problemMatcher": [{
+                "base": "$tsc",
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^Dev starting$",
+                    "endsPattern": "^Dev ready$"
+                }
+            }]
+        },
+        {
+            "label": "dev-dash",
+            "type": "process",
+            "command": "bun",
+            "args": ["./scripts/js-dev.ts", "--dash"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "dependsOn": "dev-apps",
+            "isBackground": true,
+            "problemMatcher": [{
+                "base": "$tsc",
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^Dev starting$",
+                    "endsPattern": "^Dev ready$"
+                }
+            }]
+        },
+        {
+            "label": "stop-dev",
+            "type": "process",
+            "command": "bun",
+            "args": ["./scripts/js-dev.ts", "--stop"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        }
     ]
 }
