@@ -268,7 +268,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             ctx.passes.push({
                 order: 1000,
                 render: async () => {
-                    this.renderChildren(attr, ctx.render, ctx.children);
+                    await this.renderChildren(attr, ctx.render, ctx.children);
                 },
             });
         }
