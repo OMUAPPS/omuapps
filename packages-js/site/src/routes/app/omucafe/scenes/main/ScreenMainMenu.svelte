@@ -94,8 +94,8 @@
         const result = await $obs.browserAdd({
             name,
             url: url.toString(),
-            width: 1080,
-            height: 1920,
+            width: '100:%',
+            height: '100:%',
             blend_properties: {
                 blending_method: 'SRGB_OFF',
                 blending_mode: 'NORMAL',
