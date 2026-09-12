@@ -70,7 +70,7 @@ export class BoardRenderer {
 
         if (renderState.type === 'rendered') {
             const { renderBounds, texture } = renderState.render;
-            draw.texture(...previewBounds.shrink({ x: 40, y: 40 }).fit(renderBounds.size).toArray(), texture, Vec4.ONE.with({ w: opacity }));
+            draw.texture(...previewBounds.shrink({ x: 16, y: 16 }).fit(renderBounds.size).toArray(), texture, Vec4.ONE.with({ w: opacity }));
         }
 
         draw.rectangle(previewBounds.max.x - 2, previewBounds.min.y + 20, previewBounds.max.x + 2, previewBounds.max.y - 20, PALETTE_RGB.BOARD_ACCENT.with({ w: opacity }));

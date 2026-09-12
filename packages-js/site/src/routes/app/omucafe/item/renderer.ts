@@ -329,39 +329,70 @@ export class ItemRenderer {
         const result = await this.getItemBounds(item);
         if (result.type !== 'rendered') return { type: 'loading' };
         this.deleteItemThumbnail(item.id);
-        const { renderBounds } = result.render;
-        const scale = size / Math.max(1, renderBounds.width, renderBounds.height);
-        const dimensions = new Vec2(Math.max(1, Math.ceil(renderBounds.width * scale)), Math.max(1, Math.ceil(renderBounds.height * scale)));
+        let { renderBounds } = result.render;
         const { context, matrices } = this.game.pipeline;
         const { gl, stateManager } = context;
-        const target = new RenderTarget(context, dimensions);
+        const target = new RenderTarget(context, Vec2.ONE);
         try {
-            await target.framebuffer.useAsync(async () => {
-                stateManager.pushViewport(dimensions);
-                matrices.push();
-                const scissor = gl.isEnabled(gl.SCISSOR_TEST);
-                try {
-                    gl.disable(gl.SCISSOR_TEST);
-                    matrices.identity();
-                    // FBO row zero maps to the top of the item for UI sampling and PNG readback.
-                    matrices.projection.orthographic(renderBounds.min.x, renderBounds.max.y, renderBounds.max.x, renderBounds.min.y, -1, 1);
-                    gl.clearColor(0, 0, 0, 0);
-                    gl.clear(gl.COLOR_BUFFER_BIT);
-                    await this.drawItem(item);
-                } finally {
-                    if (scissor) gl.enable(gl.SCISSOR_TEST);
-                    matrices.pop();
-                    stateManager.popViewport();
-                }
-            });
+            // First locate the visible content, then redraw from source at the full thumbnail resolution.
+            for (let pass = 0; pass < 2; pass++) {
+                const scale = size / Math.max(1, renderBounds.width, renderBounds.height);
+                const dimensions = new Vec2(Math.max(1, Math.ceil(renderBounds.width * scale)), Math.max(1, Math.ceil(renderBounds.height * scale)));
+                target.resize(dimensions);
+                let contentBounds = renderBounds;
+                await target.framebuffer.useAsync(async () => {
+                    stateManager.pushViewport(dimensions);
+                    matrices.push();
+                    const scissor = gl.isEnabled(gl.SCISSOR_TEST);
+                    try {
+                        gl.disable(gl.SCISSOR_TEST);
+                        matrices.identity();
+                        // FBO row zero maps to the top of the item for UI sampling and PNG readback.
+                        matrices.projection.orthographic(renderBounds.min.x, renderBounds.max.y, renderBounds.max.x, renderBounds.min.y, -1, 1);
+                        gl.clearColor(0, 0, 0, 0);
+                        gl.clear(gl.COLOR_BUFFER_BIT);
+                        await this.drawItem(item);
+                        if (pass === 0) contentBounds = this.getThumbnailContentBounds(target, renderBounds);
+                    } finally {
+                        if (scissor) gl.enable(gl.SCISSOR_TEST);
+                        matrices.pop();
+                        stateManager.popViewport();
+                    }
+                });
+                if (contentBounds.equals(renderBounds)) break;
+                renderBounds = contentBounds;
+            }
         } catch (error) {
             target.delete();
             throw error;
         }
-        const render = { ...result.render, texture: target.texture };
+        const render = { ...result.render, renderBounds, texture: target.texture };
         this.thumbnails.set(item.id, { item, update, size, target, render });
         if (this.thumbnails.size > 32) this.deleteItemThumbnail(this.thumbnails.keys().next().value!);
         return { type: 'rendered', render };
+    }
+
+    private getThumbnailContentBounds(target: RenderTarget, bounds: AABB2): AABB2 {
+        const { width, height } = target.texture;
+        const pixels = target.framebuffer.readPixels(0, 0, width, height, 'rgba');
+        let left = width;
+        let top = height;
+        let right = 0;
+        let bottom = 0;
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                if (pixels[(y * width + x) * 4 + 3] === 0) continue;
+                left = Math.min(left, x);
+                top = Math.min(top, y);
+                right = Math.max(right, x + 1);
+                bottom = Math.max(bottom, y + 1);
+            }
+        }
+        if (right <= left || bottom <= top) return bounds;
+        return new AABB2(
+            bounds.at({ x: left / width, y: top / height }),
+            bounds.at({ x: right / width, y: bottom / height }),
+        );
     }
 
     public dispose(): void {
