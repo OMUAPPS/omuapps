@@ -16,6 +16,10 @@ export class GLStateManager {
 
     constructor(public readonly gl: WebGL2RenderingContext) {}
 
+    public get viewport(): Vec2Like {
+        return this.viewportStack[this.viewportStack.length - 1];
+    }
+
     public setViewport(dimensions: Vec2Like) {
         this.viewportStack[this.viewportStack.length - 1] = dimensions;
         this.gl.viewport(0, 0, dimensions.x, dimensions.y);
@@ -71,9 +75,12 @@ export class GLStateManager {
         }
         this.frameBufferStack.push(framebuffer);
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer.framebuffer);
-        callback();
-        this.frameBufferStack.pop();
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBufferStack[this.frameBufferStack.length - 1]?.framebuffer ?? null);
+        try {
+            callback();
+        } finally {
+            this.frameBufferStack.pop();
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBufferStack[this.frameBufferStack.length - 1]?.framebuffer ?? null);
+        }
     }
 
     public async bindFramebufferAsync(framebuffer: GlFramebuffer, callback: () => Promise<void>): Promise<void> {
@@ -83,9 +90,12 @@ export class GLStateManager {
         }
         this.frameBufferStack.push(framebuffer);
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer.framebuffer);
-        await callback();
-        this.frameBufferStack.pop();
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBufferStack[this.frameBufferStack.length - 1]?.framebuffer ?? null);
+        try {
+            await callback();
+        } finally {
+            this.frameBufferStack.pop();
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBufferStack[this.frameBufferStack.length - 1]?.framebuffer ?? null);
+        }
     }
 
     public isFramebufferBound(framebuffer: GlFramebuffer): boolean {

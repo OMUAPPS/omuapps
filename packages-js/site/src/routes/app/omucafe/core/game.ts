@@ -137,18 +137,22 @@ export class Game {
     }
 
     public async startLoop() {
-        for await (const _frame of this.pipeline) {
-            this.pipeline.context.stateManager.setViewport({ x: this.pipeline.matrices.width, y: this.pipeline.matrices.height });
-            await this.renderer.prepare();
-            await this.renderer.render(async () => {
-                await this.scene.handleFrame();
-                await this.renderer.renderTransition();
-                await this.renderer.renderDragFile();
-                await this.notification.render();
-                await this.input.render();
-            });
-            await this.states.flush();
-            await this.processTasks();
+        try {
+            for await (const _frame of this.pipeline) {
+                this.pipeline.context.stateManager.setViewport({ x: this.pipeline.matrices.width, y: this.pipeline.matrices.height });
+                await this.renderer.prepare();
+                await this.renderer.render(async () => {
+                    await this.scene.handleFrame();
+                    await this.renderer.renderTransition();
+                    await this.renderer.renderDragFile();
+                    await this.notification.render();
+                    await this.input.render();
+                });
+                await this.states.flush();
+                await this.processTasks();
+            }
+        } finally {
+            this.itemRenderer.dispose();
         }
     }
 

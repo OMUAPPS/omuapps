@@ -170,7 +170,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
 
         for (const item of rootItems) {
             while (true) {
-                const result = await itemRenderer.getItemRender(item);
+                const result = await itemRenderer.getItemBounds(item);
                 if (result.type === 'rendered') {
                     break;
                 }

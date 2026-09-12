@@ -150,6 +150,7 @@ void main() {
     float alpha = 0.0;
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
+            if (x == 0 && y == 0) continue;
             vec2 dir = normalize(vec2(float(x), float(y)));
             vec2 sampleCoord = v_texcoord + dir * offset;
             bool isOnEdge = sampleCoord.x < 0.0 || sampleCoord.x > 1.0 || sampleCoord.y < 0.0 || sampleCoord.y > 1.0;
@@ -161,7 +162,7 @@ void main() {
     if (v_texcoord.x > 0.0 && v_texcoord.x < 1.0 && v_texcoord.y > 0.0 && v_texcoord.y < 1.0) {
         alpha -= texture(u_texture, v_texcoord).a;
     }
-    fragColor = u_outlineColor * alpha;
+    fragColor = vec4(u_outlineColor.rgb * u_outlineColor.a, u_outlineColor.a) * max(alpha, 0.0);
 }
 `;
 
@@ -1147,17 +1148,18 @@ export class Draw {
         });
     }
 
+    /** screenPixels samples a screen-sized capture whose quad already includes transparent outline padding. */
     public textureOutline(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4Like, outlineWidth: number, uv: {
         left: number;
         top: number;
         right: number;
         bottom: number;
-    } | null = null): void {
+    } | null = null, screenPixels = false): void {
         const { gl } = this.glContext;
 
         const width = right - left;
         const height = bottom - top;
-        const margin = outlineWidth;
+        const margin = screenPixels ? 0 : outlineWidth;
         const uvMargin = {
             x: margin / width,
             y: margin / height,
@@ -1194,9 +1196,9 @@ export class Draw {
 
             this.textureOutlineProgram.getUniform('u_texture').asSampler2D().set(texture);
             this.textureOutlineProgram.getUniform('u_outlineColor').asVec4().set(color);
-            this.textureOutlineProgram.getUniform('u_resolution').asVec2().set({ x: right - left, y: bottom - top });
+            this.textureOutlineProgram.getUniform('u_resolution').asVec2().set(screenPixels ? { x: texture.width, y: texture.height } : { x: right - left, y: bottom - top });
             const mvp = this.matrices.get();
-            this.textureOutlineProgram.getUniform('u_outlineWidth').asFloat().set(outlineWidth / mvp.m00 / gl.canvas.width);
+            this.textureOutlineProgram.getUniform('u_outlineWidth').asFloat().set(screenPixels ? outlineWidth : outlineWidth / mvp.m00 / gl.canvas.width);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }

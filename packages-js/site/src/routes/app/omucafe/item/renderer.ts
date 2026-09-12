@@ -1,11 +1,14 @@
-import type { GlFramebuffer } from '$lib/components/canvas/glcontext';
+import type { GlTexture } from '$lib/components/canvas/glcontext';
 import { AABB2 } from '$lib/math/aabb2';
 import type { Transform2D } from '$lib/math/transform2d';
 import { Vec2 } from '$lib/math/vec2';
+import { type Vec4Like } from '$lib/math/vec4';
+import type { AssetTransform } from '../core/game-renderer';
+import { RenderTarget, RenderTargetPool } from './render-target';
 import { PALETTE_RGB } from '../colors';
 import type { Game } from '../core/game';
 import { getTransform } from '../core/transform';
-import type { ItemRender, ItemRenderContext, ItemRenderState } from './attribute-handler';
+import type { ItemBounds, ItemDrawContext, ItemBoundsState } from './attribute-handler';
 import type { Item, ItemPool, PoolOptions } from './item';
 
 export interface PoolRenderPass {
@@ -15,13 +18,13 @@ export interface PoolRenderPass {
 export class ItemRenderer {
     public renderPass: PoolRenderPass | undefined;
     public renderPassStack: PoolRenderPass[] = [];
-    private itemRender: Map<string, ItemRenderState> = new Map();
-    private readonly target: GlFramebuffer;
+    private readonly targets: RenderTargetPool;
+    private readonly thumbnails = new Map<string, { item: Item; update: number; size: number; target: RenderTarget; render: ItemBounds & { texture: GlTexture } }>();
 
     constructor(
         private readonly game: Game,
     ) {
-        this.target = game.pipeline.context.createFramebuffer();
+        this.targets = new RenderTargetPool(game.pipeline.context);
     }
 
     public initPass() {
@@ -57,89 +60,61 @@ export class ItemRenderer {
         this.renderPass.pools[options.pool.id] = options;
     }
 
-    // =========================================================================================
-    // Rendering
-    // =========================================================================================
     public async renderPool(pool: ItemPool, options: PoolOptions): Promise<void> {
-        const { pipeline, item: itemManager, states, attribute, renderer } = this.game;
-        const { draw, matrices } = pipeline;
-        const itemStates = states.itemStates.value;
-        const poolItems = Object.values(pool.items);
-
-        // コンテキスト設定
-        this.renderPass ??= { pools: {} };
-        if (this.renderPass.pools[options.pool.id]) {
-            throw new Error(`Pool with id ${options.pool.id} already exists.`);
-        }
-        this.renderPass.pools[options.pool.id] = options;
-
-        matrices.view.push();
-        matrices.view.multiply(getTransform(options.transform).getMat4());
-
-        // 1回のみのループで処理できるようにフィルタリング
+        const { pipeline: { matrices }, item: itemManager, renderer } = this.game;
+        this.addPool(options);
         const activeItems: Item[] = [];
-        for (let i = 0; i < poolItems.length; i++) {
-            const { id } = poolItems[i];
-            const item = itemManager.items.get(id);
-
-            if (!item || (item.pool !== pool.id)) {
-                delete pool.items[id]; // 実際は描画ループ外でやるのが理想
+        for (const { id } of Object.values(pool.items)) {
+            const item = itemManager.get(id);
+            if (!item || item.pool !== pool.id) {
+                delete pool.items[id];
                 continue;
             }
-            if (itemStates.held === item.id) continue;
-            activeItems.push(item);
+            if (itemManager.states.held !== item.id) activeItems.push(item);
         }
-
-        // --- Overlay Pre ---
-        for (const item of activeItems) {
-            const renderState = await this.getItemRender(item);
-            const childrenRender = await this.gatherChildrenItemRender(item);
-            if (renderState.type === 'rendered' && childrenRender) {
+        matrices.view.push();
+        try {
+            matrices.view.multiply(getTransform(options.transform).getMat4());
+            for (const item of activeItems) await this.drawOverlay('renderOverlayPre', item, pool);
+            for (const item of activeItems) {
+                if (item.parent) continue;
+                const result = await this.getItemBounds(item);
+                if (result.type !== 'rendered') continue;
+                const { renderBounds } = result.render;
+                const transform = getTransform(item.transform).getMat4();
+                // Include the shadow so an offscreen body can still cast onto the output.
+                const visibleBounds = renderBounds.union(new AABB2(
+                    renderBounds.min.add(new Vec2(0, 20)), renderBounds.max.add(new Vec2(0, 20)),
+                ));
+                if (!renderer.isInScreenSpace(transform.transformAABB2(visibleBounds))) continue;
                 matrices.model.push();
-                matrices.model.multiply(this.getWorldTransform(item).getMat4());
-                await attribute.emit('renderOverlayPre', item, pool, renderState.render, childrenRender);
-                matrices.model.pop();
-            }
-        }
-
-        // --- Main Render (Shadow & Texture) ---
-        for (const item of activeItems) {
-            if (item.parent) continue; // 親がいる場合は親の描画プロセスに含まれる
-
-            const renderState = await this.getItemRender(item);
-            if (renderState.type === 'rendered') {
-                const { renderBounds, texture } = renderState.render;
-                const transformMat = getTransform(item.transform).getMat4();
-
-                // 画面外カリングの高速化
-                const worldBounds = transformMat.transformAABB2(renderBounds);
-                if (renderer.isInScreenSpace(worldBounds)) {
-                    matrices.model.push();
-                    matrices.model.multiply(transformMat);
-
-                    // シャドウと本体を一気に描画
-                    const { min, max } = renderBounds;
-                    draw.textureColor(min.x, min.y + 20, max.x, max.y + 15, texture, PALETTE_RGB.ITEM_SHADOW);
-                    draw.texture(min.x, min.y, max.x, max.y, texture);
-
+                try {
+                    matrices.model.multiply(transform);
+                    await this.drawShadow(item, renderBounds);
+                    await this.drawItem(item);
+                } finally {
                     matrices.model.pop();
                 }
             }
+            for (const item of activeItems) await this.drawOverlay('renderOverlayPost', item, pool);
+        } finally {
+            matrices.view.pop();
         }
+    }
 
-        // --- Overlay Post ---
-        for (const item of activeItems) {
-            const renderState = await this.getItemRender(item);
-            const childrenRender = await this.gatherChildrenItemRender(item);
-            if (renderState.type === 'rendered' && childrenRender) {
-                matrices.model.push();
-                matrices.model.multiply(this.getWorldTransform(item).getMat4());
-                await attribute.emit('renderOverlayPost', item, pool, renderState.render, childrenRender);
-                matrices.model.pop();
-            }
+    private async drawOverlay(phase: 'renderOverlayPre' | 'renderOverlayPost', item: Item, pool: ItemPool): Promise<void> {
+        const result = await this.getItemBounds(item);
+        if (result.type !== 'rendered') return;
+        const children = await this.gatherChildrenBounds(item);
+        if (!children) return;
+        const { model } = this.game.pipeline.matrices;
+        model.push();
+        try {
+            model.multiply(this.getWorldTransform(item).getMat4());
+            await this.game.attribute.emit(phase, item, pool, result.render, children);
+        } finally {
+            model.pop();
         }
-
-        matrices.view.pop();
     }
 
     public getPoolOptions(poolId: string): PoolOptions | undefined {
@@ -160,21 +135,21 @@ export class ItemRenderer {
         if (!pool) {
             return;
         }
-        const { matrices, draw } = this.game.pipeline;
-        const renderState = await this.getItemRender(item);
-        const childrenRender = await this.gatherChildrenItemRender(item);
+        const { matrices } = this.game.pipeline;
+        const renderState = await this.getItemBounds(item);
+        const childrenRender = await this.gatherChildrenBounds(item);
         if (renderState.type === 'rendered' && childrenRender) {
-            matrices.view.push();
-            matrices.view.multiply(getTransform(pool.transform).getMat4());
-            const { renderBounds, texture } = renderState.render;
-            matrices.model.push();
-            matrices.model.multiply(getTransform(item.transform).getMat4());
-            await this.game.attribute.emit('renderOverlayPre', item, pool.pool, renderState.render, childrenRender);
-            draw.textureColor(renderBounds.min.x, renderBounds.min.y + 20, renderBounds.max.x, renderBounds.max.y + 15, texture, PALETTE_RGB.ITEM_SHADOW);
-            draw.texture(renderBounds.min.x, renderBounds.min.y, renderBounds.max.x, renderBounds.max.y, texture);
-            await this.game.attribute.emit('renderOverlayPost', item, pool.pool, renderState.render, childrenRender);
-            matrices.model.pop();
-            matrices.view.pop();
+            matrices.push();
+            try {
+                matrices.view.multiply(getTransform(pool.transform).getMat4());
+                matrices.model.multiply(getTransform(item.transform).getMat4());
+                await this.game.attribute.emit('renderOverlayPre', item, pool.pool, renderState.render, childrenRender);
+                await this.drawShadow(item, renderState.render.renderBounds);
+                await this.drawItem(item);
+                await this.game.attribute.emit('renderOverlayPost', item, pool.pool, renderState.render, childrenRender);
+            } finally {
+                matrices.pop();
+            }
         }
     }
 
@@ -190,199 +165,212 @@ export class ItemRenderer {
         return transform;
     }
 
-    public async getItemRender(item: Item): Promise<ItemRenderState> {
-        const attrs = item.attrs;
-        if (attrs.image && !attrs.layered && !attrs.container) {
-            const textureResult = this.game.asset.getTexture(attrs.image.asset);
-            if (textureResult.type === 'loading') {
-                return {
-                    type: 'loading',
-                    tasks: [],
-                    update: item.update,
-                };
-            }
-            if (textureResult.type === 'ready') {
-                const tex = textureResult.data.texture;
-
-                const bounds = new AABB2(
-                    new Vec2(-tex.width / 2, -tex.height / 2),
-                    new Vec2(tex.width / 2, tex.height / 2),
-                );
-                return {
-                    type: 'rendered',
-                    render: {
-                        bounds: bounds,
-                        renderBounds: bounds,
-                        texture: tex,
-                        update: item.update,
-                    },
-                    update: item.update,
-                };
-            }
-        }
-
-        // 1. キャッシュチェック
-        const existing = this.itemRender.get(item.id);
-        if (existing && existing.update === item.update) return existing;
-
+    /** Geometry only: calling this never allocates a composite texture. */
+    public async getItemBounds(item: Item): Promise<ItemBoundsState> {
         const tasks = await this.game.item.loadItem(item);
-        if (tasks.length > 0) {
-            if (existing) {
-                return existing;
-            }
-            return { type: 'loading', tasks, update: item.update };
+        if (tasks.length) return { type: 'loading', tasks, update: item.update };
+        const children = await this.gatherChildrenBounds(item);
+        if (!children) return { type: 'loading', tasks: [], update: item.update };
+        const result = { render: AABB2.ZEROONE };
+        await this.game.attribute.emit('bounds', item, result, children);
+        let renderBounds = result.render;
+        for (const [id, render] of Object.entries(children)) {
+            const child = this.game.item.get(id);
+            if (child) renderBounds = renderBounds.union(getTransform(child.transform).getMat4().transformAABB2(render.renderBounds));
         }
-
-        // 子要素のレンダー取得（再帰）
-        const childrenRender = await this.gatherChildrenItemRender(item);
-        if (!childrenRender) throw new Error('Failed to gather children renders');
-
-        // 3. レンダリングリソースの準備
-        let render: ItemRender;
-        if (existing?.type !== 'loading' && existing?.render) {
-            render = existing.render;
-        } else {
-            render = await this.createItemRender(item, childrenRender);
-        }
-
-        // 境界計算とテクスチャリサイズ（変更がある場合のみ）
-        render.bounds = await this.getItemBounds(item, childrenRender);
-        const newRenderBounds = await this.getItemRenderBounds(item, childrenRender);
-
-        // 境界サイズが変わった場合のみテクスチャを再確保
-        if (!render.renderBounds.equals(newRenderBounds)) {
-            render.renderBounds = newRenderBounds;
-            const dims = render.renderBounds.dimensions();
-            render.texture.use(() => {
-                render.texture.ensureSize(dims.x, dims.y);
-            });
-        }
-
-        const renderingState: ItemRenderState = { type: 'rendering', render, update: item.update };
-        this.itemRender.set(item.id, renderingState);
-
-        // WebGL描画命令（シリアル実行）
-        await this.renderItemToTarget(render, item, childrenRender);
-
-        const renderedState: ItemRenderState = { type: 'rendered', render, update: item.update };
-        this.itemRender.set(item.id, renderedState);
-        return renderedState;
+        return { type: 'rendered', update: item.update, render: { update: item.update, bounds: result.render, renderBounds } };
     }
 
-    public async deleteItemRender(id: string) {
-        const renderState = this.itemRender.get(id);
-        if (renderState?.type === 'rendered') {
-            renderState.render.texture.delete();
-        }
-        this.itemRender.delete(id);
-    }
-
-    private async gatherChildrenItemRender(item: Item): Promise<Record<string, ItemRender> | undefined> {
-        if (item.children.length === 0) return {};
-
-        const childrenRender: Record<string, ItemRender> = {};
-        // 子アイテムの読み込み（ここは非同期で一気に投げる）
-        // WebGL命令が含まれるため、getItemRender内部の順序は守る必要がある
+    private async gatherChildrenBounds(item: Item): Promise<Record<string, ItemBounds> | undefined> {
+        const children: Record<string, ItemBounds> = {};
         for (const id of item.children) {
             const child = this.game.item.get(id);
             if (!child) continue;
-
-            const status = await this.getItemRender(child);
-            if (status.type === 'rendered') {
-                childrenRender[id] = status.render;
-            } else {
-                return undefined; // 準備未完了
-            }
+            const result = await this.getItemBounds(child);
+            if (result.type !== 'rendered') return;
+            children[id] = result.render;
         }
-        return childrenRender;
+        return children;
     }
 
-    private async renderItemToTarget(render: ItemRender, item: Item, children: Record<string, ItemRender>): Promise<void> {
-        const { renderBounds } = render;
+    /** The current model matrix already includes this item's transform. */
+    public async drawItem(item: Item): Promise<void> {
+        if ((await this.game.item.loadItem(item)).length) return;
+        const ctx: ItemDrawContext = { passes: [] };
+        await this.game.attribute.emit('getRenderPass', item, ctx);
+        for (const pass of ctx.passes.sort((a, b) => a.order - b.order)) await pass.render();
+    }
+
+    public async drawChildren(item: Item): Promise<void> {
+        const { model } = this.game.pipeline.matrices;
+        for (const id of item.children) {
+            const child = this.game.item.get(id);
+            if (!child) continue;
+            model.push();
+            try {
+                model.multiply(getTransform(child.transform).getMat4());
+                await this.drawItem(child);
+            } finally {
+                model.pop();
+            }
+        }
+    }
+
+    /** Capture at the current output's pixel density, including offscreen effect padding. */
+    private async capture(
+        render: () => Promise<void>,
+        consume: (texture: GlTexture, bounds: AABB2) => Promise<void>,
+        padding = 0,
+    ): Promise<void> {
         const { context, matrices } = this.game.pipeline;
-        const dims = renderBounds.dimensions();
         const { gl, stateManager } = context;
-
-        // FBOのバインド回数を減らすため、パスを整理
-        await this.target.useAsync(async () => {
-            this.target.attachTexture(render.texture);
-            stateManager.pushViewport(dims);
-
-            // Pass 1: Clear & Pre-render
-            await matrices.scopeAsync(async () => {
-                matrices.identity();
-                matrices.projection.orthographic(renderBounds.min.x, renderBounds.max.y, renderBounds.max.x, renderBounds.min.y, -1, 1);
-
-                gl.clearColor(0, 0, 0, 0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-
-                const ctx: ItemRenderContext = {
-                    render,
-                    target: this.target,
-                    children,
-                    passes: [],
-                };
-                await this.game.attribute.emit('getRenderPass', item, ctx);
-                const sortedPasses = ctx.passes.sort((a, b) => a.order - b.order);
-                for (const pass of sortedPasses) {
-                    await pass.render();
+        const viewport = stateManager.viewport;
+        const size = new Vec2(viewport.x + padding * 2, viewport.y + padding * 2);
+        if (viewport.x <= 0 || viewport.y <= 0) return;
+        await this.targets.use(size, async target => {
+            await target.framebuffer.useAsync(async () => {
+                stateManager.pushViewport(size);
+                matrices.projection.push();
+                const scissor = gl.isEnabled(gl.SCISSOR_TEST);
+                try {
+                    gl.disable(gl.SCISSOR_TEST);
+                    const projection = matrices.projection.get();
+                    matrices.projection.identity();
+                    matrices.projection.scale(viewport.x / size.x, viewport.y / size.y, 1);
+                    matrices.projection.multiply(projection);
+                    gl.clearColor(0, 0, 0, 0);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                    await render();
+                } finally {
+                    if (scissor) gl.enable(gl.SCISSOR_TEST);
+                    matrices.projection.pop();
+                    stateManager.popViewport();
                 }
             });
-
-            stateManager.popViewport();
+            await consume(target.texture, new AABB2(
+                new Vec2(-size.x / viewport.x, -size.y / viewport.y),
+                new Vec2(size.x / viewport.x, size.y / viewport.y),
+            ));
         });
     }
 
-    private async createItemRender(item: Item, childrenRender: Record<string, ItemRender>): Promise<ItemRender> {
-        const { context } = this.game.pipeline;
-        const bounds = await this.getItemBounds(item, childrenRender);
-        const renderBounds = await this.getItemRenderBounds(item, childrenRender);
-        const dimensions = renderBounds.dimensions();
-
-        const texture = context.createTexture();
-        texture.use(() => {
-            texture.setImage(null, { width: dimensions.x, height: dimensions.y, internalFormat: 'rgba', format: 'rgba' });
-            texture.setParams({
-                magFilter: 'linear',
-                minFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
-            });
-            texture.ensureSize(dimensions.x, dimensions.y);
-        });
-
-        return {
-            bounds,
-            renderBounds,
-            texture,
-            update: item.update,
-        };
-    }
-
-    private async getItemBounds(item: Item, childrenRender: Record<string, ItemRender>): Promise<AABB2> {
-        const result = { render: AABB2.ZEROONE };
-        await this.game.attribute.emit('bounds', item, result, childrenRender);
-        return result.render;
-    }
-
-    private async getItemRenderBounds(item: Item, childrenRender: Record<string, ItemRender>): Promise<AABB2> {
-        const boundsResult = { render: AABB2.ZEROONE };
-        await this.game.attribute.emit('bounds', item, boundsResult, childrenRender);
-        let bounds = boundsResult.render;
-
-        // 子アイテムの描画範囲も考慮する
-        for (const childId of item.children) {
-            const child = this.game.item.get(childId);
-            if (!child) continue;
-            const childRender = childrenRender[childId];
-            if (childRender) {
-                const childBounds = childRender.renderBounds;
-                const mat = getTransform(child.transform).getMat4();
-                const worldBounds = mat.transformAABB2(childBounds);
-                bounds = bounds.union(worldBounds);
-            }
+    private inClipSpace(draw: () => void): void {
+        const { matrices } = this.game.pipeline;
+        matrices.push();
+        try {
+            matrices.identity();
+            draw();
+        } finally {
+            matrices.pop();
         }
+    }
 
-        return bounds;
+    public async drawMasked(render: () => Promise<void>, mask: AssetTransform, inverted = false): Promise<void> {
+        const { draw, context: { gl } } = this.game.pipeline;
+        // Apply the mask once to the assembled group, preserving overlapping translucent children.
+        await this.capture(render, async (content, bounds) => {
+            await this.capture(async () => {
+                if (inverted) {
+                    gl.clearColor(1, 1, 1, 1);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                    gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_COLOR);
+                }
+                try {
+                    await this.game.renderer.drawAssetTransform(mask);
+                } finally {
+                    if (inverted) this.game.renderer.resetBlending();
+                }
+            }, async maskTexture => {
+                this.inClipSpace(() => draw.textureMask(...bounds.toArray(), content, maskTexture));
+            });
+        });
+    }
+
+    public async drawItemOverlay(item: Item, color: Vec4Like): Promise<void> {
+        await this.capture(() => this.drawItem(item), async (texture, bounds) => {
+            this.inClipSpace(() => this.game.pipeline.draw.texture(...bounds.toArray(), texture, color));
+        });
+    }
+
+    public async drawItemOutline(item: Item, color: Vec4Like, width: number): Promise<void> {
+        if (width <= 0) return;
+        await this.capture(() => this.drawItem(item), async (texture, bounds) => {
+            this.inClipSpace(() => this.game.pipeline.draw.textureOutline(...bounds.toArray(), texture, color, width, null, true));
+        }, Math.ceil(width) + 1);
+    }
+
+    private async drawShadow(item: Item, bounds: AABB2): Promise<void> {
+        const { model } = this.game.pipeline.matrices;
+        model.push();
+        try {
+            model.translate(0, bounds.min.y + 20, 0);
+            model.scale(1, Math.max(0, bounds.height - 5) / Math.max(1, bounds.height), 1);
+            model.translate(0, -bounds.min.y, 0);
+            await this.capture(() => this.drawItem(item), async (texture, screenBounds) => {
+                this.inClipSpace(() => this.game.pipeline.draw.textureColor(...screenBounds.toArray(), texture, PALETTE_RGB.ITEM_SHADOW));
+            });
+        } finally {
+            model.pop();
+        }
+    }
+
+    /** Bounded cache for UI previews only; gameplay never samples these textures. */
+    public async renderItemThumbnail(item: Item, { size = 256 }: { size?: number } = {}): Promise<
+        { type: 'loading' } | { type: 'rendered'; render: ItemBounds & { texture: GlTexture } }
+    > {
+        size = Math.max(1, Math.min(1024, Math.round(size)));
+        const existing = this.thumbnails.get(item.id);
+        if (existing?.item === item && existing.update === item.update && existing.size === size) {
+            this.thumbnails.delete(item.id);
+            this.thumbnails.set(item.id, existing);
+            return { type: 'rendered', render: existing.render };
+        }
+        const update = item.update;
+        const result = await this.getItemBounds(item);
+        if (result.type !== 'rendered') return { type: 'loading' };
+        this.deleteItemThumbnail(item.id);
+        const { renderBounds } = result.render;
+        const scale = size / Math.max(1, renderBounds.width, renderBounds.height);
+        const dimensions = new Vec2(Math.max(1, Math.ceil(renderBounds.width * scale)), Math.max(1, Math.ceil(renderBounds.height * scale)));
+        const { context, matrices } = this.game.pipeline;
+        const { gl, stateManager } = context;
+        const target = new RenderTarget(context, dimensions);
+        try {
+            await target.framebuffer.useAsync(async () => {
+                stateManager.pushViewport(dimensions);
+                matrices.push();
+                const scissor = gl.isEnabled(gl.SCISSOR_TEST);
+                try {
+                    gl.disable(gl.SCISSOR_TEST);
+                    matrices.identity();
+                    // FBO row zero maps to the top of the item for UI sampling and PNG readback.
+                    matrices.projection.orthographic(renderBounds.min.x, renderBounds.max.y, renderBounds.max.x, renderBounds.min.y, -1, 1);
+                    gl.clearColor(0, 0, 0, 0);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                    await this.drawItem(item);
+                } finally {
+                    if (scissor) gl.enable(gl.SCISSOR_TEST);
+                    matrices.pop();
+                    stateManager.popViewport();
+                }
+            });
+        } catch (error) {
+            target.delete();
+            throw error;
+        }
+        const render = { ...result.render, texture: target.texture };
+        this.thumbnails.set(item.id, { item, update, size, target, render });
+        if (this.thumbnails.size > 32) this.deleteItemThumbnail(this.thumbnails.keys().next().value!);
+        return { type: 'rendered', render };
+    }
+
+    public dispose(): void {
+        for (const id of this.thumbnails.keys()) this.deleteItemThumbnail(id);
+        this.targets.dispose();
+    }
+
+    public deleteItemThumbnail(id: string): void {
+        this.thumbnails.get(id)?.target.delete();
+        this.thumbnails.delete(id);
     }
 }

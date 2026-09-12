@@ -1,4 +1,3 @@
-import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext';
 import { AABB2 } from '$lib/math/aabb2';
 import { clamp, lerp, lerp01 } from '$lib/math/math';
 import { Vec2, type Vec2Like } from '$lib/math/vec2';
@@ -17,8 +16,8 @@ import type {
     CalculateBoundsContext,
     HashContext,
     ItemMouseEvent,
-    ItemRender,
-    ItemRenderContext,
+    ItemBounds,
+    ItemDrawContext,
 } from '../attribute-handler';
 import type { Item, ItemPool } from '../item';
 import LayeredEditor from './LayeredEditor.svelte';
@@ -67,36 +66,7 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
     readonly name = '層構造';
     readonly editor = LayeredEditor;
 
-    private readonly maskBuffer: GlFramebuffer;
-    private readonly maskTexture: GlTexture;
-    private readonly layerBuffer: GlFramebuffer;
-    private readonly layerTexture: GlTexture;
-
-    constructor(private readonly game: Game) {
-        const { context } = game.pipeline;
-
-        // --- マスク用テクスチャ・バッファの初期化 ---
-        this.maskBuffer = context.createFramebuffer();
-        this.maskTexture = context.createTexture();
-        this.maskTexture.use(() => {
-            this.maskTexture.setImage(null, { width: 4, height: 4, internalFormat: 'rgba', format: 'rgba' });
-            this.maskTexture.setParams({
-                magFilter: 'linear', minFilter: 'linear', wrapS: 'clamp-to-edge', wrapT: 'clamp-to-edge',
-            });
-        });
-        this.maskBuffer.use(() => this.maskBuffer.attachTexture(this.maskTexture));
-
-        // --- レイヤー描画用テクスチャ・バッファの初期化 ---
-        this.layerBuffer = context.createFramebuffer();
-        this.layerTexture = context.createTexture();
-        this.layerTexture.use(() => {
-            this.layerTexture.setImage(null, { width: 4, height: 4, internalFormat: 'rgba', format: 'rgba' });
-            this.layerTexture.setParams({
-                magFilter: 'linear', minFilter: 'linear', wrapS: 'clamp-to-edge', wrapT: 'clamp-to-edge',
-            });
-        });
-        this.layerBuffer.use(() => this.layerBuffer.attachTexture(this.layerTexture));
-    }
+    constructor(private readonly game: Game) {}
 
     create(): AttrLayered {
         return {
@@ -191,15 +161,14 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
     // レンダリング・バウンズ計算
     // ==========================================
 
-    async renderOverlayPost({ item, attr }: AttributeInvoke<AttrLayered>, _pool: ItemPool, render: ItemRender): Promise<void> {
+    async renderOverlayPost({ item, attr }: AttributeInvoke<AttrLayered>, _pool: ItemPool, _render: ItemBounds): Promise<void> {
         const { matrices, draw } = this.game.pipeline;
         const { states } = this.game.item;
 
         // 注ぎ元のハイライト
         const sourceItem = attr.pourSource && states.held === attr.pourSource ? this.game.item.get(attr.pourSource) : undefined;
         if (sourceItem?.attrs.layered?.pour?.target === item.id) {
-            const { min, max } = render.renderBounds;
-            draw.textureOutline(min.x, min.y, max.x, max.y, render.texture, PALETTE_RGB.TOOLTIP_TEXT, 6);
+            await this.game.itemRenderer.drawItemOutline(item, PALETTE_RGB.TOOLTIP_TEXT, 6);
         }
 
         const scene = this.game.states.scene.value;
@@ -226,41 +195,21 @@ export class AttributeLayered implements AttributeHandler<AttrLayered> {
         }
     }
 
-    async getRenderPass({ attr }: AttributeInvoke<AttrLayered>, ctx: ItemRenderContext): Promise<void> {
+    async getRenderPass({ attr }: AttributeInvoke<AttrLayered>, ctx: ItemDrawContext): Promise<void> {
         if (attr.layers.length > 0) {
             ctx.passes.push({
                 order: 500,
-                render: async () => await this.render(attr, ctx.render),
+                render: async () => await this.render(attr),
             });
         }
     }
 
-    async render(attr: AttrLayered, render: ItemRender): Promise<void> {
-        const { mask } = attr;
-        if (!mask) {
+    async render(attr: AttrLayered): Promise<void> {
+        if (attr.mask) {
+            await this.game.itemRenderer.drawMasked(() => this.renderLayers(attr), attr.mask);
+        } else {
             await this.renderLayers(attr);
-            return;
         }
-
-        const { draw, context } = this.game.pipeline;
-        const { gl } = context;
-        const { width, height } = render.renderBounds;
-
-        this.maskTexture.use(() => this.maskTexture.ensureSize(width, height));
-        await this.maskBuffer.useAsync(async () => {
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            await this.game.renderer.drawAssetTransform(mask);
-        });
-
-        this.layerTexture.use(() => this.layerTexture.ensureSize(width, height));
-        await this.layerBuffer.useAsync(async () => {
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            await this.renderLayers(attr);
-        });
-
-        draw.textureMask(...render.renderBounds.toArray(), this.layerTexture, this.maskTexture);
     }
 
     async bounds({ attr }: AttributeInvoke<AttrLayered>, ctx: CalculateBoundsContext): Promise<void> {

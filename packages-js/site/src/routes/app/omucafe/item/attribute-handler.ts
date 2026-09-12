@@ -1,4 +1,3 @@
-import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext';
 import type { InputEventMouse } from '$lib/components/canvas/pipeline';
 import type { AABB2 } from '$lib/math/aabb2';
 import type { Vec2 } from '$lib/math/vec2';
@@ -12,24 +11,19 @@ export interface AttributeInvoke<Attr> {
     item: Item;
 }
 
-export interface ItemRender {
+export interface ItemBounds {
     update: number;
-    texture: GlTexture;
     renderBounds: AABB2;
     bounds: AABB2;
 }
 
-export type ItemRenderState = {
+export type ItemBoundsState = {
     type: 'loading';
     tasks: LoadTask[];
     update: number;
 } | {
-    type: 'rendering';
-    render: ItemRender;
-    update: number;
-} | {
     type: 'rendered';
-    render: ItemRender;
+    render: ItemBounds;
     update: number;
 };
 
@@ -78,10 +72,7 @@ export interface RenderPass {
     render(): Promise<void>;
 }
 
-export interface ItemRenderContext {
-    render: ItemRender;
-    target: GlFramebuffer;
-    children: Record<string, ItemRender>;
+export interface ItemDrawContext {
     passes: RenderPass[];
 }
 
@@ -92,11 +83,11 @@ export interface AttributeHandler<T> {
     validate(value: T): ValidateResult<T>;
     hash?(invoke: AttributeInvoke<T>, ctx: HashContext): Promise<void>;
     load?(invoke: AttributeInvoke<T>, ctx: LoadContext): Promise<void>;
-    bounds?(invoke: AttributeInvoke<T>, ctx: CalculateBoundsContext, children: Record<string, ItemRender>): Promise<void>;
-    getRenderPass?(invoke: AttributeInvoke<T>, ctx: ItemRenderContext): Promise<void>;
-    renderOverlayPre?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
-    renderOverlayPost?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
-    overlay?(invoke: AttributeInvoke<T>, render: ItemRender): Promise<void>;
+    bounds?(invoke: AttributeInvoke<T>, ctx: CalculateBoundsContext, children: Record<string, ItemBounds>): Promise<void>;
+    getRenderPass?(invoke: AttributeInvoke<T>, ctx: ItemDrawContext): Promise<void>;
+    renderOverlayPre?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemBounds, children: Record<string, ItemBounds>): Promise<void>;
+    renderOverlayPost?(invoke: AttributeInvoke<T>, pool: ItemPool, render: ItemBounds, children: Record<string, ItemBounds>): Promise<void>;
+    overlay?(invoke: AttributeInvoke<T>, render: ItemBounds): Promise<void>;
     actions?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent, ctx: ActionContext): Promise<void>;
     collide?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent, ctx: CollideContext): Promise<void>;
     mouse?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent): Promise<void>;

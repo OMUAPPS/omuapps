@@ -129,7 +129,7 @@ export class CustomerRenderer {
         const product = order.products[0];
         const item = this.game.item.get(product.itemId);
         if (item) {
-            const renderState = await this.game.itemRenderer.getItemRender(item);
+            const renderState = await this.game.itemRenderer.renderItemThumbnail(item);
             const bounds = AABB2.fromSize({ width: radius * 1.5, height: radius * 1.5 }).setAt(Vec2.CENTER, center);
             if (renderState.type === 'rendered') {
                 const { renderBounds, texture } = renderState.render;

@@ -66,7 +66,7 @@ export class BoardRenderer {
 
         draw.rectangle(...entryBounds.toArray(), PALETTE_RGB.BOARD_ENTRY_BG.with({ w: opacity }));
         const [previewBounds, infoBounds] = entryBounds.split({ direction: 'x', ratio: 0.3, gap: 20 });
-        const renderState = await itemRenderer.getItemRender(item);
+        const renderState = await itemRenderer.renderItemThumbnail(item);
 
         if (renderState.type === 'rendered') {
             const { renderBounds, texture } = renderState.render;
