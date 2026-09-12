@@ -15,6 +15,8 @@
 
     let { game, scene = $bindable() }: Props = $props();
 
+    let controlsOpen = $state(true);
+
     let config = $derived(game?.states.config.store);
 
     const TOOLS: ToolEntry[] = [
@@ -61,12 +63,14 @@
         if (!photo) return;
         if (photo.type === 'started') {
             if (!obsConnected) {
-                scene.photo = undefined;
+                scene.photo = { type: 'failed' };
+                scene = { ...scene };
+                return;
             }
             const elapsed = Timer.now() - photo.startTime;
             const remaining = photo.duration - elapsed;
             await new Promise((resolve) => setTimeout(resolve, remaining));
-            $obs.screenshotCreate({});
+            await $obs.screenshotCreate({});
             await new Promise((resolve) => setTimeout(resolve, 1000));
             let binary: Uint8Array | undefined;
             let attempt = 0;
@@ -100,7 +104,11 @@
     }
 
     $effect(() => {
-        updatePhoto(scene.photo);
+        updatePhoto(scene.photo).catch((error) => {
+            console.error('Failed to take photo', error);
+            scene.photo = { type: 'failed' };
+            scene = { ...scene };
+        });
     });
 
     let obsConnected = $state($obs && $obs.isConnected());
@@ -125,23 +133,29 @@
         }
     }}
     ontouchstart={(event) => {
-        event.preventDefault();
+        if (!(event.target instanceof Element && event.target.closest('[data-input]'))) {
+            event.preventDefault();
+        }
     }}
 />
 
 {#snippet clientUI()}
+    <header class="panel-heading">
+        <h1>写真を撮る</h1>
+    </header>
     {#if !scene.photo}
         <div class="tool">
+            <h2>編集ツール</h2>
             <div class="tool-switch">
                 {#snippet tool({ name, icon, shortcut, tool }: ToolEntry)}
                     {@const selected = tool?.type === $config.canvas.tool?.type}
                     <button onclick={() => {
                         $config.canvas.tool = tool;
-                    }} class:selected>
+                    }} class:selected aria-pressed={selected}>
                         <Tooltip>
                             {shortcut}キー
                         </Tooltip>
-                        {name}
+                        {name} <kbd>{shortcut}</kbd>
                         <i class="ti {icon}"></i>
                     </button>
                 {/snippet}
@@ -152,9 +166,11 @@
             {#if $config.canvas.tool?.type === 'brush'}
                 {#snippet color(color: Vec4)}
                     {@const color1 = color.mul({ x: 1 / 255, y: 1 / 255, z: 1 / 255, w: 1 })}
-                    <!-- svelte-ignore a11y_consider_explicit_label -->
+
                     <button
                         class="color"
+                        aria-label={`色 R${Math.round(color.x)} G${Math.round(color.y)} B${Math.round(color.z)}`}
+                        aria-pressed={color1.distance($config.canvas.brush.color) < 1 / 255}
                         style="background: rgba({color.x}, {color.y}, {color.z}, {color.w});"
                         class:selected={color1.distance($config.canvas.brush.color) < 1 / 255}
                         onclick={() => {
@@ -214,6 +230,7 @@
             {/if}
         </div>
         <div class="toggles">
+            <h2>撮影効果</h2>
             <label>
                 フォトフレーム
                 <Checkbox bind:value={$config.photo.frame} />
@@ -230,7 +247,7 @@
         <div class="actions">
             {#if obsConnected}
                 <button class="primary" onclick={takePhoto}>
-                    写真を取る
+                    写真を撮る
                     <i class="ti ti-camera"></i>
                 </button>
             {:else}
@@ -259,9 +276,24 @@
                     {@const remaining = 6 - tick}
                     {#if remaining > 0}
                         {remaining}
+                    {:else}
+                        <p class="photo-status" role="status">写真を取得中…</p>
                     {/if}
                 {/snippet}
             </Ticker>
+        </div>
+    {:else if scene.photo.type === 'failed'}
+        <div class="actions">
+            <p role="alert">写真を取得できませんでした。</p>
+            {#if !obsConnected}
+                <p>OBSの接続を確認してください。</p>
+            {/if}
+            <button class="primary" onclick={takePhoto} disabled={!obsConnected}>
+                もう一度撮影する
+            </button>
+            <button onclick={() => game.startTransition({ type: 'kitchen' })}>
+                キッチンに戻る
+            </button>
         </div>
     {:else if scene.photo.type === 'completed'}
         {#if scene.receipt}
@@ -341,17 +373,25 @@
     {/if}
 {/snippet}
 
-<main>
+<main class:collapsed={game.side === 'client' && !controlsOpen && !scene.photo} class:client={game.side === 'client'} data-input={game.side === 'client' ? '' : undefined}>
     {#if game.side === 'client'}
-        {@render clientUI()}
+        {#if !scene.photo}
+            <button class="toggle-controls" aria-expanded={controlsOpen} onclick={() => (controlsOpen = !controlsOpen)}>
+                {controlsOpen ? '操作パネルを隠す' : '撮影の操作を表示'}
+                <i class="ti" class:ti-chevron-up={controlsOpen} class:ti-adjustments={!controlsOpen}></i>
+            </button>
+        {/if}
+        {#if controlsOpen || scene.photo}
+            {@render clientUI()}
+        {/if}
     {:else if game.side === 'overlay'}
         {@render overlayUI()}
     {/if}
 </main>
 
 <style>
-    :global(html) {
-        touch-action: none;
+    .photo-status {
+        font-size: 1.25rem;
     }
 
     .countdown {
@@ -437,128 +477,158 @@
         filter: drop-shadow(1px 1px 2px black);
     }
 
-    .tool {
+    main.client {
+        box-sizing: border-box;
+        left: auto;
+        right: 1rem;
+        top: 1rem;
+        bottom: auto;
+        max-height: calc(100% - 2rem);
+        width: min(24rem, calc(100% - 2rem));
+        padding: 1.25rem;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 1.25rem;
+        overflow-y: auto;
+        background: var(--color-bg-1);
+        color: var(--color-text);
+        border: 1px solid var(--color-outline);
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 20px rgb(0 0 0 / 12%);
+    }
+
+    main.client.collapsed { width: auto; }
+
+    .toggle-controls {
+        flex-shrink: 0;
         display: flex;
-        flex-direction: column;
+        justify-content: space-between;
         align-items: center;
-        gap: 4rem;
-        padding: 2rem;
-        border-radius: 1rem;
-        flex: 1;
-        margin-bottom: 2rem;
-        background: var(--color-bg-2);
-        filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.4));
-
-        .palette {
-            display: flex;
-            outline: 1px solid var(--color-outline);
-            padding: 0.25rem;
-            border-radius: 0.25rem;
-
-            > .col {
-                display: flex;
-                flex-direction: column;
-            }
-        }
-
-        .color {
-            width: 2rem;
-            height: 2rem;
-            outline: none;
-            border: none;
-
-            &.selected {
-                animation: forwards color-select 0.0621s;
-                outline-offset: 2px;
-                border: 3px solid #000;
-                z-index: 1;
-            }
-        }
-
-        .tool-switch {
-            background: var(--color-1);
-            outline: 1px solid var(--color-1);
-            border-radius: 6px;
-            padding: 2px;
-
-            > button {
-                position: relative;
-                width: 10rem;
-                height: 2.5rem;
-                border: none;
-                background: var(--color-1);
-                color: var(--color-bg-2);
-                font-size: 0.9rem;
-                font-weight: 500;
-                cursor: pointer;
-                border-radius: 4px;
-
-                &:hover {
-                    background: color-mix(in srgb, var(--color-1) 90%, var(--color-bg-2) 20%);
-                }
-
-                &.selected {
-                    background: var(--color-bg-2);
-                    color: var(--color-1);
-                    outline: 2px solid var(--color-outline);
-                    font-weight: 700;
-                }
-            }
-        }
-    }
-
-    @keyframes color-select {
-        0% {
-            outline: 2px solid transparent;
-            outline-offset: 0px;
-        }
-        100% {
-            outline: 2px solid var(--color-bg-2);
-            outline-offset: -1px;
-            border-radius: 2px;
-        }
-    }
-
-    .toggles {
-        display: flex;
-        gap: 4rem;
+        gap: 1rem;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 0.25rem;
         background: var(--color-bg-2);
         color: var(--color-1);
-        padding: 1rem 2rem;
-        border-radius: 2rem;
-        filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.4));
-        margin-bottom: 2rem;
-
-        > label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+        font: inherit;
+        cursor: pointer;
     }
 
-    .actions {
+    .panel-heading {
+        h1 { margin: 0; font-size: 1.5rem; color: var(--color-1); }
+        p { margin: 0.5rem 0 0; font-size: 0.875rem; line-height: 1.6; }
+    }
+
+    h2 { margin: 0; font-size: 1rem; color: var(--color-1); }
+
+    .tool, .toggles {
+        flex-shrink: 0;
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.4));
+        padding: 1rem;
+        border: 1px solid var(--color-outline);
+        border-radius: 0.5rem;
+        background: var(--color-bg-2);
 
-        > button {
-            width: 14rem;
-            height: 4rem;
-            border: none;
-            background: var(--color-bg-2);
-            color: var(--color-1);
-            outline: 1px solid var(--color-outline);
-            font-weight: 700;
-            font-size: 1.1rem;
-            transform: skewX(-10deg);
-            border-radius: 4px;
+        label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+    }
+
+    .tool-switch {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.25rem;
+
+        button {
+            min-width: 0;
+            padding: 0.75rem 0.25rem;
+            border: 1px solid var(--color-outline);
+            border-radius: 0.4rem;
+            background: var(--color-bg-1);
+            color: var(--color-text);
+            font-size: 0.8rem;
             cursor: pointer;
 
-            &.primary {
+            &.selected {
                 background: var(--color-1);
                 color: var(--color-bg-2);
+                border-color: var(--color-1);
+                font-weight: 700;
             }
+
+            i { display: none; }
         }
+    }
+
+    kbd { display: block; margin-top: 0.25rem; font: inherit; opacity: 0.75; }
+
+    .palette {
+        display: grid;
+        grid-template-columns: repeat(11, minmax(0, 1fr));
+        gap: 2px;
+        padding: 4px;
+        border: 1px solid var(--color-outline);
+        border-radius: 0.25rem;
+    }
+
+    .col { display: flex; flex-direction: column; gap: 2px; }
+
+    .color {
+        width: 100%;
+        aspect-ratio: 1;
+        padding: 0;
+        border: 1px solid rgb(0 0 0 / 15%);
+        border-radius: 2px;
+        cursor: pointer;
+
+        &.selected { outline: 2px solid var(--color-text); outline-offset: 1px; z-index: 1; }
+    }
+
+    .actions {
+        position: sticky;
+        bottom: -1.25rem;
+        flex-shrink: 0;
+        margin-top: auto;
+        padding: 1rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        background: var(--color-bg-1);
+        border-top: 1px solid var(--color-outline);
+
+        > button {
+            width: 100%;
+            min-height: 2.75rem;
+            padding: 0.75rem;
+            border: 1px solid var(--color-outline);
+            border-radius: 0.5rem;
+            background: var(--color-bg-2);
+            color: var(--color-text);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+
+            &:disabled { opacity: 0.5; cursor: default; }
+            &.primary { background: var(--color-1); color: var(--color-bg-2); border-color: var(--color-1); }
+        }
+
+        p, h3 { margin: 0; font-size: 0.9rem; line-height: 1.6; }
+    }
+
+    button:focus-visible { outline: 2px solid var(--color-1); outline-offset: 3px; }
+
+    @media (max-width: 760px) {
+        main.client { right: 0.5rem; top: 0.5rem; bottom: auto; max-height: calc(100% - 1rem); width: min(20rem, calc(100% - 1rem)); padding: 0.75rem; gap: 0.75rem; }
+        .tool, .toggles { padding: 0.75rem; }
+        .tool-switch { grid-template-columns: 1fr; }
+        kbd { display: inline; margin-left: 0.25rem; }
+        .actions { bottom: -0.75rem; }
     }
 </style>

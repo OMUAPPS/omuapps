@@ -198,6 +198,11 @@ export class Display {
                 await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY), `・ ${item.name}`, Vec2.ZERO, PALETTE_RGB.DISPLAY_TEXT.with({ w: animationT }));
                 offsetY += 30;
             }
+            draw.fontSize = 18;
+            await draw.textAlign(
+                new Vec2(bounds.max.x, offsetY + 12), '撮影して納品へ →',
+                { x: 1, y: 0 }, PALETTE_RGB.DISPLAY_TEXT.with({ w: animationT }),
+            );
             offsetY += 68;
 
             // インタラクション判定
@@ -205,7 +210,7 @@ export class Display {
             if (orderBounds.contains(mouse)) {
                 this.action = {
                     id: `view-order-${order.id}`,
-                    title: 'クリックで納品',
+                    title: '撮影して納品へ',
                     priority: 0,
                     invoke: async () => await this.game.scene.photo.openPhotoMode(order),
                 };
