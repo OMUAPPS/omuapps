@@ -57,27 +57,35 @@
     }
 </script>
 
-{#if $preview[id]}
-    <div class="preview">
-        <img src={$preview[id].url} alt="">
-    </div>
-{/if}
 {#if $itemStore}
-    <h2>名前</h2>
-    <Textbox bind:value={$itemStore.name} />
-    <h2>変形</h2>
-    <EditTransform bind:transform={$itemStore.transform} />
+    <div class="item-header">
+        <div class="preview">
+            {#if $preview[id]}
+                <img src={$preview[id].url} alt="">
+            {:else}
+                <i class="ti ti-package" aria-hidden="true"></i>
+            {/if}
+        </div>
+        <label class="item-name">
+            アイテム名
+            <Textbox bind:value={$itemStore.name} />
+        </label>
+    </div>
+    <details name="item-settings">
+        <summary>位置・大きさ・回転</summary>
+        <div class="transform-fields">
+            <EditTransform bind:transform={$itemStore.transform} />
+        </div>
+    </details>
     <h2>
         属性
-        <select onchange={addAttribute}>
+        <select aria-label="属性を追加" onchange={addAttribute}>
             <option value="">
                 追加
-                <i class="ti ti-plus"></i>
             </option>
             {#if $attributeClipboard}
                 <option value="clipboard">
                     ペースト
-                    <i class="ti ti-clipboard"></i>
                 </option>
             {/if}
             {#each Object.entries(game.attribute.values) as [key, attribute] (key)}
@@ -92,138 +100,139 @@
         {#each Object.entries(game.attribute.values) as [key, attribute] (key)}
             {@const attr = $itemStore.attrs[key as AttributeKey]}
             {#if attr}
-                <div class="attr">
-                    <h3>
-                        <span>{attribute.name}</span>
+                <details class="attr" name="item-settings">
+                    <summary>{attribute.name}</summary>
+
+                    <div class="body">
+                        <attribute.editor
+                            bind:attr={$itemStore.attrs[key as AttributeKey] as never}
+                        />
+                    </div>
+                    <div class="attribute-actions">
                         <button onclick={() => {
                             $attributeClipboard = {
                                 type: key as AttributeKey,
                                 data: attr,
                             };
                         }}>
-                            <Tooltip>コピー</Tooltip>
-                            <i class="ti ti-copy"></i>
+                            <Tooltip>この属性の設定をコピー</Tooltip>
+                            <i class="ti ti-copy"></i> コピー
                         </button>
                         {#if key !== 'image'}
-                            <button onclick={() => deleteAttribute(key as AttributeKey)}>
-                                <Tooltip>削除</Tooltip>
-                                <i class="ti ti-x"></i>
+                            <button class="remove" onclick={() => deleteAttribute(key as AttributeKey)}>
+                                <Tooltip>この属性を削除</Tooltip>
+                                <i class="ti ti-x"></i> 削除
                             </button>
                         {/if}
-                    </h3>
-                    <div class="body">
-                        <attribute.editor
-                            bind:attr={$itemStore.attrs[key as AttributeKey] as never}
-                        />
                     </div>
-                </div>
+                </details>
             {/if}
         {/each}
     </div>
-    <h2>JSON</h2>
-    <EditItemJson bind:item={$itemStore} />
+    <details name="item-settings">
+        <summary>詳細編集（JSON）</summary>
+        <EditItemJson bind:item={$itemStore} />
+    </details>
 {/if}
 
 <style lang="scss">
+    .item-header {
+        display: grid;
+        grid-template-columns: 5rem minmax(0, 1fr);
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
     .preview {
+        display: grid;
+        place-items: center;
+        width: 5rem;
+        height: 5rem;
+        border: 1px solid var(--color-outline);
+        border-radius: 0.5rem;
         background: var(--color-bg-2);
-        margin: 1rem 0;
-        padding: 1rem 0;
-        height: 8rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        > img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
+        overflow: hidden;
+        img { width: 100%; height: 100%; object-fit: contain; }
+        i { font-size: 2rem; color: var(--color-1); }
     }
-
+    .item-name { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; font-size: 0.8rem; }
     h2 {
-        color: var(--color-1);
-        margin: 0.5rem 0;
-        margin-top: 1.5rem;
-        text-align: left;
-        font-size: 1.5rem;
-        color: var(--color-1);
-        corner-shape: squircle;
-        padding: 0.5rem 0;
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin: 1.25rem 0 0.5rem;
+        font-size: 0.9rem;
+        color: var(--color-text);
     }
-
-    .attributes {
+    details {
+        margin-top: 0.5rem;
+        border: 1px solid var(--color-outline);
+        border-radius: 0.5rem;
+        background: var(--color-bg-2);
+        overflow: hidden;
+        min-width: 0;
+    }
+    summary {
+        padding: 0.9rem 1rem;
+        color: var(--color-1);
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    details[open] > summary { border-bottom: 1px solid var(--color-outline); }
+    summary:focus-visible, button:focus-visible, select:focus-visible {
+        outline: 2px solid var(--color-1);
+        outline-offset: -2px;
+    }
+    .attributes { display: flex; flex-direction: column; gap: 0.5rem; }
+    .attr { margin: 0; }
+    .body, .transform-fields {
+        padding: 1rem;
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
         gap: 1rem;
-        flex: 1;
+        font-size: 0.9rem;
+        overflow-x: auto;
     }
-
-    .attr {
-        width: 100%;
-        color: var(--color-text);
-        font-size: 0.8621rem;
-        background: var(--color-bg-2);
-        outline: 1px solid var(--color-outline);
-        padding: 0 1rem;
-        corner-shape: squircle;
-        border-radius: 1rem;
-
-        > h3 {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            border-bottom: 1px solid var(--color-1);
-            font-size: 1rem;
-            height: 3rem;
-            color: var(--color-1);
-            text-align: left;
-
-            > span {
-                margin-right: auto;
-            }
-
-            > button {
-                height: 2rem;
-                width: 3rem;
-                border: none;
-                background: transparent;
-                color: var(--color-1);
-
-                &:hover {
-                    background: rgb(206, 13, 13);
-                    color: #fff;
-                }
-            }
-        }
-
-        > .body {
-            padding: 1rem 0;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+    .body :global(label) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        line-height: 1.5;
     }
+    .transform-fields :global(.edit) { flex-wrap: wrap; justify-content: center; }
+    .transform-fields :global(.inspector) { flex: 1; }
+    .transform-fields :global(.inspector input) { box-sizing: border-box; width: 100%; padding: 0.4rem; }
+    .attribute-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-top: 1px solid var(--color-outline);
 
-    select {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        outline: none;
-        background: var(--color-1);
-        color: var(--color-bg-2);
-        font-size: 0.8rem;
-        font-weight: 600;
-        border-radius: 4px;
-
-        > option {
-            background: var(--color-bg-2);
+        button {
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.5rem;
+            background: transparent;
             color: var(--color-text);
+            font: inherit;
             font-size: 0.8rem;
-            font-weight: 600;
+            cursor: pointer;
+            &:hover { background: var(--color-bg-1); }
         }
+        .remove { color: #a33131; }
+    }
+    select {
+        max-width: 70%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--color-outline);
+        border-radius: 0.4rem;
+        background: var(--color-bg-2);
+        color: var(--color-text);
+        font-size: 0.8rem;
     }
 </style>
