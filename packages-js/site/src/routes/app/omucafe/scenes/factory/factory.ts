@@ -289,9 +289,8 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
             return;
         }
         const hash = await this.game.item.hash(item);
-        if (previewEntry?.hash === hash) return;
 
-        const result = await this.game.itemRenderer.getItemRender(item);
+        const result = await this.game.itemRenderer.renderItemThumbnail(item);
         if (result.type !== 'rendered') return;
 
         // バッファから画像を読み取り Blob URL を生成
@@ -302,7 +301,7 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
             const url = URL.createObjectURL(blob);
 
             // 前のURLが存在すれば破棄してメモリ解放
-            if (previewState?.url) {
+            if (previewEntry?.url) {
                 URL.revokeObjectURL(previewEntry.url);
             }
 

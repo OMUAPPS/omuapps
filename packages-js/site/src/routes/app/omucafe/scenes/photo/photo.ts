@@ -15,18 +15,15 @@ import { ASSET_VERTICAL_RESOLUTION, ASSET_VERTICAL_WORLD_BOUNDS } from '../../co
 import type { Order, Receipt } from '../../core/game-state';
 import { createTransform } from '../../core/transform';
 import type { Item, ItemPool, PoolOptions } from '../../item/item';
-import client_background from '../../resources/client_background.png';
 import type { SceneHandler } from '../scene';
 import asset_horizontal_background from './img/asset_horizontal_background.png';
 import asset_vertical_background from './img/asset_vertical_background.png';
 import asset_vertical_overlay from './img/asset_vertical_overlay.png';
-import background from './img/background.png';
 import dummy from './img/dummy.png';
 import eraser from './img/eraser.png';
 import flash from './img/flash.png';
 import pen from './img/pen.png';
 import photo_frame from './img/photo_frame.png';
-import ui_overlay from './img/ui_overlay.png';
 import ScreenPhoto from './ScreenPhoto.svelte';
 
 // ==========================================
@@ -38,7 +35,6 @@ const FONT = {
     DATE_FAMILY: 'Zen Maru Gothic',
     DATE_WEIGHT: '600',
     DEFAULT_FAMILY: 'Noto Sans JP',
-    CLIENT_DATE_SIZE: 42,
     OVERLAY_DATE_SIZE: 74,
 } as const;
 
@@ -49,9 +45,8 @@ const LAYOUT = {
     PHOTO_SCALE: 1.25,
     ITEM_SPACE: 400,
     ITEM_Y_OFFSET: 400,
-    CLIENT_CONTAINER_SHRINK: { x: 20, y: 20 },
     CLIENT_DUMMY_Y_OFFSET: -50,
-    DATE_TEXT_POSITION: { x: 0.25, y: 0.85 },
+    DATE_TEXT_POSITION: { x: 0.9, y: 1.05 },
     DATE_TEXT_SHADOW_OFFSET: { x: 2, y: 2 },
 } as const;
 
@@ -175,7 +170,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
 
         for (const item of rootItems) {
             while (true) {
-                const result = await itemRenderer.getItemRender(item);
+                const result = await itemRenderer.getItemBounds(item);
                 if (result.type === 'rendered') {
                     break;
                 }
@@ -217,69 +212,8 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
     // ------------------------------------------------------------------------
 
     private async renderClientSide(scene: ScenePhotoData): Promise<PoolOptions> {
-        const { draw, matrices, input: pipelineInput } = this.game.pipeline;
-        const { renderer, asset, itemRenderer } = this.game;
-        const { bounds, containBounds } = renderer;
-
-        // 背景の描画 (並列読み込み)
-        const [bgAsset, bg2Asset] = await Promise.all([
-            asset.getTextureByUrl(client_background).promise,
-            asset.getTextureByUrl(background).promise,
-        ]);
-
-        draw.texture(...containBounds.toArray(), bgAsset.unwrap.texture);
-        draw.rectangle(...bounds.toArray(), PALETTE_RGB.BACKGROUND.with({ w: 0.7 }));
-        draw.texture(...bounds.toArray(), bg2Asset.unwrap.texture);
-
-        // 写真フレームのセットアップ
-        const container = bounds.with({ max: { x: 0 } }).shrink(LAYOUT.CLIENT_CONTAINER_SHRINK);
-        const overlayBounds = container.fit(ASSET_VERTICAL_RESOLUTION);
-        const { photoTex, frameBounds, poolOptions } = await this.setupPhotoFrame(scene.pool, overlayBounds);
-
-        const bgAsset2 = await this.game.asset.getTextureByUrl(asset_vertical_background).promise;
-        draw.texture(...overlayBounds.expand({ x: 1, y: 1 }).toArray(), bgAsset2.unwrap.texture);
-
-        // ダミー配置とアイテム群の描画
-        await this.renderDummyBackground(frameBounds);
-
-        itemRenderer.initPass();
-        await itemRenderer.renderPool(scene.pool, poolOptions);
-        await itemRenderer.renderHeld();
-
-        // 写真フレーム枠の描画
-        draw.scissor(overlayBounds);
-
-        await this.renderFlashes(overlayBounds, 0.5);
-
-        await this.drawPhotoFrame(scene, overlayBounds, photoTex, FONT.CLIENT_DATE_SIZE);
-        draw.endScissor();
-
-        draw.rectangleStroke(...overlayBounds.toArray(), PALETTE_RGB.PHOTOFRAME_OUTLINE, 25, 'outer');
-
-        // キャンバスの描画
-        const mouse = matrices.getViewToModel().transform2(pipelineInput.mouse.pos);
-        const localPos = overlayBounds.unmap(mouse).mul(ASSET_VERTICAL_RESOLUTION);
-        const canvasOptions: CanvasOptions = { pos: localPos, mouse, size: ASSET_VERTICAL_RESOLUTION };
-
-        await this.renderCanvas(overlayBounds, canvasOptions, localPos, photoTex, scene.photo == null);
-
-        const uiOverlayTex = this.game.asset.getTextureByUrl(ui_overlay);
-        if (uiOverlayTex.type === 'ready') {
-            draw.texture(...overlayBounds.toArray(), uiOverlayTex.data.texture, Vec4.ONE.with({ w: 0.8 }));
-        }
-
-        const state = this.game.states.canvasStates;
-        const canvas = this.game.states.config.value.canvas;
-        if (canvas.tool?.type === 'brush') {
-            state.value.tool = { type: 'brush', color: canvas.brush.color };
-        } else if (canvas.tool?.type === 'eraser') {
-            state.value.tool = { type: 'eraser' };
-        } else if (canvas.tool?.type === 'move') {
-            state.value.tool = { type: 'move' };
-        }
-        state.value.pos = overlayBounds.unmap(mouse).sub({ x: 0.5, y: 0.5 }).mul(ASSET_VERTICAL_RESOLUTION);
-
-        return poolOptions;
+        await this.renderBackgroundSide();
+        return this.renderOverlaySide(scene, true);
     }
 
     private async renderBackgroundSide() {
@@ -295,14 +229,17 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         }
     }
 
-    private async renderOverlaySide(scene: ScenePhotoData) {
+    private async renderOverlaySide(scene: ScenePhotoData, interactive = false): Promise<PoolOptions> {
         const { bloom } = this.game.states.config.value.photo.effects;
         const { context, draw } = this.game.pipeline;
         const { bounds } = this.game.renderer;
         const { itemRenderer } = this.game;
         const overlayBounds = bounds.fit(ASSET_VERTICAL_RESOLUTION);
 
-        const { photoTex, poolOptions } = await this.setupPhotoFrame(scene.pool, overlayBounds);
+        const { photoTex, frameBounds, poolOptions } = await this.setupPhotoFrame(scene.pool, overlayBounds);
+        if (interactive) {
+            await this.renderDummyBackground(frameBounds);
+        }
 
         // エフェクトテクスチャのサイズ同期
         [this.effectA, this.effectB, this.effectC].forEach(effect => {
@@ -364,12 +301,26 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         // 共通のアイテム＆フレーム描画
         await this.drawPhotoFrame(scene, overlayBounds, photoTex, FONT.OVERLAY_DATE_SIZE);
 
-        // キャンバスの描画 (非インタラクティブ)
-        const canvasOptions: CanvasOptions = { pos: Vec2.ZERO, mouse: Vec2.ZERO, size: ASSET_VERTICAL_RESOLUTION };
-        await this.renderCanvas(overlayBounds, canvasOptions, Vec2.ZERO, photoTex, false);
-
-        // render cursor
         const state = this.game.states.canvasStates;
+        const { matrices, input } = this.game.pipeline;
+        const mouse = matrices.getViewToModel().transform2(input.mouse.pos);
+        const localPos = overlayBounds.unmap(mouse).mul(ASSET_VERTICAL_RESOLUTION);
+        const canvasOptions: CanvasOptions = { pos: localPos, mouse, size: ASSET_VERTICAL_RESOLUTION };
+        await this.renderCanvas(overlayBounds, canvasOptions, localPos, photoTex, interactive && !scene.photo);
+
+        if (interactive) {
+            const canvas = this.game.states.config.value.canvas;
+            if (canvas.tool?.type === 'brush') {
+                state.value.tool = { type: 'brush', color: canvas.brush.color };
+            } else if (canvas.tool?.type === 'eraser') {
+                state.value.tool = { type: 'eraser' };
+            } else if (canvas.tool?.type === 'move') {
+                state.value.tool = { type: 'move' };
+            }
+            state.value.pos = overlayBounds.unmap(mouse).sub({ x: 0.5, y: 0.5 }).mul(ASSET_VERTICAL_RESOLUTION);
+            return poolOptions;
+        }
+
         const cursorPos = overlayBounds.map(ASSET_VERTICAL_WORLD_BOUNDS.unmap(state.value.pos));
         const cursorScale = overlayBounds.width / ASSET_VERTICAL_RESOLUTION.x;
         if (state.value.tool?.type === 'brush') {
@@ -394,6 +345,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
                 eraserTex,
             );
         }
+        return poolOptions;
     }
 
     private async renderFlashes(bounds: AABB2, scaleMultiplier: number) {
@@ -488,7 +440,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         matrices.model.translate(-center.x, -center.y, 0);
 
         const photoBounds = frameBounds.fit(photoTex.size).setAt({ x: 0.5, y: -0.1 }, { x: frameBounds.center.x, y: frameBounds.min.y });
-        draw.texture(...photoBounds.scaleAt(1.25, photoBounds.center).toArray(), photoTex, Vec4.ONE.with({ w: this.game.side === 'client' ? 0.8 : 1 }));
+        draw.texture(...photoBounds.scaleAt(1.75, photoBounds.at({ x: 0.5, y: 0.25 })).toArray(), photoTex, Vec4.ONE);
 
         // 日付テキストの描画
         draw.fontFamily = FONT.DATE_FAMILY;

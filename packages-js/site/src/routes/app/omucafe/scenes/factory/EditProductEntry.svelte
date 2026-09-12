@@ -37,76 +37,91 @@
         <Checkbox bind:value={$product.hidden} />
     </label>
 </div>
-<h2>反応する文字</h2>
-<div class="aliases">
-    <Tooltip>
-        チャットで「#」の後にこの文字が打たれたら注文とみなします
-    </Tooltip>
-    <Button onclick={() => {
-        $product.aliases = [...$product.aliases, ''];
-    }} primary>
-        追加する
-        <i class="ti ti-plus"></i>
-    </Button>
-    <div class="entry">
-        <input type="text" value={$product.name} disabled />
-    </div>
-    {#each $product.aliases as _, index (index)}
+<details name="product-settings">
+    <summary>注文キーワード</summary>
+    <p class="help">チャットで <strong>#{$product.name}</strong> と送ると注文できます。別の呼び方も追加できます。</p>
+    <div class="aliases">
+        <Tooltip>
+            チャットで「#」の後にこの文字が打たれたら注文とみなします
+        </Tooltip>
+        <Button onclick={() => {
+            $product.aliases = [...$product.aliases, ''];
+        }} primary>
+            別の呼び方を追加
+            <i class="ti ti-plus"></i>
+        </Button>
         <div class="entry">
-            <input type="text" bind:value={() => $product.aliases[index], (alias) => {
-                $product.aliases[index] = alias;
-                $product.aliases = [...$product.aliases];
-            }} />
-            <button title="削除" onclick={() => {
-                $product.aliases = $product.aliases.filter((_, i) => i !== index);
-            }}>
-                <Tooltip>
-                    この反応する文字を削除します
-                </Tooltip>
-                <i class="ti ti-x"></i>
-            </button>
+            <input type="text" value={$product.name} disabled />
         </div>
-    {/each}
-</div>
-<h2>操作</h2>
-<div class="actions">
-    <Button onclick={() => {
-        game.states.scene.value = {
-            type: 'factory',
-            selecting: {
-                type: 'pick_product',
-                productId: id,
-                back: { type: 'edit_product', productId: id },
-            },
-        };
-    }} primary>
-        アイテムを選択し直す
-    </Button>
-    <Button onclick={() => {
-        game.addTask(async () => {
-            const factory = game.states.factory.value;
-            const item = game.item.get($product.itemId);
-            if (!item) return;
-            const clone = game.item.clone(item);
-            game.item.dettachItem(clone);
-            game.item.setPool(clone, factory);
-            clone.transform.offset = { x: 0, y: 100 };
-        });
-    }} primary>
-        アイテムを召喚する
-    </Button>
-    <Button onclick={() => {
-        game.states.products.delete(id);
-        game.states.scene.value = {
-            type: 'factory',
-        };
-    }} primary>
-        商品を削除
-        <i class="ti ti-trash"></i>
-    </Button>
-</div>
+        {#each $product.aliases as _, index (index)}
+            <div class="entry">
+                <input type="text" bind:value={() => $product.aliases[index], (alias) => {
+                    $product.aliases[index] = alias;
+                    $product.aliases = [...$product.aliases];
+                }} />
+                <button title="削除" onclick={() => {
+                    $product.aliases = $product.aliases.filter((_, i) => i !== index);
+                }}>
+                    <Tooltip>
+                        この反応する文字を削除します
+                    </Tooltip>
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+        {/each}
+    </div>
+</details>
+<details name="product-settings">
+    <summary>商品に使うアイテム</summary>
+    <p class="help">見た目を変えるには、作業台にコピーを置いて編集し、商品のアイテムを差し替えてください。</p>
+    <div class="actions">
+        <Button onclick={() => {
+            game.states.scene.value = {
+                type: 'factory',
+                selecting: {
+                    type: 'pick_product',
+                    productId: id,
+                    back: { type: 'edit_product', productId: id },
+                },
+            };
+        }} primary>
+            商品のアイテムを差し替える
+        </Button>
+        <Button onclick={() => {
+            game.addTask(async () => {
+                const factory = game.states.factory.value;
+                const item = game.item.get($product.itemId);
+                if (!item) return;
+                const clone = game.item.clone(item);
+                game.item.dettachItem(clone);
+                game.item.setPool(clone, factory);
+                clone.transform.offset = { x: 0, y: 100 };
+            });
+        }} primary>
+            作業台にコピーを置く
+        </Button>
+    </div>
+</details>
+<details name="product-settings">
+    <summary>商品の削除</summary>
+    <p class="help">この商品を注文できる商品の一覧から削除します。</p>
+    <div class="actions">
+        <Button onclick={() => {
+            game.states.products.delete(id);
+            game.states.scene.value = {
+                type: 'factory',
+            };
+        }} primary>
+            商品を削除
+            <i class="ti ti-trash"></i>
+        </Button>
+    </div>
+
+</details>
 
 <style lang="scss">
+    .help { font-size: 0.875rem; line-height: 1.6; margin: 0.5rem 0 1rem; }
+
     .info {
         padding: 1rem;
     }
@@ -149,17 +164,9 @@
         gap: 1rem;
     }
 
-    h2 {
-        color: var(--color-1);
-        margin: 0.5rem 0;
-        margin-top: 1rem;
-        text-align: left;
-        font-size: 1.25rem;
-        color: var(--color-1);
-        corner-shape: squircle;
-        padding: 0.5rem 0;
-        width: fit-content;
-    }
+    details { margin-top: 0.75rem; padding: 0.75rem; border: 1px solid var(--color-outline); border-radius: 0.5rem; }
+    summary { cursor: pointer; font-weight: 600; color: var(--color-1); }
+    details[open] > summary { margin-bottom: 1rem; }
 
     .aliases {
         display: flex;

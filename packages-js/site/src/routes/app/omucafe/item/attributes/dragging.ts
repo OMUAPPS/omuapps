@@ -5,7 +5,7 @@ import type { Game } from '../../core/game';
 import { validateAssetTransform, type AssetTransform } from '../../core/game-renderer';
 import { validateVec2, type ValidateResult } from '../../core/helper';
 import type { Action } from '../../core/input-system';
-import type { AttributeHandler, AttributeInvoke, ItemMouseEvent, ItemRender } from '../attribute-handler';
+import type { AttributeHandler, AttributeInvoke, ItemMouseEvent, ItemBounds } from '../attribute-handler';
 import type { Item, ItemPool } from '../item';
 import DraggingEditor from './DraggingEditor.svelte';
 
@@ -96,17 +96,13 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
      */
     async renderOverlayPost(
         { item, attr }: AttributeInvoke<AttrDragging>,
-        pool: ItemPool,
-        render: ItemRender,
+        _pool: ItemPool,
+        _render: ItemBounds,
     ): Promise<void> {
-        const { draw } = this.game.pipeline;
-        const { min, max } = render.renderBounds;
-        const { texture } = render;
-
         // 1. ホバー時のアウトライン表示
         const isPickable = this.isPickable(item, attr);
         if (isPickable) {
-            draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.ACCENT, AttributeDragging.OUTLINE_WIDTH);
+            await this.game.itemRenderer.drawItemOutline(item, PALETTE_RGB.ACCENT, AttributeDragging.OUTLINE_WIDTH);
         }
 
         // 2. ドラッグ解除後の残像エフェクト（イージング付き）
@@ -118,7 +114,7 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
             // 指数関数で急激に細くなるエフェクト
             const width = Math.pow(t, 6) * AttributeDragging.DRAG_EFFECT_MAX_WIDTH;
 
-            draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.TOOLTIP_TEXT, width);
+            await this.game.itemRenderer.drawItemOutline(item, PALETTE_RGB.TOOLTIP_TEXT, width);
         }
 
         const front = attr.hand?.front;

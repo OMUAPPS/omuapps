@@ -10,7 +10,7 @@ import { clone, generateUid, type ValidateResult } from '../core/helper';
 import type { Action } from '../core/input-system';
 import { getTransform, validateTransform, type Transform } from '../core/transform';
 import type { AttributeKey, Attributes } from './attribute';
-import type { ActionContext, CollideContext, HashContext, ItemMouseEvent, ItemRender, LoadTask } from './attribute-handler';
+import type { ActionContext, CollideContext, HashContext, ItemMouseEvent, ItemBounds, LoadTask } from './attribute-handler';
 
 // --- Interfaces ---
 // (インターフェースの変更はありません)
@@ -219,7 +219,7 @@ export class ItemSystem {
             this.remove(child);
         }
         delete pool.pool.items[item.id];
-        this.game.itemRenderer.deleteItemRender(item.id);
+        this.game.itemRenderer.deleteItemThumbnail(item.id);
     }
 
     public get(id: string) {
@@ -553,7 +553,7 @@ export class ItemSystem {
             invoke: async () => {
                 await this.dropItem();
                 this.setPool(held, pool);
-                const render = await this.game.itemRenderer.getItemRender(held);
+                const render = await this.game.itemRenderer.getItemBounds(held);
                 const transform = getTransform(held.transform);
                 if (render.type === 'rendered') {
                     this.constrainItemToBounds(held, options, transform.getMat4().basisTransformAABB2(render.render.bounds));
@@ -590,9 +590,9 @@ export class ItemSystem {
             .map(({ id }) => this.game.item.items.get(id))
             .filter((child): child is Item => !!child);
 
-        const renderData: Record<string, ItemRender> = {};
+        const renderData: Record<string, ItemBounds> = {};
         for (const child of items) {
-            const renderState = await this.game.itemRenderer.getItemRender(child);
+            const renderState = await this.game.itemRenderer.getItemBounds(child);
             if (renderState.type === 'rendered') {
                 renderData[child.id] = renderState.render;
             }

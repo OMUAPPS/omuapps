@@ -1,8 +1,7 @@
-import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext';
 import { AABB2 } from '$lib/math/aabb2';
 import { lerp } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
-import { Vec4, type Vec4Like } from '$lib/math/vec4';
+import { Vec4 } from '$lib/math/vec4';
 import { PALETTE_RGB } from '../../colors';
 import { getAssetKey } from '../../core/asset';
 import type { Game } from '../../core/game';
@@ -10,7 +9,7 @@ import { validateAssetTransform, type AssetTransform } from '../../core/game-ren
 import { validateEnum, type ValidateResult } from '../../core/helper';
 import type { Action } from '../../core/input-system';
 import { getTransform } from '../../core/transform';
-import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, HashContext, ItemMouseEvent, ItemRender, ItemRenderContext, LoadContext } from '../attribute-handler';
+import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, HashContext, ItemMouseEvent, ItemBounds, ItemDrawContext, LoadContext } from '../attribute-handler';
 import type { Item, ItemPool } from '../item';
 import ContainerEditor from './ContainerEditor.svelte';
 
@@ -19,7 +18,7 @@ export interface AttrContainer {
     cover?: AssetTransform;
     mask?: AssetTransform;
     maskInverted?: boolean;
-    layerOrder: 'upper' | 'lower';
+    layerOrder: 'upper' | 'lower' | 'latest';
     orderingAnchor: 'top' | 'center' | 'bottom';
     dropShadow?: {
         distance: number;
@@ -44,53 +43,7 @@ export interface AttrContainer {
 export class AttributeContainer implements AttributeHandler<AttrContainer> {
     readonly name = '上に乗せられる';
     readonly editor = ContainerEditor;
-    private readonly maskBuffer: GlFramebuffer;
-    private readonly maskTexture: GlTexture;
-    private readonly childrenBuffer: GlFramebuffer;
-    private readonly childrenTexture: GlTexture;
-
-    constructor(private readonly game: Game) {
-        const { context } = game.pipeline;
-        this.maskBuffer = context.createFramebuffer();
-        this.maskTexture = context.createTexture();
-        this.maskTexture.use(() => {
-            this.maskTexture.setImage(null, {
-                width: 4,
-                height: 4,
-                internalFormat: 'rgba',
-                format: 'rgba',
-            });
-            this.maskTexture.setParams({
-                magFilter: 'linear',
-                minFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
-            });
-        });
-        this.maskBuffer.use(() => {
-            this.maskBuffer.attachTexture(this.maskTexture);
-        });
-
-        this.childrenBuffer = context.createFramebuffer();
-        this.childrenTexture = context.createTexture();
-        this.childrenTexture.use(() => {
-            this.childrenTexture.setImage(null, {
-                width: 4,
-                height: 4,
-                internalFormat: 'rgba',
-                format: 'rgba',
-            });
-            this.childrenTexture.setParams({
-                magFilter: 'linear',
-                minFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
-            });
-        });
-        this.childrenBuffer.use(() => {
-            this.childrenBuffer.attachTexture(this.childrenTexture);
-        });
-    }
+    constructor(private readonly game: Game) {}
 
     create(): AttrContainer {
         return {
@@ -201,7 +154,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
     /** * コンテナ自体のカバーやデバッグ情報の描画
      */
-    async renderOverlayPost({ item, attr }: AttributeInvoke<AttrContainer>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
+    async renderOverlayPost({ item, attr }: AttributeInvoke<AttrContainer>, pool: ItemPool, render: ItemBounds, children: Record<string, ItemBounds>): Promise<void> {
         const { matrices, draw } = this.game.pipeline;
         const scene = this.game.states.scene.value;
         const { states } = this.game.item;
@@ -212,28 +165,23 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                          (hoveringItem && this.game.item.getParents(hoveringItem).includes(item));
 
         if (isHovered && heldItem && await this.isItemWithinLimits(item, render, attr, heldItem) && this.game.input.current?.id.includes(item.id)) {
-            const { min, max } = render.renderBounds;
-            const { texture } = render;
-
-            draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.CONTAINER_HOVERED, 4);
+            await this.game.itemRenderer.drawItemOutline(item, PALETTE_RGB.CONTAINER_HOVERED, 4);
         }
 
         if (isHovered && this.game.side === 'client') {
-            const { draw, matrices } = this.game.pipeline;
+            const { matrices } = this.game.pipeline;
 
-            for (const [id, renderData] of Object.entries(children)) {
+            for (const id of Object.keys(children)) {
                 const child = this.game.item.items.get(id);
                 if (!child) continue;
 
-                matrices.model.scope(() => {
+                matrices.model.push();
+                try {
                     matrices.model.multiply(getTransform(child.transform).getMat4());
-                    draw.texture(
-                        renderData.renderBounds.min.x, renderData.renderBounds.min.y,
-                        renderData.renderBounds.max.x, renderData.renderBounds.max.y,
-                        renderData.texture,
-                        Vec4.ONE.with({ w: child.id === states.hovered ? 0.5 : 0.1 }),
-                    );
-                });
+                    await this.game.itemRenderer.drawItemOverlay(child, Vec4.ONE.with({ w: child.id === states.hovered ? 0.5 : 0.1 }));
+                } finally {
+                    matrices.model.pop();
+                }
             }
         }
         const { mask } = attr;
@@ -254,7 +202,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         }
     }
 
-    async getRenderPass(invoke: AttributeInvoke<AttrContainer>, ctx: ItemRenderContext): Promise<void> {
+    async getRenderPass(invoke: AttributeInvoke<AttrContainer>, ctx: ItemDrawContext): Promise<void> {
         const { attr, item } = invoke;
         if (attr.cover) {
             ctx.passes.push({
@@ -268,7 +216,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             ctx.passes.push({
                 order: 1000,
                 render: async () => {
-                    this.renderChildren(attr, ctx.render, ctx.children);
+                    await this.renderChildren(attr, item);
                 },
             });
         }
@@ -283,70 +231,12 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
     /** * 子要素の描画（各子のトランスフォームを適用）
      */
-    async renderChildren(attr: AttrContainer, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
-        const { mask } = attr;
-        if (!mask) {
-            this.renderChildrenToTarget(children, Vec4.ONE);
-            return;
-        }
-        const textureState = this.game.asset.getTexture(mask.asset);
-        if (textureState.type !== 'ready') return;
-        const { context, draw } = this.game.pipeline;
-        const { gl } = context;
-
-        // マスクの準備
-        this.maskTexture.use(() => {
-            this.maskTexture.ensureSize(render.renderBounds.width, render.renderBounds.height);
-        });
-        await this.maskBuffer.useAsync(async () => {
-            const inverted = attr.maskInverted;
-            if (inverted) {
-                gl.clearColor(1, 1, 1, 1);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-                // Sub blending
-                gl.enable(gl.BLEND);
-                gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_COLOR);
-            } else {
-                gl.clearColor(0, 0, 0, 0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-            }
-
-            await this.game.renderer.drawAssetTransform(mask);
-
-            if (inverted) {
-                this.game.renderer.resetBlending();
-            }
-        });
-
-        // 子アイテムの書き出し
-        this.childrenTexture.use(() => {
-            this.childrenTexture.ensureSize(render.renderBounds.width, render.renderBounds.height);
-        });
-        this.childrenBuffer.use(() => {
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            this.renderChildrenToTarget(children, Vec4.ONE);
-        });
-
-        draw.textureMask(...render.renderBounds.toArray(), this.childrenTexture, this.maskTexture);
-    }
-
-    private renderChildrenToTarget(children: Record<string, ItemRender>, color: Vec4Like) {
-        const { draw, matrices } = this.game.pipeline;
-
-        for (const [id, renderData] of Object.entries(children)) {
-            const child = this.game.item.items.get(id);
-            if (!child) continue;
-
-            matrices.model.scope(() => {
-                matrices.model.multiply(getTransform(child.transform).getMat4());
-                draw.texture(
-                    renderData.renderBounds.min.x, renderData.renderBounds.min.y,
-                    renderData.renderBounds.max.x, renderData.renderBounds.max.y,
-                    renderData.texture,
-                    color,
-                );
-            });
+    async renderChildren(attr: AttrContainer, item: Item): Promise<void> {
+        const render = () => this.game.itemRenderer.drawChildren(item);
+        if (attr.mask) {
+            await this.game.itemRenderer.drawMasked(render, attr.mask, attr.maskInverted);
+        } else {
+            await render();
         }
     }
 
@@ -372,7 +262,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
         const heldItem = this.game.item.items.get(states.held);
         if (!heldItem) return;
-        const renderResult = await this.game.itemRenderer.getItemRender(item);
+        const renderResult = await this.game.itemRenderer.getItemBounds(item);
         if (renderResult.type !== 'rendered') return;
 
         if (isHovered && await this.isItemWithinLimits(item, renderResult.render, attr, heldItem)) {
@@ -394,7 +284,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         }
     }
 
-    private async isItemWithinLimits(item: Item, render: ItemRender, attr: AttrContainer, child: Item): Promise<boolean> {
+    private async isItemWithinLimits(item: Item, render: ItemBounds, attr: AttrContainer, child: Item): Promise<boolean> {
         const { constraints } = attr;
         if (!constraints) return true;
         // アイテム数制約の確認
@@ -416,7 +306,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                 new Vec2(bounds.max.x - constraints.bounds.padding.right, bounds.max.y - constraints.bounds.padding.bottom),
             );
 
-            const childRender = await this.game.itemRenderer.getItemRender(child);
+            const childRender = await this.game.itemRenderer.getItemBounds(child);
             if (childRender.type !== 'rendered') return true;
             const childBounds = childRender.render.bounds;
 
@@ -436,7 +326,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
      */
     private async constrainItemToBounds(attr: AttrContainer, container: Item, child: Item) {
         if (!attr.constraints?.bounds) return;
-        const containerRender = await this.game.itemRenderer.getItemRender(container);
+        const containerRender = await this.game.itemRenderer.getItemBounds(container);
         if (containerRender.type !== 'rendered') return;
 
         const bounds = containerRender.render.bounds;
@@ -445,7 +335,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             new Vec2(bounds.max.x - attr.constraints.bounds.padding.right, bounds.max.y - attr.constraints.bounds.padding.bottom),
         );
 
-        const childRender = await this.game.itemRenderer.getItemRender(child);
+        const childRender = await this.game.itemRenderer.getItemBounds(child);
         if (childRender.type !== 'rendered') return;
         const childBounds = childRender.render.bounds;
 
@@ -490,9 +380,9 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             .map(id => this.game.item.items.get(id))
             .filter((child): child is Item => !!child);
 
-        const renderData: Record<string, ItemRender> = {};
+        const renderData: Record<string, ItemBounds> = {};
         for (const child of children) {
-            const renderState = await this.game.itemRenderer.getItemRender(child);
+            const renderState = await this.game.itemRenderer.getItemBounds(child);
             if (renderState.type === 'rendered') {
                 renderData[child.id] = renderState.render;
             }
@@ -500,18 +390,20 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
         const anchorYLevel = attr.orderingAnchor === 'top' ? 0 : attr.orderingAnchor === 'bottom' ? 1 : 0.5;
 
-        children.sort((a, b) => {
-            const aBounds = renderData[a.id]?.bounds;
-            const bBounds = renderData[b.id]?.bounds;
+        if (attr.layerOrder !== 'latest') {
+            children.sort((a, b) => {
+                const aBounds = renderData[a.id]?.bounds;
+                const bBounds = renderData[b.id]?.bounds;
 
-            if (!aBounds || !bBounds) return 0; // 描画データがない場合は順序を変えない
+                if (!aBounds || !bBounds) return 0; // 描画データがない場合は順序を変えない
 
-            const aCenterY = a.transform.offset.y + lerp(aBounds.min.y, aBounds.max.y, anchorYLevel);
-            const bCenterY = b.transform.offset.y + lerp(bBounds.min.y, bBounds.max.y, anchorYLevel);
+                const aCenterY = a.transform.offset.y + lerp(aBounds.min.y, aBounds.max.y, anchorYLevel);
+                const bCenterY = b.transform.offset.y + lerp(bBounds.min.y, bBounds.max.y, anchorYLevel);
 
-            const delta = (bCenterY - aCenterY);
-            return attr.layerOrder === 'upper' ? delta : -delta;
-        });
+                const delta = (bCenterY - aCenterY);
+                return attr.layerOrder === 'upper' ? delta : -delta;
+            });
+        }
 
         item.children = children.map(child => child.id);
     }

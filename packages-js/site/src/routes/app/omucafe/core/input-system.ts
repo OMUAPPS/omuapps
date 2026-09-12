@@ -1,9 +1,8 @@
 import type { InputEvent } from '$lib/components/canvas/pipeline';
 import { comparator } from '$lib/helper';
-import { clamp, lerp } from '$lib/math/math';
+import { clamp } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
 import { PALETTE_RGB } from '../colors';
-import shadowUrl from '../resources/img/shadow.png';
 import type { Game } from './game';
 
 export interface Action {
@@ -11,6 +10,7 @@ export interface Action {
     id: string;
     priority: number;
     reset?: boolean;
+    disabled?: boolean;
     invoke(): Promise<void>;
 }
 
@@ -46,7 +46,7 @@ export class InputSystem {
             const index = this.actions.findIndex((action) => action.id === this.currentAction?.id);
             const action = index === -1 ? this.actions[0] : this.actions[index];
             this.lastAction = action;
-            if (action) {
+            if (action && !action.disabled) {
                 await action.invoke();
                 console.log(action.title);
                 if (action.reset) {
@@ -54,17 +54,12 @@ export class InputSystem {
                 }
             }
         } else if (event.kind === 'mouse-wheel') {
-            const index = this.actions.findIndex((action) => action.id === this.currentAction?.id);
-            if (index === -1) {
-                this.currentAction = this.actions[0];
-            } else {
-                const actionIndex = clamp(index + (event.delta > 0 ? 1 : -1), 0, this.actions.length - 1);
-                this.currentAction = this.actions[actionIndex];
-            }
+            if (!this.actions.length || event.delta === 0) return;
+            const index = Math.max(0, this.actions.findIndex((action) => action.id === this.currentAction?.id));
+            const actionIndex = clamp(index + (event.delta > 0 ? 1 : -1), 0, this.actions.length - 1);
+            this.currentAction = this.actions[actionIndex];
         }
     }
-
-    private readonly animationTimes: number[] = [];
 
     public async render() {
         const { draw, input, matrices } = this.game.pipeline;
@@ -74,77 +69,80 @@ export class InputSystem {
             this.actions.splice(1);
         }
 
-        const padding = 32 + this.actions.length * 4; // メニュー外枠の余白
-        const itemHeight = 36; // 1項目あたりの高さ
-        draw.fontSize = 16;
+        const padding = 8;
+        const itemHeight = 36;
+        const multiple = this.actions.length > 1;
+        const hint = 'ホイールで選択を切り替え ↕';
+        const click = 'クリック';
+        const previousFont = { size: draw.fontSize, family: draw.fontFamily, weight: draw.fontWeight };
         draw.fontFamily = 'Noto Sans JP';
-
-        const shadow = (await this.game.asset.getTextureByUrl(shadowUrl).promise).unwrap.texture;
-
-        // 1. メニューの横幅を決定するため、最も長いテキストの幅を計算する
-        let maxTextWidth = 0;
-        for (const action of this.actions) {
-            const bounds = draw.measureTextActual(action.title);
-            maxTextWidth = Math.max(maxTextWidth, bounds.width);
-        }
-
-        // パネル全体のサイズ
-        const menuWidth = maxTextWidth + padding * 3 + 12; // テキスト幅 + 余白 + アクセントライン用のスペース
-        const menuHeight = this.actions.length * itemHeight + padding * 2;
+        draw.fontWeight = '600';
+        draw.fontSize = 12;
+        const clickWidth = draw.measureTextActual(click).width + 16;
+        const hintWidth = multiple ? draw.measureTextActual(hint).width + 24 : 0;
+        draw.fontSize = 16;
+        const titleWidth = Math.max(...this.actions.map((action) => draw.measureTextActual(action.title).width));
+        const menuWidth = Math.max(titleWidth + clickWidth + 56, hintWidth) + padding * 2;
+        const menuHeight = this.actions.length * itemHeight + padding * 2 + (multiple ? 32 : 0);
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
-
+        const { bounds } = this.game.renderer;
+        // Layout uses pixels; positioning and viewport bounds use world coordinates.
         const scale = 1 / this.game.renderer.scale;
-        const isOverflowX = mouse.x * scale > this.game.renderer.bounds.max.x;
-        const isOverflowY = mouse.y + menuHeight * scale > this.game.renderer.bounds.max.y;
-        const startX = isOverflowX ? -menuWidth / 2 - 16 : 16;
-        const startY = isOverflowY ? -menuHeight - 16 : 24;
+        const margin = 8 * scale;
+        const width = menuWidth * scale;
+        const height = menuHeight * scale;
+        const right = mouse.x + 20 * scale;
+        const below = mouse.y + 24 * scale;
+        const x = clamp(
+            right + width <= bounds.max.x - margin ? right : mouse.x - width - 20 * scale,
+            bounds.min.x + margin, Math.max(bounds.min.x + margin, bounds.max.x - width - margin),
+        );
+        const y = clamp(
+            below + height <= bounds.max.y - margin ? below : mouse.y - height - 24 * scale,
+            bounds.min.y + margin, Math.max(bounds.min.y + margin, bounds.max.y - height - margin),
+        );
+        const currentAction = this.actions.find((action) => action.id === this.currentAction?.id) ?? this.actions[0];
+        const textColor = PALETTE_RGB.BOARD_TEXT;
 
         matrices.model.push();
-        matrices.model.translate(mouse.x - menuWidth / 2, mouse.y, 1);
+        matrices.model.translate(x, y, 1);
         matrices.model.scale(scale, scale, 1);
-
-        draw.texture(
-            startX, startY,
-            startX + menuWidth, startY + menuHeight,
-            shadow,
-            { x: 0, y: 0, z: 0, w: 3 },
-        );
-
-        const currentAction = this.currentAction && this.actions.find((act) => act.id === this.currentAction!.id);
-
-        // 4. 各アクションの項目を描画
-        for (let index = 0; index < this.actions.length; index++) {
-            const action = this.actions[index];
-            const isSelected = currentAction ? action.id === currentAction.id : index === 0;
-            const itemY = startY + padding + index * itemHeight;
-
-            const lastT = this.animationTimes[index] ??= isSelected ? 1 : 0;
-            const t = lerp(lastT, isSelected ? 1 : 0, 0.6);
-            this.animationTimes[index] = t;
-            if (isSelected) {
-                const offsetX = (1 - t) * -16;
-                draw.rectangle(
-                    startX + padding + 12 + offsetX, itemY + itemHeight - 3 - 4,
-                    startX + padding + 12 + maxTextWidth + offsetX, itemY + itemHeight - 2 - 4,
-                    PALETTE_RGB.TOOLTIP_TEXT,
-                );
-                draw.fontWeight = '700';
-            } else {
-                draw.fontWeight = '600';
+        try {
+            draw.rectangle(2, 4, menuWidth + 2, menuHeight + 4, PALETTE_RGB.ITEM_SHADOW);
+            draw.rectangle(0, 0, menuWidth, menuHeight, PALETTE_RGB.BACKGROUND);
+            for (const [index, action] of this.actions.entries()) {
+                const selected = action.id === currentAction.id;
+                const itemY = padding + index * itemHeight;
+                const color = action.disabled ? textColor.with({ w: 0.5 })
+                    : selected ? PALETTE_RGB.TOOLTIP_TEXT : textColor;
+                if (selected) {
+                    draw.rectangle(padding, itemY, menuWidth - padding, itemY + itemHeight,
+                        action.disabled ? textColor.with({ w: 0.08 }) : PALETTE_RGB.ACCENT);
+                }
+                draw.fontSize = 16;
+                if (selected) {
+                    await draw.textAlign(new Vec2(padding + 8, itemY + itemHeight / 2), '▶', { x: 0, y: 0.5 }, color);
+                }
+                await draw.textAlign(new Vec2(padding + 28, itemY + itemHeight / 2), action.title, { x: 0, y: 0.5 }, color);
+                if (selected && !action.disabled) {
+                    const badgeX = menuWidth - padding - clickWidth - 8;
+                    draw.rectangle(badgeX, itemY + 7, badgeX + clickWidth, itemY + itemHeight - 7,
+                        PALETTE_RGB.TOOLTIP_TEXT.with({ w: 0.16 }));
+                    draw.fontSize = 12;
+                    await draw.textAlign(new Vec2(badgeX + clickWidth / 2, itemY + itemHeight / 2), click, { x: 0.5, y: 0.5 }, color);
+                }
             }
-            draw.fontSize = isSelected ? 16 : 12;
-
-            // テキストの描画
-            const offsetX = (1 - t) * 16;
-            const textPos = new Vec2(startX + padding + 12 + offsetX, itemY + 6); // Y位置はフォントに合わせて微調整してください
-            await draw.textAlign(
-                textPos,
-                action.title,
-                Vec2.ZERO,
-                PALETTE_RGB.TOOLTIP_TEXT,
-            );
+            if (multiple) {
+                const footerY = padding + this.actions.length * itemHeight + 4;
+                draw.rectangle(padding + 4, footerY, menuWidth - padding - 4, footerY + 1, textColor.with({ w: 0.15 }));
+                draw.fontSize = 12;
+                await draw.textAlign(new Vec2(padding + 12, footerY + 16), hint, { x: 0, y: 0.5 }, textColor.with({ w: 0.75 }));
+            }
+        } finally {
+            matrices.model.pop();
+            draw.fontSize = previousFont.size;
+            draw.fontFamily = previousFont.family;
+            draw.fontWeight = previousFont.weight;
         }
-
-        matrices.model.pop();
     }
 }
