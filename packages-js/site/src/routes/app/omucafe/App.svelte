@@ -22,6 +22,9 @@
 
 <main>
     <Canvas {setPipeline} />
+    {#if game && game.side !== 'background'}
+        <div class="vignette" aria-hidden="true"></div>
+    {/if}
     {#if scene && $scene && game}
         {@const Component = $scene && game?.scene.getComponent($scene)}
         {#key [Component, $scene]}
@@ -44,6 +47,18 @@
         inset: 0;
         display: flex;
         justify-content: center;
+    }
+
+    .vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+            ellipse farthest-corner at center,
+            transparent 20%,
+            rgba(117, 62, 17, 0.08) 72%,
+            rgba(85, 57, 4, 0.1) 100%
+        );
     }
 
     .screen {
