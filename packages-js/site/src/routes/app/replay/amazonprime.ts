@@ -1,4 +1,4 @@
-import { type WebviewHandle } from '@omujs/omu/api/dashboard';
+import type { WebviewHandle } from '@omujs/omu/api/dashboard';
 import { ReplayApp, type Playback, type Video, type VideoInfo } from './replay-app';
 
 interface Metadata {
@@ -49,7 +49,7 @@ interface VodPlaybackResources {
 interface AdPlaylist {
     'playlist': {
         'description': {
-            'duration': '00:00:32.032';
+            'duration': string;
         };
     }[];
 }
@@ -79,6 +79,8 @@ async function init() {
         metadata?: Metadata;
         vod?: VodPlaybackResources;
         ads: Map<string, AdPlaylist>;
+        seekbarOffset?: number;
+        playbackTimer?: ReturnType<typeof setInterval>;
         originalFetch?: typeof fetch;
         originalXHR?: typeof XMLHttpRequest;
     } = {
@@ -105,7 +107,6 @@ async function init() {
     }
 
     function setPlayback(playback: Playback) {
-        console.log('Playback:', playback);
         emit({
             type: 'playback',
             playback,
@@ -113,26 +114,24 @@ async function init() {
     }
 
     function observeForVideo() {
-        const videoElement = document.querySelector('[id*="dv-web-player"][class="dv-player-fullscreen"] video') as HTMLVideoElement | null;
+        const videoElement = document.querySelector('[id*="dv-web-player"] video') as HTMLVideoElement | null;
         if (videoElement) {
             attachVideo(videoElement);
             return;
         }
-
-        setTimeout(() => observeForVideo(), 500);
     }
 
     function attachVideo(video: HTMLVideoElement) {
         if (state.video === video) return;
 
         if (state.video) {
-            state.video.pause();
             state.video.removeEventListener('play', onPlayPause);
             state.video.removeEventListener('pause', onPlayPause);
             state.video.removeEventListener('seeked', onSeeked);
         }
 
         state.video = video;
+        state.seekbarOffset = undefined;
         console.info('Video element attached:', video);
 
         video.addEventListener('play', onPlayPause);
@@ -153,44 +152,62 @@ async function init() {
     function getAdDuration(path: string) {
         const url = new URL(path, 'https://amazon.com/');
         const sessionId = url.searchParams.get('adDeliverySessionId');
-        if (!sessionId) return 0;
-        const ad = state.ads.get(sessionId);
+        const markerId = url.searchParams.get('adMarkerId');
+        if (!sessionId || !markerId) return 0;
+        const ad = state.ads.get(JSON.stringify([sessionId, markerId]));
         if (!ad) return 0;
         return ad.playlist.reduce((acc, item) => {
-            const [min, sec, ms] = item.description.duration.split(':').map(Number);
-            return acc + min * 60 * 1000 + sec * 1000 + ms;
+            const [hours, minutes, seconds] = item.description.duration.split(':').map(Number);
+            const duration = (hours * 3600 + minutes * 60 + seconds) * 1000;
+            return acc + (Number.isFinite(duration) && duration >= 0 ? duration : 0);
         }, 0);
     }
 
-    function calculateRealVideoTime(time: number): number {
-        if (!state.vod) return time;
+    function calculateRealVideoTime(time: number): { offset: number; advertising: boolean } {
+        if (!state.vod) return { offset: time, advertising: false };
         const playlist = state.vod.vodPlaylistedPlaybackUrls.result.playbackUrls.intraTitlePlaylist;
         let realTime = time * 1000;
+        let contentTime = 0;
         for (const item of playlist) {
             if (item.type === 'Main') {
                 if (realTime < item.endMs) {
-                    return realTime / 1000;
+                    return { offset: Math.max(item.startMs, realTime) / 1000, advertising: false };
                 }
+                contentTime = item.endMs;
             } else if (item.type === 'Remote') {
                 const adDuration = getAdDuration(item.urlsInPriorityOrder[0]);
+                if (realTime < contentTime + adDuration) {
+                    return { offset: contentTime / 1000, advertising: true };
+                }
                 realTime -= adDuration;
             }
         }
-        return realTime / 1000;
+        return { offset: contentTime / 1000, advertising: false };
     }
 
     function updatePlaybackFromVideo() {
         const { video } = state;
         if (!video) return;
         const start = Date.now();
-        const offset = calculateRealVideoTime(video.currentTime);
-        const playing = !video.paused && !video.ended;
+        let { offset, advertising } = calculateRealVideoTime(video.currentTime);
+        // Amazon's seekbar uses the content timeline, including when ads are removed after viewing.
+        const seekbar = document.querySelector<HTMLInputElement>('[id*="dv-web-player"] input[type="range"][aria-label="Seek"]');
+        const value = seekbar?.valueAsNumber;
+        if (value !== undefined && Number.isFinite(value) && value >= 0 && value <= 100 && state.info.duration) {
+            offset = state.info.duration * value / 100;
+            // A frozen content position must not advance on the receiver during an ad or buffering.
+            advertising = state.seekbarOffset === undefined || offset === state.seekbarOffset;
+            state.seekbarOffset = offset;
+        } else {
+            state.seekbarOffset = undefined;
+        }
+        const playing = !video.paused && !video.ended && !video.seeking && !advertising;
         setPlayback({ start, offset, playing });
     }
 
     function patchFetch() {
         if (state.originalFetch) return;
-        state.originalFetch = window.fetch.bind(window);
+        state.originalFetch = window.fetch;
 
         const proxyFetch = async (request: Request, response: Response): Promise<Response> => {
             const url = new URL(request.url);
@@ -209,7 +226,6 @@ async function init() {
                         title: catalog.title,
                         thumbnailUrl: images.coverImage,
                     });
-                    state.video = undefined;
                     observeForVideo();
                 } catch (innerErr) {
                     console.warn('Failed to parse Netflix metadata:', innerErr);
@@ -227,6 +243,8 @@ async function init() {
                     setInfo({
                         duration,
                     });
+                    state.seekbarOffset = undefined;
+                    updatePlaybackFromVideo();
                 } catch (innerErr) {
                     console.warn('Failed to parse Netflix metadata:', innerErr);
                 }
@@ -237,7 +255,12 @@ async function init() {
                 try {
                     const clone = response.clone();
                     const adPlaylist: AdPlaylist = await clone.json();
-                    state.ads.set(url.searchParams.get('adDeliverySessionId') ?? '', adPlaylist);
+                    const sessionId = url.searchParams.get('adDeliverySessionId');
+                    const markerId = url.searchParams.get('adMarkerId');
+                    if (sessionId && markerId) {
+                        state.ads.set(JSON.stringify([sessionId, markerId]), adPlaylist);
+                        updatePlaybackFromVideo();
+                    }
                     console.log('Ad playlist updated:', state.ads);
                 } catch (innerErr) {
                     console.warn('Failed to parse ad playlist:', innerErr);
@@ -300,9 +323,14 @@ async function init() {
     }
 
     function cleanup() {
+        clearInterval(state.playbackTimer);
         if (state.originalFetch) {
             window.fetch = state.originalFetch as typeof fetch;
             state.originalFetch = undefined;
+        }
+        if (state.originalXHR) {
+            window.XMLHttpRequest = state.originalXHR;
+            state.originalXHR = undefined;
         }
         if (state.video) {
             state.video.removeEventListener('play', onPlayPause);
@@ -317,6 +345,10 @@ async function init() {
     patchFetch();
 
     observeForVideo();
+    state.playbackTimer = setInterval(() => {
+        observeForVideo();
+        updatePlaybackFromVideo();
+    }, 250);
 
     window.addEventListener('beforeunload', cleanup);
 
