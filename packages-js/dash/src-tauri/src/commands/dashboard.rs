@@ -152,6 +152,22 @@ pub async fn create_webview_window(
                 true
             });
 
+    #[cfg(target_os = "windows")]
+    {
+        // Separate WebView2 processes from the dashboard so their GPU arguments can differ.
+        let data_directory = app_handle
+            .path()
+            .app_local_data_dir()
+            .map_err(|err| err.to_string())?
+            .join("webview-api");
+        builder = builder
+            .data_directory(data_directory)
+            // Preserve Wry's default arguments when overriding them.
+            .additional_browser_args(
+                "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-gpu",
+            );
+    }
+
     if let Some(center) = options.center {
         if center {
             builder = builder.center();
