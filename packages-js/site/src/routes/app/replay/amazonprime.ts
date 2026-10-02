@@ -80,6 +80,7 @@ async function init() {
         vod?: VodPlaybackResources;
         ads: Map<string, AdPlaylist>;
         seekbarOffset?: number;
+        playback?: Playback;
         playbackTimer?: ReturnType<typeof setInterval>;
         originalFetch?: typeof fetch;
         originalXHR?: typeof XMLHttpRequest;
@@ -107,6 +108,7 @@ async function init() {
     }
 
     function setPlayback(playback: Playback) {
+        state.playback = playback;
         emit({
             type: 'playback',
             playback,
@@ -189,11 +191,18 @@ async function init() {
         const { video } = state;
         if (!video) return;
         const start = Date.now();
+        if (!video.isConnected || video.readyState < 2 || !Number.isFinite(video.currentTime)) {
+            if (state.playback) {
+                setPlayback({ start, offset: state.playback.offset, playing: false });
+            }
+            return;
+        }
         let { offset, advertising } = calculateRealVideoTime(video.currentTime);
         // Amazon's seekbar uses the content timeline, including when ads are removed after viewing.
         const seekbar = document.querySelector<HTMLInputElement>('[id*="dv-web-player"] input[type="range"][aria-label="Seek"]');
         const value = seekbar?.valueAsNumber;
-        if (value !== undefined && Number.isFinite(value) && value >= 0 && value <= 100 && state.info.duration) {
+        // A reset seekbar can briefly report zero while the media is still at its previous position.
+        if (value !== undefined && Number.isFinite(value) && value >= 0 && value <= 100 && state.info.duration && (value !== 0 || offset === 0)) {
             offset = state.info.duration * value / 100;
             // A frozen content position must not advance on the receiver during an ad or buffering.
             advertising = state.seekbarOffset === undefined || offset === state.seekbarOffset;
@@ -201,7 +210,7 @@ async function init() {
         } else {
             state.seekbarOffset = undefined;
         }
-        const playing = !video.paused && !video.ended && !video.seeking && !advertising;
+        const playing = !video.paused && !video.ended && !video.seeking && video.readyState >= 3 && !advertising;
         setPlayback({ start, offset, playing });
     }
 

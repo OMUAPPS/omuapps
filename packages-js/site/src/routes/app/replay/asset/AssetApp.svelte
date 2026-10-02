@@ -19,7 +19,7 @@
         omu.start();
     }
 
-    let timeTimeout = $state(0);
+    let timeTimeout = 0;
     let timer: {
         start: number;
         time: number;
@@ -27,7 +27,7 @@
     } | null = $state(null);
     let formattedTime = $state('...');
 
-    let data: ReplayData | null = $replayData;
+    let data: ReplayData | null = null;
 
     function updateTime() {
         if (!timer) {
@@ -35,7 +35,7 @@
             return;
         }
         const { duration, start } = timer;
-        const elapsed = (performance.now() + performance.timeOrigin) - start;
+        const elapsed = data?.playback.playing ? Math.max(0, Date.now() - start) : 0;
         const time = timer.time + elapsed / 1000;
         formattedTime = formatTime(time, duration ? getTimeUnits(duration) : undefined);
         if (data?.playback.playing) {
@@ -46,26 +46,21 @@
         }
     }
 
-    replayData.subscribe((replayData) => {
-        data = replayData;
-        if (!replayData) return;
-        timer = {
-            start: replayData.playback.start,
-            time: replayData.playback.offset,
-            duration: replayData.info.duration,
-        };
-        if (replayData.playback.playing) {
-            updateTime();
-        }
-    });
-    replayData.subscribe((replayData) => {
-        if (!replayData) return;
-        if (!replayData.playback.playing) {
-            clearTimeout(timeTimeout);
-        }
-    });
     onMount(() => {
-        if (!$replayData) return;
+        const unsubscribe = replayData.subscribe((replayData) => {
+            clearTimeout(timeTimeout);
+            data = replayData;
+            timer = replayData ? {
+                start: replayData.playback.start,
+                time: replayData.playback.offset,
+                duration: replayData.info.duration,
+            } : null;
+            updateTime();
+        });
+        return () => {
+            unsubscribe();
+            clearTimeout(timeTimeout);
+        };
     });
 
     function mapColorKeyValue(value: number) {

@@ -27,7 +27,7 @@ const TIME_UNITS: TimeUnit[] = [
 ] as const;
 
 export function getTimeUnits(time: number) {
-    return TIME_UNITS.filter((unit) => time > unit.factor);
+    return TIME_UNITS.filter((unit) => unit.factor === 1 || time >= unit.factor);
 }
 
 export function formatTime(time: number, units?: TimeUnit[]) {
