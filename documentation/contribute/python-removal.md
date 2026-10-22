@@ -238,15 +238,42 @@ Python版はアプリの`metadata`が変わったかを`json.dumps`の文字列�
 
 ```ts
 class BundledPlugins {
-    public static readonly all: readonly ServerPlugin[] = [
-        ChatPlugin.instance,
-        ChatProviderPlugin.instance,
-        ObsPlugin.instance,
-    ];
+    public static create(context: ServerPluginContext): ServerPlugin[] {
+        return [
+            new ChatPlugin(context),
+            new ObsPlugin(context, ObsInstallations.current),
+        ];
+    }
 }
 ```
 
 `ServerPlugin`は、起動、停止、片付けの3つを持つ。インストールと更新の通知は持たない。同梱するプラグインはサーバーと同じ版でしか存在しないためである。
+
+### プラグインには文脈を作るときに1回だけ渡す
+
+プラグインが使うサーバーの機能（エンドポイント、権限、サーバーのアドレス、クライアントの作成）は`ServerPluginContext`にまとめ、プラグインを作るときに渡す。起動や停止のたびに引数で渡さない。
+
+悪い例
+
+```ts
+interface ServerPlugin {
+    start(server: Server): Promise<void>;
+}
+```
+
+良い例
+
+```ts
+class ObsPlugin implements ServerPlugin {
+    public constructor(private readonly context: ServerPluginContext) {}
+}
+```
+
+エンドポイントは作るときに結び付け、起動のたびに結び付けない。再読み込みで停止と起動を繰り返しても、同じエンドポイントを二重に結び付けないためである。
+
+### プラグインのクライアントはメモリの中でつなぐ
+
+同梱するプラグインがクライアントとして振る舞うときは、`ServerPluginContext.createClient`で作る。作ったクライアントは`LocalTransport`でサーバーとメモリの中でつながり、`plugin`の種類のセッションになる。パケットは実際の通信と同じくバイト列にしてから渡す。クライアントとサーバーの定義の食い違いを、同梱のプラグインでも見つけられるようにするためである。
 
 ### アプリからの要求はプラグインの名前で照合する
 
@@ -343,7 +370,9 @@ C++のプラグインが応えるエンドポイントとシグナルは`package
 
 ### C++で実装するプロトコルは必要な分だけにする
 
-C++のプラグインはアプリ`com.omuapps:plugin-obs`として接続する。実装するのは次の範囲だけにする。
+C++のプラグインはアプリ`com.omuapps:plugin-obs`として接続する。名乗る`App`は、サーバーの`ObsPlugin.APP`と同じID、版、メタデータにする。食い違うとサーバーはアプリが更新されたとみなし、ダッシュボードに確認を求めて接続を止める。
+
+実装するのは次の範囲だけにする。
 
 - フレーム（パケットの種類の文字列と本体のバイト列）
 - 接続の手順（`server_meta`、`connect`、`token`、`ready`、`disconnect`）
