@@ -8,6 +8,7 @@ from omu.app import AppType
 from omu_chat import Channel, Chat, Message, Room, events
 
 from .controller import ChannelController
+from .errors import ProviderTemporarilyUnavailable
 from .service import ProviderContext, ProviderService, retrieve_services
 from .version import VERSION
 
@@ -82,6 +83,9 @@ async def should_remove(room: Room, provider_service: ProviderService):
     try:
         online = await provider_service.is_online(room)
         return not online
+    except ProviderTemporarilyUnavailable as e:
+        logger.warning(f"Could not check room {room.key()}; keeping connection until next check: {e}")
+        return False
     except Exception as e:
         logger.opt(exception=e).error(f"Error checking if room {room.key()} should be removed")
         return True

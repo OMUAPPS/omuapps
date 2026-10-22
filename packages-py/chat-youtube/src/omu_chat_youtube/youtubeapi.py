@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 import aiohttp
 import bs4
+from loguru import logger
 from omu import Omu
-from omu_chatprovider.errors import ProviderError
+from omu_chatprovider.errors import ProviderError, ProviderTemporarilyUnavailable
 from omu_chatprovider.helper import assert_none
 from omu_chatprovider.throttle import Throttle
 
@@ -82,13 +83,34 @@ class YoutubeAPI:
         url: str,
         params: dict[str, str] | None = None,
     ) -> YoutubePage:
-        async with self.throttle:
-            response = await self.session.get(
-                url,
-                params=params,
-                headers=BASE_HEADERS,
-            )
-        return await YoutubePage.from_response(response)
+        try:
+            async with self.throttle:
+                response = await self.session.get(url, params=params, headers=BASE_HEADERS)
+            if response.status // 100 != 2:
+                response.release()
+                raise ProviderTemporarilyUnavailable(f"page HTTP {response.status}")
+            return await YoutubePage.from_response(response)
+        except (aiohttp.ClientError, TimeoutError, ValueError) as e:
+            raise ProviderTemporarilyUnavailable(f"page: {type(e).__name__}") from e
+
+    async def _post_json(self, url: str, params: dict[str, str], payload: dict[str, Any]) -> Any:
+        stage = url.rsplit("/", 1)[-1]
+        try:
+            async with self.throttle:
+                response = await self.session.post(url, params=params, headers=BASE_HEADERS, json=payload)
+            if response.status // 100 != 2:
+                response.release()
+                raise ProviderTemporarilyUnavailable(f"{stage} HTTP {response.status}")
+            data = await response.json()
+            if not isinstance(data, dict):
+                raise ProviderTemporarilyUnavailable(f"{stage}: expected JSON object")
+            if "error" in data:
+                error = data["error"]
+                code = error.get("code") if isinstance(error, dict) else None
+                raise ProviderTemporarilyUnavailable(f"{stage} API error {code}")
+            return data
+        except (aiohttp.ClientError, TimeoutError, ValueError) as e:
+            raise ProviderTemporarilyUnavailable(f"{stage}: {type(e).__name__}") from e
 
     async def fetch_online_videos(self, url: str) -> list[str]:
         match = assert_none(
@@ -186,14 +208,7 @@ class YoutubeAPI:
         }
         if continuation:
             payload["continuation"] = continuation
-        async with self.throttle:
-            response = await self.session.post(
-                url,
-                params=params,
-                headers=BASE_HEADERS,
-                json=payload,
-            )
-        return await response.json()
+        return await self._post_json(url, params, payload)
 
     async def updated_metadata(
         self,
@@ -215,41 +230,50 @@ class YoutubeAPI:
             payload["videoId"] = video_id
         else:
             raise ValueError("video_id or continuation must be provided")
-        async with self.throttle:
-            response = await self.session.post(
-                url,
-                params=params,
-                headers=BASE_HEADERS,
-                json=payload,
-            )
-        return await response.json()
+        return await self._post_json(url, params, payload)
 
     async def is_online(self, video_id: str) -> bool:
-        live_chat_params = {"v": video_id}
-        async with self.throttle:
-            live_chat_response = await self.session.get(
-                f"{YOUTUBE_URL}/live_chat",
-                params=live_chat_params,
-                headers=BASE_HEADERS,
-            )
-        if live_chat_response.status // 100 != 2:
+        try:
+            page = await self.get(f"{YOUTUBE_URL}/live_chat", {"v": video_id})
+            continuation = extract_chat_continuation(page)
+            if continuation is None:
+                raise ProviderTemporarilyUnavailable("live_chat: missing continuation")
+            data = await self.get_live_chat(video_id=video_id, key=page.INNERTUBE_API_KEY, continuation=continuation)
+            if isinstance(data.get("continuationContents", {}).get("liveChatContinuation"), dict):
+                return True
+            raise ProviderTemporarilyUnavailable("get_live_chat: missing chat contents")
+        except (ProviderTemporarilyUnavailable, ValueError, KeyError, TypeError, AttributeError, IndexError) as e:
+            if await self.has_ended(video_id):
+                return False
+            detail = str(e) if isinstance(e, ProviderTemporarilyUnavailable) else type(e).__name__
+            raise ProviderTemporarilyUnavailable(f"{video_id}: online check: {detail}") from e
+
+    async def has_ended(self, video_id: str) -> bool:
+        try:
+            page = await self.get(f"{YOUTUBE_URL}/watch", {"v": video_id})
+            player = page.get_ytinitialplayerresponse()
+            details = player.get("microformat", {}).get("playerMicroformatRenderer", {}).get("liveBroadcastDetails", {})
+            end = details.get("endTimestamp")
+            if not isinstance(end, str) or not end:
+                return False
+            # Validate the end marker before treating an unfamiliar response as final.
+            datetime.fromisoformat(end)
+        except (ProviderTemporarilyUnavailable, ValueError, KeyError, TypeError, AttributeError):
             return False
-        response = await YoutubePage.from_response(live_chat_response)
-        initial_data = response.get_ytinitialdata()
-        if initial_data is None:
-            return False
-        continuation = (
-            initial_data.get("contents", {})
-            .get("liveChatRenderer", {})
-            .get("continuations", [{}])[0]
-            .get("invalidationContinuationData", {})
-            .get("continuation")
-        )
-        if continuation is None:
-            return False
-        live_chat_response_data = await self.get_live_chat(
-            video_id=video_id,
-            key=response.get_ytcfg()["INNERTUBE_API_KEY"],
-            continuation=continuation,
-        )
-        return "continuationContents" in live_chat_response_data
+        logger.info(f"YouTube {video_id}: stream ended (endTimestamp confirmed)")
+        return True
+
+
+def extract_chat_continuation(page: YoutubePage) -> str | None:
+    initial_data = page.get_ytinitialdata() or {}
+    continuations = initial_data.get("contents", {}).get("liveChatRenderer", {}).get("continuations", [])
+    return extract_continuation(continuations)
+
+
+def extract_continuation(continuations: list) -> str | None:
+    for continuation in continuations:
+        for kind in ("invalidationContinuationData", "timedContinuationData", "reloadContinuationData"):
+            value = continuation.get(kind, {}).get("continuation")
+            if isinstance(value, str) and value:
+                return value
+    return None

@@ -7,6 +7,7 @@ from loguru import logger
 from omu.identifier import Identifier
 from omu_chat import Channel
 
+from .errors import ProviderTemporarilyUnavailable
 from .service import ProviderContext, ProviderService
 
 
@@ -90,6 +91,8 @@ class ChannelController:
                         await service.start_channel(self._ctx, channel)
                     else:
                         await service.stop_channel(self._ctx, channel)
+                except ProviderTemporarilyUnavailable as e:
+                    logger.warning(f"Channel {channel.key()} temporarily unavailable; retrying next refresh: {e}")
                 except Exception as e:
                     action = "starting" if active else "stopping"
                     logger.opt(exception=e).error(f"Error {action} channel {channel.key()}")

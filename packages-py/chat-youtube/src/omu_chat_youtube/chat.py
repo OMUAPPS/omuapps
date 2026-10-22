@@ -30,7 +30,7 @@ from omu_chat.model import (
 )
 from omu_chat.model.channel import Channel
 from omu_chat.model.vote import Choice
-from omu_chatprovider.errors import ProviderError
+from omu_chatprovider.errors import ProviderError, ProviderTemporarilyUnavailable
 from omu_chatprovider.helper import traverse
 from omu_chatprovider.tasks import Tasks
 
@@ -56,7 +56,7 @@ from .types.frameworkupdates import (
 )
 from .types.metadataactions import MetadataActions
 from .types.runs import Runs
-from .youtubeapi import YoutubeAPI, YoutubePage
+from .youtubeapi import YoutubeAPI, YoutubePage, extract_chat_continuation, extract_continuation
 
 if TYPE_CHECKING:
     from .youtube import YoutubeChatService
@@ -97,23 +97,7 @@ class YoutubeChatAPI:
 
     @classmethod
     def extract_chat_continuation(cls, page: YoutubePage) -> str | None:
-        initial_data = page.get_ytinitialdata()
-        if initial_data is None:
-            return None
-        return (
-            traverse(initial_data)
-            .map(lambda x: x.get("contents"))
-            .map(lambda x: x.get("liveChatRenderer"))
-            .map(lambda x: x.get("continuations"))
-            .map(lambda x: x[0])
-            .map(
-                lambda x: x.get("invalidationContinuationData")
-                or x.get("timedContinuationData")
-                or x.get("reloadContinuationData")
-            )
-            .map(lambda x: x.get("continuation"))
-            .get()
-        )
+        return extract_chat_continuation(page)
 
     async def reset_continuation(self) -> bool:
         chat_page = await self.api.get(
@@ -142,20 +126,7 @@ class YoutubeChatAPI:
         return data
 
     async def is_online(self) -> bool:
-        live_chat_params = {"v": self.video_id}
-        live_chat_page = await self.api.get(
-            f"{YOUTUBE_URL}/live_chat",
-            params=live_chat_params,
-        )
-        continuation = self.extract_chat_continuation(live_chat_page)
-        if continuation is None:
-            return False
-        live_chat_response_data = await self.api.get_live_chat(
-            video_id=self.video_id,
-            key=self.api_key,
-            continuation=continuation,
-        )
-        return "continuationContents" in live_chat_response_data
+        return await self.api.is_online(self.video_id)
 
     async def fetch(self, retry: int = 3) -> types.live_chat:
         data = await self.api.get_live_chat(
@@ -166,45 +137,40 @@ class YoutubeChatAPI:
         return data
 
     async def next(self) -> ChatData | None:
-        attempts = 0
+        attempt = 0
         while True:
-            if attempts > 3:
-                return
-            data: types.live_chat = await self.fetch()
-            if "error" in data:
-                logger.error(f"Error while fetching youtube chat with video id {self.video_id}: {data['error']}")
+            try:
+                if self.chat_continuation is None and not await self.reset_continuation():
+                    raise ProviderTemporarilyUnavailable("live_chat: missing continuation")
+                data = await self.fetch()
+                contents = data.get("continuationContents")
+                if contents is None:
+                    raise ProviderTemporarilyUnavailable("get_live_chat: missing chat contents")
+                live_chat_continuation = contents["liveChatContinuation"]
+                self.chat_continuation = extract_continuation(live_chat_continuation["continuations"])
+                chat_actions = live_chat_continuation.get("actions", [])
+                if not isinstance(chat_actions, list):
+                    raise ProviderTemporarilyUnavailable("get_live_chat: invalid actions")
+                mutations = (
+                    traverse(data)
+                    .map(lambda x: x.get("frameworkUpdates"))
+                    .map(lambda x: x.get("entityBatchUpdate"))
+                    .map(lambda x: x.get("mutations"))
+                    .get()
+                    or []
+                )
+                if not isinstance(mutations, list):
+                    raise ProviderTemporarilyUnavailable("get_live_chat: invalid mutations")
+                break
+            except (ProviderTemporarilyUnavailable, ValueError, KeyError, TypeError, AttributeError, IndexError) as e:
                 self.chat_continuation = None
+                if await self.api.has_ended(self.video_id):
+                    return None
+                if attempt == 3:
+                    detail = str(e) if isinstance(e, ProviderTemporarilyUnavailable) else type(e).__name__
+                    raise ProviderTemporarilyUnavailable(f"{self.video_id}: chat fetch: {detail}") from e
+                attempt += 1
                 await asyncio.sleep(10)
-                if not await self.reset_continuation():
-                    return None
-                attempts += 1
-                continue
-            if "continuationContents" not in data:
-                if not await self.reset_continuation():
-                    return None
-                await asyncio.sleep(3)
-                attempts += 1
-                continue
-            break
-
-        live_chat_continuation = data["continuationContents"]["liveChatContinuation"]
-        continuations = live_chat_continuation["continuations"]
-        if len(continuations) == 0:
-            self.chat_continuation = None
-        else:
-            continuation = continuations[0]
-            self.chat_continuation = (
-                continuation.get("invalidationContinuationData", {}) or continuation.get("timedContinuationData", {})
-            ).get("continuation", None)
-        chat_actions = live_chat_continuation.get("actions", [])
-        mutations = (
-            traverse(data)
-            .map(lambda x: x.get("frameworkUpdates"))
-            .map(lambda x: x.get("entityBatchUpdate"))
-            .map(lambda x: x.get("mutations"))
-            .get()
-            or []
-        )
         return ChatData(
             chat_actions=chat_actions,
             metadata_actions=[],
@@ -279,6 +245,7 @@ class YoutubeChat:
         self.tasks = Tasks(asyncio.get_running_loop())
         self.author_fetch_queue: list[Author] = []
         self._closed = False
+        self._run_task: asyncio.Task | None = None
 
     @property
     def closed(self) -> bool:
@@ -347,23 +314,42 @@ class YoutubeChat:
 
     async def run(self):
         """Main loop for processing chat data."""
+        if self._closed:
+            return
+        self._run_task = asyncio.current_task()
         count = 0
         self.tasks.create_task(self.fetch_authors_task())
         try:
             self.room.connected = True
             await self.chat.rooms.update(self.room)
             while not self._closed:
-                chat_data = await self.youtube_chat.next()
+                try:
+                    chat_data = await self.youtube_chat.next()
+                except ProviderTemporarilyUnavailable as e:
+                    logger.warning(f"YouTube {self.youtube_chat.video_id}: {e}; retrying in 10 seconds")
+                    await asyncio.sleep(10)
+                    continue
                 if chat_data is None:
                     break
                 await self.process_chat_data(chat_data)
                 await asyncio.sleep(1 / 3)
                 if count % METADATA_UPDATE_INTERVAL == 0:
-                    self.room.metadata |= await self.youtube_chat.fetch_metadata()
-                    await self.chat.rooms.update(self.room)
+                    try:
+                        metadata = await self.youtube_chat.fetch_metadata()
+                    except (
+                        ProviderTemporarilyUnavailable, ValueError, KeyError, TypeError, AttributeError, IndexError
+                    ) as e:
+                        detail = str(e) if isinstance(e, ProviderTemporarilyUnavailable) else type(e).__name__
+                        logger.warning(
+                            f"YouTube {self.youtube_chat.video_id}: metadata: {detail}; retrying next update"
+                        )
+                    else:
+                        self.room.metadata |= metadata
+                        await self.chat.rooms.update(self.room)
                 count += 1
         finally:
             await self.stop()
+            self._run_task = None
 
     async def process_chat_data(self, chat_data: ChatData):
         """Process a batch of chat data including messages, deletions, and polls."""
@@ -630,7 +616,18 @@ class YoutubeChat:
         if self._closed:
             return
         self._closed = True
+        if self._run_task is not None and self._run_task is not asyncio.current_task():
+            self._run_task.cancel()
         self.tasks.terminate()
         self.room.connected = False
-        await self.update_times()
+        self.room.status = "offline"
+        await self.chat.rooms.update(self.room)
+        try:
+            async with asyncio.timeout(5):
+                await self.update_times()
+        except (
+            ProviderTemporarilyUnavailable, TimeoutError, ValueError, KeyError, TypeError, AttributeError, IndexError
+        ) as e:
+            detail = str(e) if isinstance(e, ProviderTemporarilyUnavailable) else type(e).__name__
+            logger.warning(f"YouTube {self.youtube_chat.video_id}: final timestamps unavailable: {detail}")
         await self.chat.rooms.update(self.room)

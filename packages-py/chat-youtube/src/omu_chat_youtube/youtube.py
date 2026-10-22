@@ -7,6 +7,7 @@ from omu import Omu
 from omu.identifier import Identifier
 from omu_chat import Chat
 from omu_chat.model import Channel, Provider, Room
+from omu_chatprovider.errors import ProviderTemporarilyUnavailable
 from omu_chatprovider.helper import get_session
 from omu_chatprovider.service import ProviderContext, ProviderService
 
@@ -76,6 +77,9 @@ class YoutubeChatService(ProviderService):
                 room,
                 channel,
             )
+        except ProviderTemporarilyUnavailable as e:
+            logger.warning(f"Could not start YouTube chat for {video_id}: {e}")
+            return
         except Exception as e:
             logger.opt(exception=e).error(f"Could not start YouTube chat for {video_id}")
             return
