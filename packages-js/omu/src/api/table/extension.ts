@@ -196,6 +196,7 @@ class TableImpl<T> implements Table<T> {
         this.promiseMap = new Map();
         this.proxies = [];
         this.listening = false;
+        this.permissions = type.permissions;
 
         omu.network.addPacketHandler(TABLE_PROXY_PACKET, (packet) => {
             if (!packet.id.isEqual(this.id)) {
@@ -262,7 +263,7 @@ class TableImpl<T> implements Table<T> {
             this.events.emit('clear');
             this.events.emit('cache', this.cache);
         });
-        omu.on('ready', () => this.onReady());
+        omu.network.addTask(() => this.onTask());
     }
 
     public on<K extends keyof TableEvents<T>>(event: K, listener: (...args: TableEvents<T>[K]) => void): Unlisten {
@@ -311,13 +312,20 @@ class TableImpl<T> implements Table<T> {
         };
     }
 
-    private onReady(): void {
+    private async onTask(): Promise<void> {
         if (this.config) {
-            this.omu.send(TABLE_SET_CONFIG_PACKET, {
-                id: this.id,
-                config: this.config,
-            });
+            await this.omu.send(TABLE_SET_CONFIG_PACKET, new SetConfigPacket(this.id, this.config));
         }
+        const permissions = this.permissions;
+        if (!permissions || !this.id.isSubpathOf(this.omu.app.id)) return;
+        await this.omu.send(TABLE_SET_PERMISSION_PACKET, new SetPermissionPacket(
+            this.id,
+            permissions.all ?? null,
+            permissions.read ?? null,
+            permissions.write ?? null,
+            permissions.remove ?? null,
+            permissions.proxy ?? null,
+        ));
     }
 
     public async get(key: string): Promise<T | undefined> {
