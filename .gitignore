@@ -1,3 +1,6 @@
+/diagnostics
+/documentation/plans
+
 # python
 **/__pycache__/**
 /dist
