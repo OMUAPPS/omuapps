@@ -4,6 +4,10 @@ import { type PermissionMetadata, PermissionType } from '@omujs/omu/api/permissi
 
 export class ObsPermissions {
     public static readonly ALL: readonly PermissionType[] = [
+        ObsPermissions.create(OBSPermissions.OBS_INSTALL_PERMISSION_ID, {
+            level: 'low',
+            name: { ja: 'OBSプラグインのインストール', en: 'Install OBS plugin' },
+        }),
         ObsPermissions.create(OBSPermissions.OBS_SOURCE_READ_PERMISSION_ID, {
             level: 'low',
             name: { ja: 'ソース情報の読み取り', en: 'Read source' },
