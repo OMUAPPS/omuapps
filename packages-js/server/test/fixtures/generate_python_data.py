@@ -176,6 +176,7 @@ def main(output: Path) -> None:
     (output.parent / "python-data.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=4) + "\n",
         encoding="utf-8",
+        newline="\n",
     )
 
 
