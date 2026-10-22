@@ -42,6 +42,22 @@ describe('PermissionManager', () => {
         });
     }
 
+    test('limits a child app to the permissions its parent has', async () => {
+        const manager = SecurityFixture.load();
+        const parent = new App('com.example:family', { version: '1.0.0' });
+        const child = new App('com.example:family/child', { parentId: parent.id, type: 'remote' });
+        const shared = Identifier.fromKey('com.example:family/shared');
+        const childOnly = Identifier.fromKey('com.example:family/child-only');
+        manager.generateAppToken(parent).handle.grant(shared);
+        const { handle, token } = manager.generateAppToken(child);
+        handle.grantAll([shared, childOnly]);
+        const verification = await manager.verifyApp(child, token);
+        expect(verification.ok).toBe(true);
+        if (!verification.ok) return;
+        expect(verification.handle.has(shared)).toBe(true);
+        expect(verification.handle.has(childOnly)).toBe(false);
+    });
+
     test('reads permission types written by Python', () => {
         const manager = SecurityFixture.load();
         expect(manager.permissions.get(Identifier.fromKey('com.example:app/permission'))?.metadata.level).toBe('low');

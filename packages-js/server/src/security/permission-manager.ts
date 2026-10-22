@@ -6,7 +6,7 @@ import { PermissionType, type PermissionTypeJson } from '@omujs/omu/api/permissi
 
 import { AppEntry, type AppEntryJSON } from './app-entry.js';
 import { AppToken } from './app-token.js';
-import { AppPermissionHandle, type AppEntrySource, FullPermissionHandle, type PermissionHandle } from './permission-handle.js';
+import { AppPermissionHandle, type AppEntrySource, ChildPermissionHandle, FullPermissionHandle, type PermissionHandle } from './permission-handle.js';
 
 export type AppVerification = {
     ok: true;
@@ -131,6 +131,7 @@ export class PermissionManager implements AppEntrySource {
             const parent = this.entry(app.parentId);
             if (!parent) return { ok: false, reason: `Parent app ${app.parentId.key()} not found` };
             if (parent.parentId) return { ok: false, reason: 'Child apps cannot have children' };
+            return { ok: true, handle: new ChildPermissionHandle(this, app.id, app.parentId), token };
         }
         return { ok: true, handle: new AppPermissionHandle(this, app.id), token };
     }

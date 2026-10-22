@@ -71,3 +71,16 @@ export class AppPermissionHandle extends PermissionHandle {
         this.source.store();
     }
 }
+
+export class ChildPermissionHandle extends AppPermissionHandle {
+    private readonly parent: AppPermissionHandle;
+
+    public constructor(source: AppEntrySource, id: Identifier, parentId: Identifier) {
+        super(source, id);
+        this.parent = new AppPermissionHandle(source, parentId);
+    }
+
+    public has(id: Identifier): boolean {
+        return super.has(id) && this.parent.has(id);
+    }
+}
