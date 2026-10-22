@@ -11,25 +11,25 @@ export const PERMISSION_EXTENSION_TYPE: ExtensionType<PermissionExtension> = new
     'permission',
     (client) => new PermissionExtension(client),
 );
-const PERMISSION_REGISTER_PACKET = PacketType.createJson<PermissionType[]>(
+export const PERMISSION_REGISTER_PACKET: PacketType<PermissionType[]> = PacketType.createJson<PermissionType[]>(
     PERMISSION_EXTENSION_TYPE,
     {
         name: 'register',
         serializer: Serializer.of(PermissionType).toArray(),
     },
 );
-const PERMISSION_REQUIRE_PACKET = PacketType.createJson<Identifier[]>(PERMISSION_EXTENSION_TYPE, {
+export const PERMISSION_REQUIRE_PACKET: PacketType<Identifier[]> = PacketType.createJson<Identifier[]>(PERMISSION_EXTENSION_TYPE, {
     name: 'require',
     serializer: Serializer.of(Identifier).toArray(),
 });
-const PERMISSION_REQUEST_ENDPOINT = EndpointType.createJson<Identifier[], void>(
+export const PERMISSION_REQUEST_ENDPOINT: EndpointType<Identifier[], void> = EndpointType.createJson<Identifier[], void>(
     PERMISSION_EXTENSION_TYPE,
     {
         name: 'request',
         requestSerializer: Serializer.of(Identifier).toArray(),
     },
 );
-const PERMISSION_GRANT_PACKET = PacketType.createJson<PermissionType[]>(PERMISSION_EXTENSION_TYPE, {
+export const PERMISSION_GRANT_PACKET: PacketType<PermissionType[]> = PacketType.createJson<PermissionType[]>(PERMISSION_EXTENSION_TYPE, {
     name: 'grant',
     serializer: Serializer.of(PermissionType).toArray(),
 });

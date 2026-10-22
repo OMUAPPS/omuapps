@@ -185,19 +185,19 @@ function formatError(error: unknown): string {
     return String(error);
 }
 
-const ENDPOINT_REGISTER_PACKET = PacketType.createSerialized<EndpointRegisterPacket>(ENDPOINT_EXTENSION_TYPE, {
+export const ENDPOINT_REGISTER_PACKET: PacketType<EndpointRegisterPacket> = PacketType.createSerialized<EndpointRegisterPacket>(ENDPOINT_EXTENSION_TYPE, {
     name: 'register',
     serializer: EndpointRegisterPacket,
 });
-const ENDPOINT_INVOKE_PACKET = PacketType.createSerialized<EndpointInvokePacket>(ENDPOINT_EXTENSION_TYPE, {
+export const ENDPOINT_INVOKE_PACKET: PacketType<EndpointInvokePacket> = PacketType.createSerialized<EndpointInvokePacket>(ENDPOINT_EXTENSION_TYPE, {
     name: 'invoke',
     serializer: EndpointInvokePacket,
 });
-const ENDPOINT_INVOKED_PACKET = PacketType.createSerialized<EndpointInvokedPacket>(ENDPOINT_EXTENSION_TYPE, {
+export const ENDPOINT_INVOKED_PACKET: PacketType<EndpointInvokedPacket> = PacketType.createSerialized<EndpointInvokedPacket>(ENDPOINT_EXTENSION_TYPE, {
     name: 'invoked',
     serializer: EndpointInvokedPacket,
 });
-const ENDPOINT_RESPONSE_PACKET = PacketType.createSerialized<EndpointResponsePacket>(ENDPOINT_EXTENSION_TYPE, {
+export const ENDPOINT_RESPONSE_PACKET: PacketType<EndpointResponsePacket> = PacketType.createSerialized<EndpointResponsePacket>(ENDPOINT_EXTENSION_TYPE, {
     name: 'response',
     serializer: EndpointResponsePacket,
 });

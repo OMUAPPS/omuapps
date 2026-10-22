@@ -10,9 +10,13 @@ export const I18N_EXTENSION_TYPE: ExtensionType<I18nExtension> = new ExtensionTy
 
 export const I18N_SET_LOCALES_PERMISSION_ID: Identifier = I18N_EXTENSION_TYPE.join('locales', 'set');
 export const I18N_GET_LOCALES_PERMISSION_ID: Identifier = I18N_EXTENSION_TYPE.join('locales', 'get');
-const I18N_LOCALES_REGISTRY_TYPE = RegistryType.createJson<Locale[]>(I18N_EXTENSION_TYPE, {
+export const I18N_LOCALES_REGISTRY_TYPE: RegistryType<Locale[]> = RegistryType.createJson<Locale[]>(I18N_EXTENSION_TYPE, {
     name: 'locales',
     defaultValue: typeof window === 'undefined' ? [] : window.navigator.languages as Locale[],
+    permissions: {
+        read: I18N_GET_LOCALES_PERMISSION_ID,
+        write: I18N_SET_LOCALES_PERMISSION_ID,
+    },
 });
 
 export class I18nExtension implements Extension {

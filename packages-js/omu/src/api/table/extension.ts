@@ -28,87 +28,87 @@ export const TABLE_EXTENSION_TYPE: ExtensionType<TableExtension> = new Extension
 );
 export const TABLE_PERMISSION_ID: Identifier = TABLE_EXTENSION_TYPE.join('permission');
 
-const TABLE_SET_PERMISSION_PACKET = PacketType.createSerialized<SetPermissionPacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_SET_PERMISSION_PACKET: PacketType<SetPermissionPacket> = PacketType.createSerialized<SetPermissionPacket>(TABLE_EXTENSION_TYPE, {
     name: 'set_permission',
     serializer: SetPermissionPacket,
 });
-const TABLE_SET_CONFIG_PACKET = PacketType.createSerialized<SetConfigPacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_SET_CONFIG_PACKET: PacketType<SetConfigPacket> = PacketType.createSerialized<SetConfigPacket>(TABLE_EXTENSION_TYPE, {
     name: 'set_config',
     serializer: SetConfigPacket,
 });
-const TABLE_LISTEN_PACKET = PacketType.createJson<Identifier>(TABLE_EXTENSION_TYPE, {
+export const TABLE_LISTEN_PACKET: PacketType<Identifier> = PacketType.createJson<Identifier>(TABLE_EXTENSION_TYPE, {
     name: 'listen',
     serializer: Identifier,
 });
-const TABLE_PROXY_LISTEN_PACKET = PacketType.createJson<Identifier>(TABLE_EXTENSION_TYPE, {
+export const TABLE_PROXY_LISTEN_PACKET: PacketType<Identifier> = PacketType.createJson<Identifier>(TABLE_EXTENSION_TYPE, {
     name: 'proxy_listen',
     serializer: Identifier,
 });
-const TABLE_PROXY_PACKET = PacketType.createSerialized<TableProxyPacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_PROXY_PACKET: PacketType<TableProxyPacket> = PacketType.createSerialized<TableProxyPacket>(TABLE_EXTENSION_TYPE, {
     name: 'proxy',
     serializer: TableProxyPacket,
 });
-const TABLE_ITEM_ADD_PACKET = PacketType.createSerialized<TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_ITEM_ADD_PACKET: PacketType<TableItemsPacket> = PacketType.createSerialized<TableItemsPacket>(TABLE_EXTENSION_TYPE, {
     name: 'item_add',
     serializer: TableItemsPacket,
 });
-const TABLE_ITEM_UPDATE_PACKET = PacketType.createSerialized<TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_ITEM_UPDATE_PACKET: PacketType<TableItemsPacket> = PacketType.createSerialized<TableItemsPacket>(TABLE_EXTENSION_TYPE, {
     name: 'item_update',
     serializer: TableItemsPacket,
 });
-const TABLE_ITEM_REMOVE_PACKET = PacketType.createSerialized<TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_ITEM_REMOVE_PACKET: PacketType<TableItemsPacket> = PacketType.createSerialized<TableItemsPacket>(TABLE_EXTENSION_TYPE, {
     name: 'item_remove',
     serializer: TableItemsPacket,
 });
-const TABLE_ITEM_GET_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_ITEM_GET_ENDPOINT: EndpointType<TableKeysPacket, TableItemsPacket> = EndpointType.createSerialized<TableKeysPacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
     name: 'item_get',
     requestSerializer: TableKeysPacket,
     responseSerializer: TableItemsPacket,
     permissionId: TABLE_PERMISSION_ID,
 });
-const TABLE_ITEM_HAS_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, Record<string, boolean>>(TABLE_EXTENSION_TYPE, {
+export const TABLE_ITEM_HAS_ENDPOINT: EndpointType<TableKeysPacket, Record<string, boolean>> = EndpointType.createSerialized<TableKeysPacket, Record<string, boolean>>(TABLE_EXTENSION_TYPE, {
     name: 'item_has',
     requestSerializer: TableKeysPacket,
     responseSerializer: Serializer.json(),
     permissionId: TABLE_PERMISSION_ID,
 });
-const TABLE_ITEM_HAS_ALL_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, boolean>(TABLE_EXTENSION_TYPE, {
+export const TABLE_ITEM_HAS_ALL_ENDPOINT: EndpointType<TableKeysPacket, boolean> = EndpointType.createSerialized<TableKeysPacket, boolean>(TABLE_EXTENSION_TYPE, {
     name: 'item_has_all',
     requestSerializer: TableKeysPacket,
     responseSerializer: Serializer.json(),
     permissionId: TABLE_PERMISSION_ID,
 });
-const TABLE_ITEM_HAS_ANY_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, boolean>(TABLE_EXTENSION_TYPE, {
+export const TABLE_ITEM_HAS_ANY_ENDPOINT: EndpointType<TableKeysPacket, boolean> = EndpointType.createSerialized<TableKeysPacket, boolean>(TABLE_EXTENSION_TYPE, {
     name: 'item_has_any',
     requestSerializer: TableKeysPacket,
     responseSerializer: Serializer.json(),
     permissionId: TABLE_PERMISSION_ID,
 });
-const TABLE_FETCH_ENDPOINT = EndpointType.createSerialized<TableFetchPacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_FETCH_ENDPOINT: EndpointType<TableFetchPacket, TableItemsPacket> = EndpointType.createSerialized<TableFetchPacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
     name: 'fetch',
     requestSerializer: TableFetchPacket,
     responseSerializer: TableItemsPacket,
     permissionId: TABLE_PERMISSION_ID,
 });
-const TABLE_FETCH_RANGE_ENDPOINT = EndpointType.createSerialized<TableFetchRangePacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_FETCH_RANGE_ENDPOINT: EndpointType<TableFetchRangePacket, TableItemsPacket> = EndpointType.createSerialized<TableFetchRangePacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
     name: 'fetch_range',
     requestSerializer: TableFetchRangePacket,
     responseSerializer: TableItemsPacket,
     permissionId: TABLE_PERMISSION_ID,
 });
-const TABLE_FETCH_ALL_ENDPOINT = EndpointType.createSerialized<TablePacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_FETCH_ALL_ENDPOINT: EndpointType<TablePacket, TableItemsPacket> = EndpointType.createSerialized<TablePacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
     name: 'fetch_all',
     requestSerializer: TablePacket,
     responseSerializer: TableItemsPacket,
     permissionId: TABLE_PERMISSION_ID,
 });
-const TABLE_SIZE_ENDPOINT = EndpointType.createSerialized<TablePacket, number>(TABLE_EXTENSION_TYPE, {
+export const TABLE_SIZE_ENDPOINT: EndpointType<TablePacket, number> = EndpointType.createSerialized<TablePacket, number>(TABLE_EXTENSION_TYPE, {
     name: 'size',
     requestSerializer: TablePacket,
     responseSerializer: Serializer.json(),
     permissionId: TABLE_PERMISSION_ID,
 });
-const TABLE_ITEM_CLEAR_PACKET = PacketType.createSerialized<TablePacket>(TABLE_EXTENSION_TYPE, {
+export const TABLE_ITEM_CLEAR_PACKET: PacketType<TablePacket> = PacketType.createSerialized<TablePacket>(TABLE_EXTENSION_TYPE, {
     name: 'clear',
     serializer: TablePacket,
 });
