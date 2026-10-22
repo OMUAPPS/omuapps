@@ -4,6 +4,7 @@ import { SignalType } from '@omujs/omu/api/signal';
 import { ByteReader, ByteWriter, Serializer } from '@omujs/omu/serialize';
 import { PLUGIN_ID } from './const.js';
 import {
+    OBS_INSTALL_PERMISSION_ID,
     OBS_SCENE_READ_PERMISSION_ID,
     OBS_SCENE_SET_CURRENT_PERMISSION_ID,
 } from './permissions.js';
@@ -20,10 +21,12 @@ export type InstallRequest = {
 
 export const CHECK_INSTALLED: EndpointType<null, InstallationStatus> = EndpointType.createJson<null, InstallationStatus>(PLUGIN_ID, {
     name: 'check_installed',
+    permissionId: OBS_INSTALL_PERMISSION_ID,
 });
 
 export const SET_INSTALL: EndpointType<InstallRequest, null> = EndpointType.createJson<InstallRequest, null>(PLUGIN_ID, {
     name: 'set_install',
+    permissionId: OBS_INSTALL_PERMISSION_ID,
 });
 
 export type OBSFrontendEvent =
