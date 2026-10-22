@@ -1,11 +1,25 @@
 export { AppIndexRegistry, type AppIndexRegistryJSON } from './api/server';
-export { App, type AppMetadata } from './app.js';
-export { DisconnectReason } from './errors.js';
+export type { Address } from './address.js';
+export { App, type AppJson, type AppMetadata, type AppType, type DependencySpecifier } from './app.js';
+export {
+    AnotherConnection,
+    AppRemoved,
+    DisconnectReason,
+    InternalError,
+    InvalidOrigin,
+    InvalidPacket,
+    InvalidToken,
+    InvalidVersion,
+    OmuError,
+    PermissionDenied,
+    ServerRestart,
+} from './errors.js';
 export { Identifier, IdentifierMap, IdentifierSet, type IntoId } from './identifier';
 export * as network from './network';
 export { Omu } from './omu.js';
 export { Serializer } from './serialize';
 export type { Serializable } from './serialize';
+export { VERSION } from './version.js';
 export {
     BrowserSession,
     type SessionParam,

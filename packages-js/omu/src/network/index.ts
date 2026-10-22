@@ -6,4 +6,4 @@ export { WebsocketTransport } from './websocket-transport.js';
 
 export { PacketMapper, type Transport } from './connection.js';
 export { AES, Decryptor, Encryptor, type EncryptionResponse } from './encryption.js';
-export { ConnectPacket, PACKET_TYPES, type ServerMeta } from './packet/packet-types.js';
+export { ConnectPacket, DisconnectPacket, DisconnectType, PACKET_TYPES, type ServerMeta } from './packet/packet-types.js';
