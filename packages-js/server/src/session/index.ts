@@ -1,3 +1,4 @@
+export { LocalPipe, LocalTransport, type LocalConnectionHost } from './local-pipe.js';
 export { PacketDispatcher, type PacketHandler } from './packet-dispatcher.js';
 export { Session, TaskPriority, type SessionTask } from './session.js';
 export { SessionAcceptor, type AcceptedSession } from './session-acceptor.js';

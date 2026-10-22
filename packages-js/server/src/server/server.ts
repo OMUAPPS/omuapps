@@ -13,17 +13,18 @@ import {
     PluginExtension,
     RegistryExtension,
     type ServerLifecycle,
-    type ServerPlugin,
     ServerExtension,
     SessionExtension,
     SignalExtension,
     TableExtension,
 } from '../api';
 import { HttpServer } from '../network';
+import { BundledPlugins } from '../plugins';
 import { ConnectionVerifier, PermissionManager, TrustedHosts } from '../security';
 import { PacketDispatcher, SessionAcceptor, SessionGateway } from '../session';
 import { AssetStore, StorageRoot } from '../storage';
 
+import { PluginContext } from './plugin-context.js';
 import type { ServerConfig } from './server-config.js';
 import { ServerPages } from './server-pages.js';
 import { ServerProcess } from './server-process.js';
@@ -39,9 +40,10 @@ export class Server implements ServerLifecycle {
     private readonly registries: RegistryExtension;
     private readonly assets: AssetStore;
 
+    public readonly pluginContext: PluginContext;
+
     public constructor(
         public readonly config: ServerConfig,
-        plugins: readonly ServerPlugin[],
     ) {
         this.storage = new StorageRoot(config.root);
         this.security = PermissionManager.load(this.storage.directory('security'), config.dashboardToken);
@@ -51,12 +53,13 @@ export class Server implements ServerLifecycle {
         this.registries = new RegistryExtension(this.dispatcher, endpoints, this.security, this.storage);
         const apps = this.tables.register(SERVER_APP_TABLE_TYPE);
         this.sessions = new SessionExtension(this.dispatcher, endpoints, this.tables, this.security, apps);
-        this.http = new HttpServer(config.port, new SessionGateway(
+        const gateway = new SessionGateway(
             new SessionAcceptor(this.security, this.dispatcher.mapper, config.hash),
             new ConnectionVerifier(this.security, hosts),
             this.dispatcher,
             this.sessions,
-        ));
+        );
+        this.http = new HttpServer(config.port, gateway);
         const server = new ServerExtension(endpoints, this.registries, this.security, this.sessions, apps, hosts, this);
         const indexes = new AppIndexes(hosts);
         const dashboard = new DashboardExtension(
@@ -76,7 +79,9 @@ export class Server implements ServerLifecycle {
         new AssetExtension(endpoints, this.security, this.http, this.assets);
         new I18nExtension(this.security, this.registries);
         new LoggerExtension(this.dispatcher, this.security);
-        this.plugins = new PluginExtension(this.dispatcher, endpoints, this.tables, this.security, plugins);
+        this.plugins = new PluginExtension(this.dispatcher, endpoints, this.tables, this.security);
+        this.pluginContext = new PluginContext(endpoints, this.security, config, gateway);
+        this.plugins.register(...BundledPlugins.create(this.pluginContext));
         new ServerPages(this.http, config, this.security, indexes, dashboard, server);
     }
 

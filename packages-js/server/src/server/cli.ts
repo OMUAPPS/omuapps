@@ -3,7 +3,6 @@ import { parseArgs } from 'node:util';
 
 import { VERSION } from '@omujs/omu';
 
-import type { ServerPlugin } from '../api';
 import { SystemProcesses } from '../system';
 
 import { Server } from './server.js';
@@ -24,7 +23,7 @@ type CliOptions = {
 };
 
 export class Cli {
-    public static async run(args: string[], plugins: readonly ServerPlugin[]): Promise<void> {
+    public static async run(args: string[]): Promise<void> {
         ServerLog.install('logs', 'omuserver');
         console.info(`// omuserver v${VERSION} (pid=${process.pid}) at (${process.cwd()}) on (${process.platform} ${process.arch})`);
         const options = Cli.parse(args);
@@ -33,7 +32,7 @@ export class Cli {
             await Cli.stop(config.port);
             return;
         }
-        const server = new Server(config, plugins);
+        const server = new Server(config);
         if (options.uninstall) {
             await server.plugins.uninstall();
             console.info('Successfully uninstalled plugins!');

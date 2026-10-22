@@ -5,7 +5,7 @@ export { HttpExtension } from './http';
 export { I18nExtension } from './i18n';
 export { LoggerExtension } from './logger';
 export { PermissionExtension } from './permission';
-export { PluginExtension, VersionSpecifier, type ServerPlugin } from './plugin';
+export { PluginExtension, VersionSpecifier, type ServerAddress, type ServerPlugin, type ServerPluginContext } from './plugin';
 export { RegistryExtension, ServerRegistry, TypedRegistry } from './registry';
 export { ServerExtension, type ServerLifecycle } from './server';
 export { SessionExtension } from './session';

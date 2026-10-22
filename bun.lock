@@ -93,6 +93,7 @@
       "name": "@omujs/server",
       "version": "0.10.12",
       "dependencies": {
+        "@omujs/obs": "workspace:*",
         "@omujs/omu": "workspace:*",
       },
     },

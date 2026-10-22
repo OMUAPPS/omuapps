@@ -1,4 +1,4 @@
-import { VERSION } from '@omujs/omu';
+import { type App, type Omu, VERSION } from '@omujs/omu';
 import { PermissionType } from '@omujs/omu/api/permission';
 import {
     PLUGIN_ALLOWED_PACKAGE_TABLE,
@@ -15,6 +15,21 @@ import type { EndpointExtension } from '../endpoint';
 import type { TableExtension } from '../table';
 
 import { VersionSpecifier } from './version-specifier.js';
+
+export type ServerAddress = {
+    host: string;
+    port: number;
+    hash: string | undefined;
+};
+
+export interface ServerPluginContext {
+    readonly endpoints: EndpointExtension;
+    readonly security: PermissionManager;
+    readonly address: ServerAddress;
+    readonly root: string;
+    readonly dashboardPath: string | undefined;
+    createClient(app: App): Omu;
+}
 
 export interface ServerPlugin {
     readonly packageName: string;
@@ -50,11 +65,7 @@ export class PluginExtension {
         endpoints: EndpointExtension,
         tables: TableExtension,
         security: PermissionManager,
-        plugins: readonly ServerPlugin[],
     ) {
-        for (const plugin of plugins) {
-            this.plugins.set(PluginExtension.normalize(plugin.packageName), plugin);
-        }
         security.registerPermission(...PluginExtension.PERMISSIONS);
         tables.register(PLUGIN_ALLOWED_PACKAGE_TABLE);
         dispatcher.register(PLUGIN_REQUIRE_PACKET);
@@ -68,6 +79,12 @@ export class PluginExtension {
             }
             return { packages: {} };
         });
+    }
+
+    public register(...plugins: ServerPlugin[]): void {
+        for (const plugin of plugins) {
+            this.plugins.set(PluginExtension.normalize(plugin.packageName), plugin);
+        }
     }
 
     public async start(): Promise<void> {

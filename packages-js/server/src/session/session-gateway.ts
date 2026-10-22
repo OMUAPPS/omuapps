@@ -3,16 +3,17 @@ import { DisconnectType, PACKET_TYPES } from '@omujs/omu/network';
 import type { SocketAcceptor, SocketChannel, SocketRequest } from '../network';
 import type { ConnectionVerifier } from '../security';
 
+import type { LocalConnectionHost } from './local-pipe.js';
 import type { PacketDispatcher } from './packet-dispatcher.js';
 import type { Session } from './session.js';
 import type { SessionAcceptor } from './session-acceptor.js';
-import { FramedConnection } from './session-connection.js';
+import { FramedConnection, type SessionConnection } from './session-connection.js';
 
 export interface SessionHost {
     host(session: Session): Promise<void>;
 }
 
-export class SessionGateway implements SocketAcceptor {
+export class SessionGateway implements SocketAcceptor, LocalConnectionHost {
     public constructor(
         private readonly acceptor: SessionAcceptor,
         private readonly verifier: ConnectionVerifier,
@@ -38,6 +39,12 @@ export class SessionGateway implements SocketAcceptor {
             await session.send(PACKET_TYPES.TOKEN, token);
         }
         await this.sessions.host(session);
+    }
+
+    public async attach(connection: SessionConnection): Promise<void> {
+        const accepted = await this.acceptor.accept(connection);
+        if (!accepted) return;
+        await this.sessions.host(accepted.session);
     }
 
     private async handleReady(session: Session): Promise<void> {

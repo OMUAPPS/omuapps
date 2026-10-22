@@ -13,17 +13,31 @@ export abstract class TestServer {
 
     public abstract readonly name: string;
 
-    protected abstract command(): string[];
+    public constructor(private readonly extraArgs: string[] = []) {}
 
-    protected environment(): Record<string, string> {
-        return {};
+    public abstract command(): string[];
+
+    public environment(): Record<string, string> {
+        return {
+            USERPROFILE: this.root,
+            HOME: this.root,
+            APPDATA: path.join(this.root, 'AppData', 'Roaming'),
+            PROGRAMDATA: path.join(this.root, 'ProgramData'),
+        };
+    }
+
+    public env(): Record<string, string | undefined> {
+        const overrides = this.environment();
+        const names = new Set(Object.keys(overrides).map((name) => name.toUpperCase()));
+        const inherited = Object.entries(process.env).filter(([name]) => !names.has(name.toUpperCase()));
+        return { ...Object.fromEntries(inherited), ...overrides };
     }
 
     public async start(): Promise<void> {
         this.port = await TestServer.freePort();
-        this.process = Bun.spawn([...this.command(), '--port', String(this.port), '--token', this.token], {
+        this.process = Bun.spawn([...this.command(), '--port', String(this.port), '--token', this.token, ...this.extraArgs], {
             cwd: this.root,
-            env: { ...process.env, ...this.environment() },
+            env: this.env(),
             stdout: Bun.file(path.join(this.root, 'stdout.log')),
             stderr: Bun.file(path.join(this.root, 'stderr.log')),
         });
@@ -68,12 +82,12 @@ export class PythonTestServer extends TestServer {
     public readonly name = 'python';
     private static readonly PYTHON = path.resolve(import.meta.dir, '../../../../.venv/Scripts/python.exe');
 
-    protected command(): string[] {
+    public command(): string[] {
         return [PythonTestServer.PYTHON, '-m', 'omuserver'];
     }
 
-    protected environment(): Record<string, string> {
-        return { USERPROFILE: this.root, HOME: this.root, PYTHONIOENCODING: 'utf-8' };
+    public environment(): Record<string, string> {
+        return { ...super.environment(), PYTHONIOENCODING: 'utf-8' };
     }
 }
 
@@ -81,7 +95,7 @@ export class TypeScriptTestServer extends TestServer {
     public readonly name = 'typescript';
     private static readonly MAIN = path.resolve(import.meta.dir, '../../src/main.ts');
 
-    protected command(): string[] {
+    public command(): string[] {
         return [process.execPath, TypeScriptTestServer.MAIN];
     }
 }
