@@ -66,6 +66,12 @@ PythonとJSの定義を比べると次の食い違いがある。サーバーを
 |---|---|---|---|
 | `DASHBOARD_PROMPT_CLEAR_BLOCKED` | 権限`DASHBOARD_SET_PERMISSION_ID` | 権限なし | JS版に権限を足す |
 | `EndpointRegisterPacket.deserialize` | 空の文字列を権限なしとして読む | 空の文字列を`Identifier.fromKey`に渡して失敗する | 空の文字列を`undefined`として読む |
+| `DASHBOARD_STARTUP_APPS` | 権限`all`に`DASHBOARD_SET_PERMISSION_ID`、`read`に`DASHBOARD_APP_STARTUP_PERMISSION_ID` | 権限なし | JS版に権限を足す |
+| `I18N_LOCALES_REGISTRY_TYPE` | 権限`read`と`write`に言語設定の権限 | 権限なし | JS版に権限を足す |
+| `PLUGIN_ALLOWED_PACKAGE_TABLE` | 権限`read`に`PLUGIN_READ_PACKAGE_PERMISSION_ID` | 権限なし | JS版に権限を足す |
+| `HTTP_ALLOWED_PORTS` | あり | なし | JS版に足す |
+
+テーブルとレジストリの権限はサーバーが登録するときに使うので、クライアントだけが使っていた今までは食い違いが表に出なかった。
 
 今までJS版の`deserialize`はサーバーからの受信でしか使われていなかった。サーバーがJS版で受信するようになると、ほかにも食い違いが見つかる。互換性のテストで洗い出す（「移行の順序」を参照）。
 
@@ -83,7 +89,7 @@ PythonとJSの定義を比べると次の食い違いがある。サーバーを
 
 `<識別子のパス>`はPython版の`Identifier.get_sanitized_path`と1文字も違わない結果にする。名前空間とパスのそれぞれで、Pythonの`[^\w]`にあたる文字を`_`に置き換え、元の文字列のMD5を付ける。Pythonの`\w`はUnicodeの文字と数字を含むので、JSでは`/[^\p{L}\p{N}_]/gu`にする。
 
-この処理は`Identifier`のメソッドにする。
+この処理はサーバーの`storage`モジュールに`StoragePath`の型を作って置く。テーブル、レジストリ、アセットはどれもこの型からパスを受け取り、それぞれに同じ処理を書かない。
 
 悪い例
 
@@ -98,10 +104,12 @@ class TableStore {
 良い例
 
 ```ts
-id.sanitizedPath();
+const path = StoragePath.of(id);
 ```
 
-入力と出力が`Identifier`だけで閉じるので、ファイルの置き場所の都合で別の型に置かないためである。
+`Identifier`のメソッドにはしない。ファイルの置き場所はサーバーの都合で、`@omujs/omu`がそれを知ると下の層が上の層を知ることになるためである。`@omujs/omu`はブラウザでも動き、ブラウザにはMD5がないこともある。
+
+Python版との一致は`packages-js/server/test/fixtures/python-data.json`の見本で確かめる。見本には、Pythonの`\w`が文字として扱う`①`や、文字として扱わない結合文字（`e`と`U+0301`）を含める。
 
 ### 起動の引数を変えない
 
