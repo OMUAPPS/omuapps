@@ -87,7 +87,11 @@ const CREATE_CHANNEL_TREE_ENDPOINT = EndpointType.createJson(PLUGIN_ID, {
 const REACTION_SIGNAL = SignalType.createJson(PLUGIN_ID, {
     name: 'reaction',
     serializer: Reaction,
-    permissions: { all: CHAT_PERMISSION_ID },
+    permissions: {
+        all: CHAT_PERMISSION_ID,
+        listen: CHAT_READ_PERMISSION_ID,
+        send: CHAT_WRITE_PERMISSION_ID,
+    },
 });
 
 export class Chat {
