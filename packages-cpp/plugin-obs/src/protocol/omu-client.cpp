@@ -1,5 +1,6 @@
 #include "omu-client.hpp"
 
+#include <algorithm>
 #include <chrono>
 
 #include <ixwebsocket/IXNetSystem.h>
@@ -97,6 +98,7 @@ void OmuClient::stop()
 
 void OmuClient::run()
 {
+	int delay = INITIAL_RETRY_MS;
 	while (true) {
 		{
 			std::lock_guard lock(mutex);
@@ -104,14 +106,15 @@ void OmuClient::run()
 				return;
 		}
 		std::optional<ServerAddress> address = addresses();
-		if (address)
-			session(*address);
+		if (address && session(*address))
+			delay = INITIAL_RETRY_MS;
 		std::unique_lock lock(mutex);
-		changed.wait_for(lock, std::chrono::seconds(RETRY_SECONDS), [this] { return !running; });
+		changed.wait_for(lock, std::chrono::milliseconds(delay), [this] { return !running; });
+		delay = (std::min)(MAX_RETRY_MS, delay * 3 / 2);
 	}
 }
 
-void OmuClient::session(const ServerAddress &initial)
+bool OmuClient::session(const ServerAddress &initial)
 {
 	auto webSocket = std::make_shared<ix::WebSocket>();
 	ServerAddress address = initial;
@@ -140,13 +143,16 @@ void OmuClient::session(const ServerAddress &initial)
 		socket = webSocket;
 	}
 	webSocket->start();
+	bool wasReady;
 	{
 		std::unique_lock lock(mutex);
 		changed.wait(lock, [this] { return closed || !running; });
+		wasReady = ready;
 		ready = false;
 		socket.reset();
 	}
 	webSocket->stop();
+	return wasReady;
 }
 
 void OmuClient::receive(ServerAddress &address, const std::string &message)

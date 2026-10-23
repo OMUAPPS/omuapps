@@ -54,7 +54,8 @@ public:
 	void stop();
 
 private:
-	static constexpr int RETRY_SECONDS = 5;
+	static constexpr int INITIAL_RETRY_MS = 500;
+	static constexpr int MAX_RETRY_MS = 30000;
 
 	struct Endpoint {
 		std::string permission;
@@ -76,7 +77,7 @@ private:
 	std::shared_ptr<ix::WebSocket> socket;
 
 	void run();
-	void session(const ServerAddress &address);
+	bool session(const ServerAddress &address);
 	void receive(ServerAddress &address, const std::string &message);
 	void handshake(ServerAddress &address, const Bytes &data);
 	void invoked(const Bytes &data);
