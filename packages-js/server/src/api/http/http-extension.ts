@@ -111,10 +111,10 @@ export class HttpExtension {
     private async handleRequestCreate(session: Session, request: HttpRequest): Promise<void> {
         this.verifyRequest(session, request, this.requests);
         const body = new RequestBody(session);
+        this.requests.set(request.id, body);
         try {
             const url = new URL(request.url);
             await this.verifyPortAllowed(session, url);
-            this.requests.set(request.id, body);
             await body.closed;
             const response = await fetch(url, {
                 method: request.method,

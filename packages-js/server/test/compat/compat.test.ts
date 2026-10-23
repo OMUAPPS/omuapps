@@ -37,6 +37,17 @@ for (const createServer of SERVERS) {
             expect(await response.json()).toEqual({ version: expect.any(String) });
         });
 
+        test('relays an HTTP request with a body', async () => {
+            const echo = Bun.serve({ port: 0, fetch: async (request) => new Response(`${request.method} ${await request.text()}`) });
+            try {
+                const omu = await clients.connect(TestClients.app('http'), () => {}, [OmuPermissions.HTTP_REQUEST_PERMISSION_ID]);
+                const response = await omu.http.fetch(`http://127.0.0.1:${echo.port}/`, { method: 'POST', body: 'hello' });
+                expect(await response.text()).toBe('POST hello');
+            } finally {
+                echo.stop();
+            }
+        }, 30_000);
+
         test('accepts the dashboard', async () => {
             const dashboard = await clients.connectDashboard();
             expect(dashboard.ready).toBe(true);
