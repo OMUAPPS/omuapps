@@ -111,6 +111,7 @@ export class PicartoChat {
         { type: 'topChips' },
         { type: 'topChips' },
     ];
+    private static readonly IGNORED_TYPES: ReadonlySet<string> = new Set(['ctt', 'st', 'system']);
 
     public closed = false;
     private readonly ping: ReturnType<typeof setInterval>;
@@ -144,7 +145,7 @@ export class PicartoChat {
     ): Promise<PicartoChat> {
         const name = channel.id.path.at(-1) ?? '';
         const key = await PicartoChat.token(http, name);
-        const socket = new WebSocket(`wss://chat.picarto.tv/chat/token=${key}`);
+        const socket = http.socket(`wss://chat.picarto.tv/chat/token=${key}`);
         await new Promise<void>((resolve, reject) => {
             socket.addEventListener('open', () => resolve(), { once: true });
             socket.addEventListener('error', () => reject(new Error(`[Picarto] Failed to connect to ${name}`)), { once: true });
@@ -184,7 +185,7 @@ export class PicartoChat {
 
     private async handle(command: ServerCommand): Promise<void> {
         if ('type' in command) {
-            if (command.type === 'ctt' || command.type === 'st') return;
+            if (PicartoChat.IGNORED_TYPES.has(command.type)) return;
             if (command.type === 'stream' && 'messages' in command) {
                 const detail = command.messages;
                 this.room.status = detail.online ? 'online' : 'offline';
@@ -204,6 +205,7 @@ export class PicartoChat {
                 await this.addMessages(command.m);
                 return;
             }
+            if (PicartoChat.IGNORED_TYPES.has(command.t)) return;
             console.warn(`[Picarto] Unknown message type ${command.t}`);
             return;
         }
