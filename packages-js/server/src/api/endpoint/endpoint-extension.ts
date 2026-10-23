@@ -67,7 +67,7 @@ class ServerEndpoint<Req, Res> implements Endpoint {
         const { caller, callerKey } = invocation;
         try {
             const request = this.type.requestSerializer.deserialize(invocation.buffer);
-            const response = await this.handler(caller, request);
+            const response = (await this.handler(caller, request)) ?? (null as Res);
             await caller.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
                 new ResponseParams(this.id, callerKey, null),
                 this.type.responseSerializer.serialize(response),

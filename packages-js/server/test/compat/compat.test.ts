@@ -48,6 +48,13 @@ for (const createServer of SERVERS) {
             }
         }, 30_000);
 
+        test('answers an endpoint without a result as null', async () => {
+            await clients.connectDashboard();
+            const omu = await clients.connect(TestClients.app('opener'), () => {}, [OmuPermissions.DASHBOARD_OPEN_APP_PERMISSION_ID]);
+            const target = new App('com.example:opened', { version: '1.0.0', url: 'https://example.com/opened' });
+            expect(await omu.dashboard.apps.open(target)).toBeNull();
+        }, 30_000);
+
         test('accepts the dashboard', async () => {
             const dashboard = await clients.connectDashboard();
             expect(dashboard.ready).toBe(true);
