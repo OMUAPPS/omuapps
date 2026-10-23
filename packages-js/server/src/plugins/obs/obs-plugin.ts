@@ -6,9 +6,11 @@ import { CHECK_INSTALLED, type InstallationStatus, type InstallRequest, SET_INST
 import { App, OmuPermissions, VERSION } from '@omujs/omu';
 
 import type { ServerPlugin, ServerPluginContext } from '../../api';
+import { SystemProcesses } from '../../system';
 
 import { ObsFiles } from './obs-files.js';
 import type { ObsInstallation } from './obs-installation.js';
+import { ObsLegacyScript } from './obs-legacy-script.js';
 import { ObsPermissions } from './obs-permissions.js';
 
 export class ObsPlugin implements ServerPlugin {
@@ -46,6 +48,7 @@ export class ObsPlugin implements ServerPlugin {
             OmuPermissions.LOGGER_LOG_PERMISSION_ID,
         ]);
         ObsFiles.storeToken(this.context.address, ObsPlugin.APP, token);
+        await this.removeLegacyScript();
     }
 
     public async stop(): Promise<void> {}
@@ -53,6 +56,14 @@ export class ObsPlugin implements ServerPlugin {
     public async uninstall(): Promise<void> {
         this.context.security.removeApp(ObsPlugin.APP.id);
         ObsFiles.remove();
+    }
+
+    private async removeLegacyScript(): Promise<void> {
+        if (await SystemProcesses.table.isRunning(this.installation.processNames)) {
+            console.info('OBS is running; legacy script will be removed on next start');
+            return;
+        }
+        new ObsLegacyScript(this.installation).remove();
     }
 
     private status(): InstallationStatus {

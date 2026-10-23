@@ -3,12 +3,8 @@
 
 mod commands;
 mod options;
-mod python;
 mod server;
-mod sources;
-mod sync;
 mod utils;
-mod uv;
 mod version;
 
 use crate::{
@@ -138,9 +134,7 @@ fn main() {
             set_config,
             create_webview_window,
             get_cookies,
-            generate_log_file,
-            open_python_path,
-            open_uv_path
+            generate_log_file
         ])
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {

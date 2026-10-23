@@ -4,30 +4,17 @@ use anyhow::{ensure, Result};
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
 
-use crate::{server::ServerConfig, sources::py::PythonVersionRequest, APP_DIRECTORY};
-
-static PYTHON_VERSION: PythonVersionRequest = PythonVersionRequest {
-    name: None,
-    arch: None,
-    os: None,
-    major: 3,
-    minor: Some(12),
-    patch: Some(3),
-    suffix: None,
-};
+use crate::APP_DIRECTORY;
 
 #[derive(Debug, Clone)]
 pub struct AppOptions {
-    pub python_version: PythonVersionRequest,
-    pub python_path: PathBuf,
-    pub uv_path: PathBuf,
     pub workdir: PathBuf,
     pub appdir: PathBuf,
 }
 
 impl AppOptions {
-    pub fn get_python_path(self: &AppOptions) -> PathBuf {
-        self.python_path.join(self.python_version.to_string())
+    pub fn legacy_directories(&self) -> Vec<PathBuf> {
+        vec![self.appdir.join("python"), self.appdir.join("uv")]
     }
 
     pub fn ensure() -> Result<Self> {
@@ -48,9 +35,6 @@ impl AppOptions {
         );
 
         let options = Self {
-            python_version: PYTHON_VERSION.clone(),
-            python_path: bin_dir.join("python"),
-            uv_path: bin_dir.join("uv"),
             workdir: data_dir.clone(),
             appdir: bin_dir.to_path_buf(),
         };

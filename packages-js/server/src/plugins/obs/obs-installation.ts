@@ -4,6 +4,7 @@ import path from 'node:path';
 export interface ObsInstallation {
     readonly configDirectory: string;
     readonly pluginDirectory: string;
+    readonly processNames: readonly string[];
 }
 
 class WindowsObsInstallation implements ObsInstallation {
@@ -14,6 +15,8 @@ class WindowsObsInstallation implements ObsInstallation {
     public get pluginDirectory(): string {
         return path.join(process.env.PROGRAMDATA ?? 'C:\\ProgramData', 'obs-studio', 'plugins', 'omuapps');
     }
+
+    public readonly processNames: readonly string[] = ['obs64.exe', 'obs32.exe'];
 }
 
 class MacObsInstallation implements ObsInstallation {
@@ -24,6 +27,8 @@ class MacObsInstallation implements ObsInstallation {
     public get pluginDirectory(): string {
         return path.join(this.configDirectory, 'plugins', 'omuapps.plugin');
     }
+
+    public readonly processNames: readonly string[] = ['obs', 'OBS'];
 }
 
 class LinuxObsInstallation implements ObsInstallation {
@@ -34,6 +39,8 @@ class LinuxObsInstallation implements ObsInstallation {
     public get pluginDirectory(): string {
         return path.join(this.configDirectory, 'plugins', 'omuapps');
     }
+
+    public readonly processNames: readonly string[] = ['obs'];
 }
 
 export class ObsInstallations {

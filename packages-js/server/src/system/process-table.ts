@@ -6,6 +6,7 @@ export type ProcessEntry = {
 
 export interface ProcessTable {
     listeningOn(port: number): Promise<ProcessEntry[]>;
+    isRunning(names: readonly string[]): Promise<boolean>;
     terminate(pid: number): void;
 }
 
@@ -33,6 +34,12 @@ class WindowsProcessTable implements ProcessTable {
         });
     }
 
+    public async isRunning(names: readonly string[]): Promise<boolean> {
+        const output = await WindowsProcessTable.run(['tasklist', '/FO', 'CSV', '/NH']);
+        const running = new Set(output.split(/\r?\n/).map((line) => line.split('","')[0].replace(/^"/, '').toLowerCase()));
+        return names.some((name) => running.has(name.toLowerCase()));
+    }
+
     public terminate(pid: number): void {
         Bun.spawnSync(['taskkill', '/PID', String(pid), '/F']);
     }
@@ -56,6 +63,14 @@ class PosixProcessTable implements ProcessTable {
             if (line.startsWith('c') && entries.length > 0) entries[entries.length - 1].name = line.slice(1);
         }
         return entries;
+    }
+
+    public async isRunning(names: readonly string[]): Promise<boolean> {
+        for (const name of names) {
+            const child = Bun.spawn(['pgrep', '-x', name], { stdout: 'ignore', stderr: 'ignore' });
+            if (await child.exited === 0) return true;
+        }
+        return false;
     }
 
     public terminate(pid: number): void {

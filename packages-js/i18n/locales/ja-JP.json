@@ -306,20 +306,9 @@
     },
     "setup": {
         "progress": {
-            "Python": {
-                "Downloading": "サーバーをダウンロード中...",
-                "Extracting": "サーバーを展開中..."
-            },
-            "Uv": {
-                "Downloading": "Uvをダウンロード中...",
-                "Extracting": "Uvを展開中...",
-                "UvCleanupOldVersions": "古いバージョンをクリーンアップ中...",
-                "UvUpdatePip": "pipを更新中...",
-                "UpdateRequirements": "依存関係を更新中..."
-            },
             "Server": {
-                "UpdatingDependencies": "依存関係を更新中...",
-                "ServerStopping": "サーバーを停止中..."
+                "ServerStopping": "サーバーを停止中...",
+                "LegacyRemoving": "古い動作環境を削除中..."
             }
         },
         "title": "セットアップ",

@@ -18,21 +18,9 @@
             title: '開発モードのため環境を削除できません',
             hint: 'ビルドしてからお試しください',
         },
-        PythonError: {
-            title: 'Python環境の構築に失敗しました',
-            hint: 'OBS Studioを閉じてから再度試すか、手動での削除をお試しください',
-        },
         ServerError: {
             title: 'サーバーの停止に失敗しました',
             hint: 'OBS Studioを閉じてから再度試すか、手動での停止をお試しください',
-        },
-        RemovePythonError: {
-            title: '動作環境の削除に失敗しました',
-            hint: 'OBS Studioを閉じてから再度試すか、手動での削除をお試しください',
-        },
-        RemoveUvError: {
-            title: 'uv環境の削除に失敗しました',
-            hint: 'OBS Studioを閉じてから再度試すか、手動での削除をお試しください',
         },
     };
 
@@ -79,21 +67,6 @@
                         <p>{error.title}</p>
                         <small><code>{error.hint}</code></small>
                     </div>
-                    {#if errorMessage.type === 'RemovePythonError'}
-                        <Button onclick={() => {
-                            invoke('open_python_path');
-                        }}>
-                            フォルダーを開く
-                            <i class="ti ti-folder"></i>
-                        </Button>
-                    {:else if errorMessage.type === 'RemoveUvError'}
-                        <Button onclick={() => {
-                            invoke('open_uv_path');
-                        }}>
-                            フォルダーを開く
-                            <i class="ti ti-folder"></i>
-                        </Button>
-                    {/if}
                 {:else}
                     <p>エラー: <code>{error.message}</code></p>
                 {/if}

@@ -6,7 +6,7 @@
     "scripts": {
         "build": "bun run build-pre && tauri build",
         "build-pre": "bun ./scripts/build-pre.ts",
-        "dev": "tauri dev",
+        "dev": "bun run build-pre && tauri dev",
         "dev-release": "tauri dev --release --no-dev-server",
         "prepare": "bun x --bun svelte-kit sync",
         "tauri": "tauri",

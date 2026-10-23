@@ -3,3 +3,5 @@
 /target/
 /obs-plugin/*
 !/obs-plugin/.gitkeep
+/binaries/*
+!/binaries/.gitkeep

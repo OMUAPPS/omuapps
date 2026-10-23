@@ -51,8 +51,25 @@ async function stageObsPlugin() {
     await fs.cp(source, destination, { recursive: true });
 }
 
+async function buildServer() {
+    const rustc = Bun.spawnSync(['rustc', '-vV'], { stdout: 'pipe' });
+    const target = /^host: (.+)$/m.exec(rustc.stdout.toString())?.[1].trim();
+    if (!target) {
+        throw new Error('Failed to detect the Rust target triple');
+    }
+    const extension = process.platform === 'win32' ? '.exe' : '';
+    const outfile = path.join('src-tauri', 'binaries', `omuserver-${target}${extension}`);
+    const build = Bun.spawnSync(
+        ['bun', 'build', path.join('..', 'server', 'src', 'main.ts'), '--compile', '--outfile', outfile],
+        { stdout: 'inherit', stderr: 'inherit' },
+    );
+    if (build.exitCode !== 0) {
+        throw new Error(`Failed to build server: exit code ${build.exitCode}`);
+    }
+}
+
 async function main() {
-    const tasks = [generateLicense(), stageObsPlugin()];
+    const tasks = [generateLicense(), stageObsPlugin(), buildServer()];
     await Promise.all(tasks);
 }
 
