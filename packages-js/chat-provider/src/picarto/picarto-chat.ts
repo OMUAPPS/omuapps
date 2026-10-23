@@ -44,6 +44,7 @@ export class PicartoMessageParser {
             authorId: author?.id,
             content: this.content(data),
             createdAt: data.d === undefined ? new Date() : new Date(data.d),
+            deleted: false,
         });
         return { message, author };
     }

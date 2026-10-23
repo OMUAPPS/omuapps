@@ -43,6 +43,7 @@
         "@omujs/chat": "workspace:*",
         "@omujs/iwashi": "workspace:*",
         "@omujs/omu": "workspace:*",
+        "node-html-parser": "7.0.1",
       },
     },
     "packages-js/dash": {
