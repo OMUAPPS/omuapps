@@ -54,6 +54,15 @@ for (const createServer of SERVERS) {
             expect(message?.text).toBe('hello');
         }, 60_000);
 
+        test('fetches the latest rooms backward', async () => {
+            let chat: Chat | undefined;
+            await clients.connect(TestClients.app('chat-rooms'), (omu) => {
+                chat = Chat.create(omu);
+            }, [ChatPermissions.CHAT_PERMISSION_ID]);
+            const rooms = await chat?.rooms.fetchItems({ limit: 64, backward: true });
+            expect(rooms?.size).toBe(0);
+        }, 60_000);
+
         test('accepts an app requiring the chat plugins', async () => {
             const omu = await clients.connect(TestClients.app('chat-plugins'), (client) => {
                 client.plugins.require({ omu_chat: '>=0.10.0', omu_chatprovider: '>=0.10.0' });
