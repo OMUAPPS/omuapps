@@ -221,6 +221,15 @@ Python版はアプリの`metadata`が変わったかを`json.dumps`の文字列�
 | WebSocketを作るときの重複の確認でHTTPの一覧を見ている | WebSocketの一覧を見る |
 | 子アプリの権限のハンドルを親のハンドルで絞るはずが、親のハンドルを子のIDで作っていて、子の権限が親の権限で絞られていない | 子と親の両方が持つ権限だけを有効にする |
 | OBSプラグインのインストールの権限のIDがソースの読み取りの権限と同じで、ソースを読めるアプリが自動起動の設定を変えられる | インストールの権限を`com.omuapps:plugin-obs/install`に分ける |
+| `iwashi`がリダイレクトした先を元のURLの子にせず、木から外れたアカウントができる | リダイレクトした先を元のURLの子にする |
+| `iwashi`が一度たどったURLにも、もう一度リクエストを送る | たどったURLを覚え、二度目は送らない |
+| Picartoの本文で、絵文字の前の文字が落ちる | 絵文字の前の文字も本文に入れる |
+| YouTubeの本文で、URLでない移動先を持つ文字が落ちる | 移動先がURLでないときは文字として入れる |
+| Twitchのチャンネルを15秒ごとの確認のたびに開き直す | 開いているチャンネルは開き直さない |
+| Twitchの絵文字の位置をUTF-16の単位で数え、絵文字（Unicode）のあとのTwitchの絵文字がずれる | 位置をコードポイントで数える |
+| Twitchの本文に` :`があると、そこから後ろが落ちる | ` :`のあとも本文に入れる |
+| TwitchのPubSubが切れたら、つなぎ直さない | 5秒後につなぎ直し、購読していたトピックを購読し直す |
+| Twitchで配信のゲームが決まっていないと、部屋を作れない | ゲームがないときは説明を空にする |
 
 クライアントの側にも、Python版のサーバーでは表に出なかった食い違いがあった。
 
@@ -228,6 +237,8 @@ Python版はアプリの`metadata`が変わったかを`json.dumps`の文字列�
 |---|---|
 | `READY`の型が`PacketType<undefined>`で、`undefined`を送るとJSONが空になる。Python版は`null`を送っていた | `PacketType<null>`にする |
 | WebSocketの受信がBlobを前提にしていて、Bunで受け取る`ArrayBuffer`を読めない | `binaryType`を`arraybuffer`にし、Blobも読めるようにする |
+| テーブルのクライアントが設定と権限を送っておらず、持ち主のテーブルに権限が付かない | `READY`の前に`TABLE_SET_CONFIG`と`TABLE_SET_PERMISSION`を送る |
+| `@omujs/chat`の権限のIDがPython版と違う | `com.omuapps:chat/read`、`write`、`send`に揃える |
 
 ## プラグイン
 

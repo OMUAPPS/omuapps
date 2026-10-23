@@ -13,3 +13,4 @@ export {
 export { ChatProviders } from './chat-providers.js';
 export { PicartoChat, PicartoEmoticons, PicartoMessageParser, PicartoProvider, type Emoticon, type PicartoMessage } from './picarto';
 export * from './youtube';
+export * from './twitch';
