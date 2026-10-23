@@ -5,8 +5,12 @@ import { ByteReader, ByteWriter, Serializer } from '@omujs/omu/serialize';
 import { PLUGIN_ID } from './const.js';
 import {
     OBS_INSTALL_PERMISSION_ID,
+    OBS_SCENE_CREATE_PERMISSION_ID,
     OBS_SCENE_READ_PERMISSION_ID,
     OBS_SCENE_SET_CURRENT_PERMISSION_ID,
+    OBS_SOURCE_CREATE_PERMISSION_ID,
+    OBS_SOURCE_READ_PERMISSION_ID,
+    OBS_SOURCE_UPDATE_PERMISSION_ID,
 } from './permissions.js';
 
 export type InstallationStatus = {
@@ -177,10 +181,12 @@ export type CreateResponse = {
 
 export const SOURCE_CREATE: EndpointType<SourceJson, CreateResponse> = EndpointType.createJson<SourceJson, CreateResponse>(PLUGIN_ID, {
     name: 'source_create',
+    permissionId: OBS_SOURCE_CREATE_PERMISSION_ID,
 });
 
 export const SOURCE_ADD: EndpointType<SourceJson, CreateResponse> = EndpointType.createJson<SourceJson, CreateResponse>(PLUGIN_ID, {
     name: 'source_add',
+    permissionId: OBS_SOURCE_CREATE_PERMISSION_ID,
 });
 
 // 100:% = full width/height of the scene
@@ -200,10 +206,12 @@ export type CreateBrowserRequest = {
 
 export const BROWSER_CREATE: EndpointType<CreateBrowserRequest, CreateResponse> = EndpointType.createJson<CreateBrowserRequest, CreateResponse>(PLUGIN_ID, {
     name: 'browser_create',
+    permissionId: OBS_SOURCE_CREATE_PERMISSION_ID,
 });
 
 export const BROWSER_ADD: EndpointType<CreateBrowserRequest, CreateResponse> = EndpointType.createJson<CreateBrowserRequest, CreateResponse>(PLUGIN_ID, {
     name: 'browser_add',
+    permissionId: OBS_SOURCE_CREATE_PERMISSION_ID,
 });
 
 export type RemoveByNameRequest = {
@@ -218,10 +226,12 @@ export type RemoveResponse = unknown;
 
 export const SOURCE_REMOVE_BY_NAME: EndpointType<RemoveByNameRequest> = EndpointType.createJson<RemoveByNameRequest, RemoveResponse>(PLUGIN_ID, {
     name: 'source_remove_by_name',
+    permissionId: OBS_SOURCE_UPDATE_PERMISSION_ID,
 });
 
 export const SOURCE_REMOVE_BY_UUID: EndpointType<RemoveByUuidRequest> = EndpointType.createJson<RemoveByUuidRequest, RemoveResponse>(PLUGIN_ID, {
     name: 'source_remove_by_uuid',
+    permissionId: OBS_SOURCE_UPDATE_PERMISSION_ID,
 });
 
 export type UpdateResponse = {
@@ -230,6 +240,7 @@ export type UpdateResponse = {
 
 export const SOURCE_UPDATE: EndpointType<SourceJson, UpdateResponse> = EndpointType.createJson<SourceJson, UpdateResponse>(PLUGIN_ID, {
     name: 'source_update',
+    permissionId: OBS_SOURCE_UPDATE_PERMISSION_ID,
 });
 
 export type SourceGetByNameRequest = {
@@ -239,6 +250,7 @@ export type SourceGetByNameRequest = {
 
 export const SOURCE_GET_BY_NAME: EndpointType<SourceGetByNameRequest, SourceJson> = EndpointType.createJson<SourceGetByNameRequest, SourceJson>(PLUGIN_ID, {
     name: 'source_get_by_name',
+    permissionId: OBS_SOURCE_READ_PERMISSION_ID,
 });
 
 export type SourceGetByUuidRequest = {
@@ -248,6 +260,7 @@ export type SourceGetByUuidRequest = {
 
 export const SOURCE_GET_BY_UUID: EndpointType<SourceGetByUuidRequest, SourceJson> = EndpointType.createJson<SourceGetByUuidRequest, SourceJson>(PLUGIN_ID, {
     name: 'source_get_by_uuid',
+    permissionId: OBS_SOURCE_READ_PERMISSION_ID,
 });
 
 export type SourceListRequest = {
@@ -256,6 +269,7 @@ export type SourceListRequest = {
 
 export const SOURCE_LIST: EndpointType<SourceListRequest, SourceJson[]> = EndpointType.createJson<SourceListRequest, SourceJson[]>(PLUGIN_ID, {
     name: 'source_list',
+    permissionId: OBS_SOURCE_READ_PERMISSION_ID,
 });
 
 export type SceneListRequest = unknown;
@@ -266,6 +280,7 @@ export type SceneListResponse = {
 
 export const SCENE_LIST: EndpointType<unknown, SceneListResponse> = EndpointType.createJson<SceneListRequest, SceneListResponse>(PLUGIN_ID, {
     name: 'scene_list',
+    permissionId: OBS_SCENE_READ_PERMISSION_ID,
 });
 
 export type SceneGetByNameRequest = {
@@ -278,10 +293,12 @@ export type SceneGetByUuidRequest = {
 
 export const SCENE_GET_BY_NAME: EndpointType<SceneGetByNameRequest, SceneJson> = EndpointType.createJson<SceneGetByNameRequest, SceneJson>(PLUGIN_ID, {
     name: 'scene_get_by_name',
+    permissionId: OBS_SCENE_READ_PERMISSION_ID,
 });
 
 export const SCENE_GET_BY_UUID: EndpointType<SceneGetByUuidRequest, SceneJson> = EndpointType.createJson<SceneGetByUuidRequest, SceneJson>(PLUGIN_ID, {
     name: 'scene_get_by_uuid',
+    permissionId: OBS_SCENE_READ_PERMISSION_ID,
 });
 
 export type SceneGetCurrentRequest = unknown;
@@ -327,6 +344,7 @@ export type SceneCreateResponse = {
 
 export const SCENE_CREATE: EndpointType<SceneCreateRequest, SceneCreateResponse> = EndpointType.createJson<SceneCreateRequest, SceneCreateResponse>(PLUGIN_ID, {
     name: 'scene_create',
+    permissionId: OBS_SCENE_CREATE_PERMISSION_ID,
 });
 
 export type ScreenshotCreateRequest = object;
@@ -334,6 +352,7 @@ export type ScreenshotCreateResponse = object;
 
 export const SCREENSHOT_CREATE: EndpointType<ScreenshotCreateRequest, ScreenshotCreateResponse> = EndpointType.createJson<ScreenshotCreateRequest, ScreenshotCreateResponse>(PLUGIN_ID, {
     name: 'screenshot_create',
+    permissionId: OBS_SOURCE_READ_PERMISSION_ID,
 });
 
 export type ScreenshotGetLastBinaryRequest = unknown;
@@ -375,6 +394,7 @@ export const SCREENSHOT_GET_LAST_BINARY: EndpointType<ScreenshotGetLastBinaryReq
     ScreenshotGetLastBinaryResponse
 >(PLUGIN_ID, {
     name: 'screenshot_get_last_binary',
+    permissionId: OBS_SOURCE_READ_PERMISSION_ID,
     requestSerializer: Serializer.json(),
     responseSerializer: ScreenshotGetLastBinaryResponse,
 });

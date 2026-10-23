@@ -1,0 +1,4 @@
+.deps/
+build_*/
+release/
+cmake/.CMakeBuildNumber

@@ -1,0 +1,32 @@
+{
+    "dependencies": {
+        "obs-studio": {
+            "version": "31.1.1",
+            "baseUrl": "https://github.com/obsproject/obs-studio/archive/refs/tags",
+            "label": "OBS sources",
+            "hashes": {
+                "macos": "39751f067bacc13d44b116c5138491b5f1391f91516d3d590d874edd21292291",
+                "windows-x64": "2c8427c10b55ac6d68008df2e9a3e82f4647aaad18f105e30d4713c2de678ccf"
+            }
+        },
+        "prebuilt": {
+            "version": "2025-07-11",
+            "baseUrl": "https://github.com/obsproject/obs-deps/releases/download",
+            "label": "Pre-Built obs-deps",
+            "hashes": {
+                "macos": "495687e63383d1a287684b6e2e9bfe246bb8f156fe265926afb1a325af1edd2a",
+                "windows-x64": "c8c642c1070dc31ce9a0f1e4cef5bb992f4bff4882255788b5da12129e85caa7"
+            }
+        }
+    },
+    "platformConfig": {
+        "macos": {
+            "bundleId": "com.omuapps.plugin-obs"
+        }
+    },
+    "name": "omuapps",
+    "displayName": "OMUAPPS",
+    "author": "OMUAPPS",
+    "website": "https://omuapps.com",
+    "email": ""
+}

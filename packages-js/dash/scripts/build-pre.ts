@@ -37,8 +37,22 @@ async function generateLicense() {
     );
 }
 
+async function stageObsPlugin() {
+    const source = path.join('..', '..', 'packages-cpp', 'plugin-obs', 'release', 'omuapps');
+    const destination = path.join('src-tauri', 'obs-plugin', 'omuapps');
+    await fs.rm(destination, { recursive: true, force: true });
+    const exists = await fs.stat(source).then(() => true, () => false);
+    if (!exists) {
+        if (process.platform === 'win32') {
+            console.warn(`OBS plugin is not built: ${source}`);
+        }
+        return;
+    }
+    await fs.cp(source, destination, { recursive: true });
+}
+
 async function main() {
-    const tasks = [generateLicense()];
+    const tasks = [generateLicense(), stageObsPlugin()];
     await Promise.all(tasks);
 }
 
