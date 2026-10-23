@@ -119,6 +119,7 @@ void OmuClient::session(const ServerAddress &initial)
 	webSocket->setUrl("ws://" + host + ":" + std::to_string(address.port) + "/ws");
 	webSocket->disableAutomaticReconnection();
 	webSocket->disablePerMessageDeflate();
+	webSocket->setExtraHeaders({{"Origin", ""}});
 	webSocket->setOnMessageCallback([this, &address](const ix::WebSocketMessagePtr &message) {
 		if (message->type == ix::WebSocketMessageType::Message && message->binary) {
 			try {
