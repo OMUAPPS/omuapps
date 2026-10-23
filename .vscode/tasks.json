@@ -10,29 +10,12 @@
             "problemMatcher": []
         },
         {
-            "label": "dev-package-index",
-            "type": "process",
-            "command": "bun",
-            "args": ["./scripts/js-upload-dev-index.ts"],
-            "options": { "cwd": "${workspaceFolder}" },
-            "dependsOn": "prelaunch",
-            "isBackground": true,
-            "problemMatcher": [{
-                "base": "$tsc",
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": "^Index starting$",
-                    "endsPattern": "^Index ready$"
-                }
-            }]
-        },
-        {
             "label": "dev-apps",
             "type": "process",
             "command": "bun",
             "args": ["./scripts/js-dev.ts", "--apps"],
             "options": { "cwd": "${workspaceFolder}" },
-            "dependsOn": "dev-package-index",
+            "dependsOn": "prelaunch",
             "isBackground": true,
             "problemMatcher": [{
                 "base": "$tsc",
