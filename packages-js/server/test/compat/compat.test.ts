@@ -9,12 +9,11 @@ import { TableType } from '@omujs/omu/api/table';
 import { DisconnectType } from '@omujs/omu/network';
 
 import { TestClients } from './test-clients.js';
-import { PythonTestServer, type TestServer, TypeScriptTestServer } from './test-server.js';
+import { type TestServer, TypeScriptTestServer } from './test-server.js';
 
 type Item = { id: string; value: number };
 
 const SERVERS: (() => TestServer)[] = [
-    () => new PythonTestServer(),
     () => new TypeScriptTestServer(),
 ];
 

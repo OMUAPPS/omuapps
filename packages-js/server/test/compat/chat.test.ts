@@ -4,10 +4,9 @@ import { Chat, ChatPermissions, Models } from '@omujs/chat';
 import { App, Identifier } from '@omujs/omu';
 
 import { TestClients } from './test-clients.js';
-import { PythonTestServer, type TestServer, TypeScriptTestServer } from './test-server.js';
+import { type TestServer, TypeScriptTestServer } from './test-server.js';
 
 const SERVERS: (() => TestServer)[] = [
-    () => new PythonTestServer(),
     () => new TypeScriptTestServer(),
 ];
 

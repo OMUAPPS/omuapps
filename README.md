@@ -17,15 +17,26 @@ OMUAPPSの開発環境を構築する方法です。
 
 - Install [Rust](https://www.rust-lang.org/)
 - Install [bun](https://bun.sh/)
-- Install [uv](https://docs.astral.sh/uv/)
+
+OBSプラグインをビルドするときは、次のものも必要です。
+
+- Install [CMake](https://cmake.org/) 3.28以上
+- Install [Visual Studio 2022](https://visualstudio.microsoft.com/)（C++によるデスクトップ開発）
 
 ### セットアップ
 
-`uv sync` `bun i`を実行してください。
+`bun i`を実行してください。
 
 ```bash
-uv sync
 bun i
+```
+
+OBSプラグインは`packages-cpp/plugin-obs`で次を実行してビルドします。
+
+```bash
+cmake --preset windows-x64
+cmake --build --preset windows-x64
+cmake --install build_x64 --prefix release --config RelWithDebInfo
 ```
 
 ### 起動

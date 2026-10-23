@@ -19,9 +19,9 @@
         },
         {
             "name": "Server",
-            "type": "debugpy",
+            "type": "bun",
             "request": "launch",
-            "module": "omuserver",
+            "program": "${workspaceFolder}/packages-js/server/src/main.ts",
             "args": [
                 "--debug",
                 "--token-file",
@@ -32,36 +32,26 @@
                 "localhost:5173=omuapps.com"
             ],
             "cwd": "${workspaceFolder}/appdata",
-            "justMyCode": true,
         },
         {
             "name": "Server (stop)",
-            "type": "debugpy",
+            "type": "bun",
             "request": "launch",
-            "module": "omuserver",
+            "program": "${workspaceFolder}/packages-js/server/src/main.ts",
             "args": [
                 "--stop",
             ],
             "cwd": "${workspaceFolder}/appdata",
-            "justMyCode": true,
         },
         {
             "name": "Server (uninstall)",
-            "type": "debugpy",
+            "type": "bun",
             "request": "launch",
-            "module": "omuserver",
+            "program": "${workspaceFolder}/packages-js/server/src/main.ts",
             "args": [
                 "--uninstall",
             ],
             "cwd": "${workspaceFolder}/appdata",
-            "justMyCode": true,
-        },
-        {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
         },
         {
             "type": "lldb",

@@ -78,19 +78,6 @@ export abstract class TestServer {
     }
 }
 
-export class PythonTestServer extends TestServer {
-    public readonly name = 'python';
-    private static readonly PYTHON = path.resolve(import.meta.dir, '../../../../.venv/Scripts/python.exe');
-
-    public command(): string[] {
-        return [PythonTestServer.PYTHON, '-m', 'omuserver'];
-    }
-
-    public environment(): Record<string, string> {
-        return { ...super.environment(), PYTHONIOENCODING: 'utf-8' };
-    }
-}
-
 export class TypeScriptTestServer extends TestServer {
     public readonly name = 'typescript';
     private static readonly MAIN = path.resolve(import.meta.dir, '../../src/main.ts');

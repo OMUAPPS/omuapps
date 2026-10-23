@@ -1,16 +1,10 @@
 /diagnostics
 /documentation/plans
 
-# python
-**/__pycache__/**
 /dist
 
 # Github Actions
 release-assets
-
-# pytest
-.coverage
-coverage.xml
 
 # typescript
 **/tsconfig.tsbuildinfo
