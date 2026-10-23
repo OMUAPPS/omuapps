@@ -105,6 +105,8 @@ json SceneJson::from(obs_scene_t *scene)
 	obs_scene_enum_items(
 		scene,
 		[](obs_scene_t *, obs_sceneitem_t *item, void *param) {
+			if (obs_source_removed(obs_sceneitem_get_source(item)))
+				return true;
 			if (std::optional<json> source = SourceJson::from(item))
 				static_cast<json *>(param)->push_back(*source);
 			return true;

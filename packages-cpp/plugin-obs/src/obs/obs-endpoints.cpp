@@ -183,7 +183,7 @@ json ObsEndpoints::update(const json &request)
 	obs_source_update(source, settings);
 	OBSSceneAutoRelease scene = ObsScenes::find(request, "scene");
 	std::string name = obs_source_get_name(source);
-	obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
+	obs_sceneitem_t *item = ObsScenes::item(scene, name.c_str());
 	if (!item)
 		throw std::runtime_error("Source with name " + name + " is not in the scene");
 	SourceJson::applyProperties(item, request);
@@ -197,7 +197,7 @@ json ObsEndpoints::getByName(const json &request)
 {
 	OBSSceneAutoRelease scene = ObsScenes::find(request, "scene");
 	std::string name = request["name"].get<std::string>();
-	obs_sceneitem_t *item = obs_scene_find_source(scene, name.c_str());
+	obs_sceneitem_t *item = ObsScenes::item(scene, name.c_str());
 	if (!item)
 		throw std::runtime_error("Source with name " + name + " does not exist");
 	std::optional<json> source = SourceJson::from(item);
@@ -214,7 +214,7 @@ json ObsEndpoints::getByUuid(const json &request)
 	OBSSourceAutoRelease source = obs_get_source_by_uuid(uuid.c_str());
 	if (!source)
 		throw std::runtime_error("Source with uuid " + uuid + " does not exist");
-	obs_sceneitem_t *item = obs_scene_find_source(scene, obs_source_get_name(source));
+	obs_sceneitem_t *item = ObsScenes::item(scene, obs_source_get_name(source));
 	if (!item)
 		throw std::runtime_error("Source with uuid " + uuid + " exist but can't get scene item");
 	std::optional<json> found = SourceJson::from(item);

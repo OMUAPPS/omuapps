@@ -12,6 +12,7 @@ public:
 	static OBSSceneAutoRelease byName(const std::string &name);
 	static OBSSceneAutoRelease byUuid(const std::string &uuid);
 	static bool exists(const std::string &name);
+	static obs_sceneitem_t *item(obs_scene_t *scene, const char *name);
 	static std::string uniqueName(const std::string &name);
 	static obs_sceneitem_t *add(obs_scene_t *scene, const std::string &type, const std::string &name,
 				    obs_data_t *settings);

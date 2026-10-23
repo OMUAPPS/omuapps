@@ -42,6 +42,14 @@ bool ObsScenes::exists(const std::string &name)
 	return source && !obs_source_removed(source);
 }
 
+obs_sceneitem_t *ObsScenes::item(obs_scene_t *scene, const char *name)
+{
+	obs_sceneitem_t *item = obs_scene_find_source(scene, name);
+	if (!item || obs_source_removed(obs_sceneitem_get_source(item)))
+		return nullptr;
+	return item;
+}
+
 std::string ObsScenes::uniqueName(const std::string &name)
 {
 	if (!exists(name))
