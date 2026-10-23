@@ -92,12 +92,13 @@ void ObsEndpoints::bind(OmuClient &client)
 void ObsEndpoints::bindJson(OmuClient &client, const char *name, const char *permission, JsonHandler handler)
 {
 	client.bind(std::string(ObsIds::PLUGIN) + name, permission,
-		    [handler](const Bytes &body, const Responder &responder) {
+		    [name, handler](const Bytes &body, const Responder &responder) {
 			    json request = ::json::parse(ByteStrings::to(body));
-			    UiThread::post([handler, request, responder] {
+			    UiThread::post([name, handler, request, responder] {
 				    try {
 					    responder.json(handler(request));
 				    } catch (const std::exception &error) {
+					    blog(LOG_WARNING, "[OMUAPPS] %s failed: %s", name, error.what());
 					    responder.error(error.what());
 				    }
 			    });
@@ -116,6 +117,7 @@ void ObsEndpoints::screenshot(OmuClient &client)
 				    writer.uleb128(1);
 				    std::ifstream stream(std::filesystem::u8path(file), std::ios::binary);
 				    if (file.empty() || !stream) {
+					    blog(LOG_WARNING, "[OMUAPPS] Last screenshot is not available: '%s'", file.c_str());
 					    responder.ok(writer.uleb128(0).finish());
 					    return;
 				    }

@@ -139,5 +139,18 @@ for (const createServer of SERVERS) {
             expect(asset.buffer).toEqual(buffer);
             expect(Identifier.from(asset.id).key()).toBe(id.key());
         });
+
+        test('serves a large uploaded asset over its url', async () => {
+            const app = TestClients.app('large-asset');
+            const omu = await clients.connect(app, (client) => {
+                client.permissions.require(OmuPermissions.ASSET_PERMISSION_ID);
+            }, [OmuPermissions.ASSET_PERMISSION_ID]);
+            const id = app.id.join('files', 'screenshot.png');
+            const buffer = crypto.getRandomValues(new Uint8Array(1_400_000));
+            await omu.assets.upload(id, buffer);
+            const response = await fetch(omu.assets.url(id));
+            expect(response.status).toBe(200);
+            expect(new Uint8Array(await response.arrayBuffer())).toEqual(buffer);
+        }, 30_000);
     });
 }
