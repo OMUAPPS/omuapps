@@ -21,7 +21,7 @@ export class ObsPlugin implements ServerPlugin {
         },
     });
 
-    public readonly packageName = 'omuplugin_obs';
+    public readonly packageNames: readonly string[] = ['omuplugin_obs'];
 
     public constructor(
         private readonly context: ServerPluginContext,

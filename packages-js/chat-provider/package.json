@@ -1,0 +1,21 @@
+{
+    "type": "module",
+    "name": "@omujs/chat-provider",
+    "version": "0.10.12",
+    "private": true,
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "scripts": {
+        "test": "bun test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/OMUAPPS/omuapps"
+    },
+    "dependencies": {
+        "@omujs/chat": "workspace:*",
+        "@omujs/iwashi": "workspace:*",
+        "@omujs/omu": "workspace:*"
+    }
+}

@@ -32,7 +32,7 @@ export interface ServerPluginContext {
 }
 
 export interface ServerPlugin {
-    readonly packageName: string;
+    readonly packageNames: readonly string[];
     start(): Promise<void>;
     stop(): Promise<void>;
     uninstall(): Promise<void>;
@@ -58,7 +58,8 @@ export class PluginExtension {
         }),
     ];
 
-    private readonly plugins = new Map<string, ServerPlugin>();
+    private readonly plugins: ServerPlugin[] = [];
+    private readonly packages = new Map<string, ServerPlugin>();
 
     public constructor(
         dispatcher: PacketDispatcher,
@@ -72,8 +73,8 @@ export class PluginExtension {
         dispatcher.bind(PLUGIN_REQUIRE_PACKET, (session, requirements) => this.handleRequire(session, requirements));
         endpoints.bind(PLUGIN_RELOAD_ENDPOINT_TYPE, async (_, options) => {
             const filter = options.packages?.map((name) => PluginExtension.normalize(name));
-            for (const [name, plugin] of this.plugins) {
-                if (filter && !filter.includes(name)) continue;
+            for (const plugin of this.plugins) {
+                if (filter && !plugin.packageNames.some((name) => filter.includes(PluginExtension.normalize(name)))) continue;
                 await plugin.stop();
                 await plugin.start();
             }
@@ -83,25 +84,28 @@ export class PluginExtension {
 
     public register(...plugins: ServerPlugin[]): void {
         for (const plugin of plugins) {
-            this.plugins.set(PluginExtension.normalize(plugin.packageName), plugin);
+            this.plugins.push(plugin);
+            for (const name of plugin.packageNames) {
+                this.packages.set(PluginExtension.normalize(name), plugin);
+            }
         }
     }
 
     public async start(): Promise<void> {
-        for (const plugin of this.plugins.values()) {
-            await PluginExtension.attempt(`starting ${plugin.packageName}`, () => plugin.start());
+        for (const plugin of this.plugins) {
+            await PluginExtension.attempt(`starting ${plugin.packageNames[0]}`, () => plugin.start());
         }
     }
 
     public async stop(): Promise<void> {
-        for (const plugin of this.plugins.values()) {
-            await PluginExtension.attempt(`stopping ${plugin.packageName}`, () => plugin.stop());
+        for (const plugin of this.plugins) {
+            await PluginExtension.attempt(`stopping ${plugin.packageNames[0]}`, () => plugin.stop());
         }
     }
 
     public async uninstall(): Promise<void> {
-        for (const plugin of this.plugins.values()) {
-            await PluginExtension.attempt(`uninstalling ${plugin.packageName}`, () => plugin.uninstall());
+        for (const plugin of this.plugins) {
+            await PluginExtension.attempt(`uninstalling ${plugin.packageNames[0]}`, () => plugin.uninstall());
         }
     }
 
@@ -109,7 +113,7 @@ export class PluginExtension {
         const entries = Object.entries(requirements);
         if (entries.length === 0) return;
         for (const [name, specifier] of entries) {
-            if (!this.plugins.has(PluginExtension.normalize(name))) {
+            if (!this.packages.has(PluginExtension.normalize(name))) {
                 await session.disconnect(DisconnectType.INVALID_VERSION, `Required plugin versions are not installed: Package ${name} not installed`);
                 return;
             }

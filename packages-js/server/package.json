@@ -13,6 +13,8 @@
         "url": "https://github.com/OMUAPPS/omuapps"
     },
     "dependencies": {
+        "@omujs/chat": "workspace:*",
+        "@omujs/chat-provider": "workspace:*",
         "@omujs/obs": "workspace:*",
         "@omujs/omu": "workspace:*"
     }

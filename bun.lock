@@ -36,6 +36,15 @@
         "@omujs/omu": "workspace:*",
       },
     },
+    "packages-js/chat-provider": {
+      "name": "@omujs/chat-provider",
+      "version": "0.10.12",
+      "dependencies": {
+        "@omujs/chat": "workspace:*",
+        "@omujs/iwashi": "workspace:*",
+        "@omujs/omu": "workspace:*",
+      },
+    },
     "packages-js/dash": {
       "name": "dash",
       "version": "0.0.0",
@@ -100,6 +109,8 @@
       "name": "@omujs/server",
       "version": "0.10.12",
       "dependencies": {
+        "@omujs/chat": "workspace:*",
+        "@omujs/chat-provider": "workspace:*",
         "@omujs/obs": "workspace:*",
         "@omujs/omu": "workspace:*",
       },
@@ -485,6 +496,8 @@
     "@octokit/types": ["@octokit/types@16.0.0", "", { "dependencies": { "@octokit/openapi-types": "^27.0.0" } }, "sha512-sKq+9r1Mm4efXW1FCk7hFSeJo4QKreL/tTbR0rz/qx/r1Oa2VV83LTA/H/MuCOX7uCIJmQVRKBcbmWoySjAnSg=="],
 
     "@omujs/chat": ["@omujs/chat@workspace:packages-js/chat"],
+
+    "@omujs/chat-provider": ["@omujs/chat-provider@workspace:packages-js/chat-provider"],
 
     "@omujs/i18n": ["@omujs/i18n@workspace:packages-js/i18n"],
 
