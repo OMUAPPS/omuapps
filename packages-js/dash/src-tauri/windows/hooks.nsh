@@ -4,6 +4,10 @@
   StrCpy $R2 "$INSTDIR\obs-plugin\omuapps"
 !macroend
 
+!macro NSIS_HOOK_PREINSTALL
+  !insertmacro CheckIfAppIsRunning "omuserver.exe" "${PRODUCTNAME}"
+!macroend
+
 !macro NSIS_HOOK_POSTINSTALL
   Push $R0
   Push $R1
@@ -30,6 +34,7 @@
 !macroend
 
 !macro NSIS_HOOK_PREUNINSTALL
+  !insertmacro CheckIfAppIsRunning "omuserver.exe" "${PRODUCTNAME}"
   ${If} $UpdateMode <> 1
     Push $R0
     Push $R1
