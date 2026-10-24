@@ -64,7 +64,7 @@
     },
     "productName": "OMUAPPS",
     "mainBinaryName": "OMUAPPS",
-    "version": "0.10.12",
+    "version": "0.11.0",
     "identifier": "com.omuapps.app",
     "plugins": {
         "cli": {

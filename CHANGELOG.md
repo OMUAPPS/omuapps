@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.11.0](https://github.com/OMUAPPS/omuapps/compare/v0.10.12...v0.11.0) (2026-10-24)
+
+### Bug Fixes
+
+* **app-replay:** 時間が表示されない問題を修正 ([8d40f46](https://github.com/OMUAPPS/omuapps/commit/8d40f461af92743c960c7001003d58a5e770e540))
+* **ci:** 版の更新のコミットをGitHub APIで作り、署名を付ける ([#105](https://github.com/OMUAPPS/omuapps/issues/105)) ([5843174](https://github.com/OMUAPPS/omuapps/commit/58431745cf6f79876f4f9e4789ecf26504e62b72))
+* **dash:** Bunのビルド一時ファイルをViteの監視対象から除外する ([0104f83](https://github.com/OMUAPPS/omuapps/commit/0104f8394990f16f0a06781c2435270f5c274282))
+* **debug:** Dashboardのデバッグ前に準備ビルドを実行する ([9ebb802](https://github.com/OMUAPPS/omuapps/commit/9ebb80266e5482bf3836d815d251f085ea7c6de5))
+
+### Features
+
+* プロジェクトからPythonへの依存を削除 ([#104](https://github.com/OMUAPPS/omuapps/issues/104)) ([1b7e5d0](https://github.com/OMUAPPS/omuapps/commit/1b7e5d038920e112c720740d7f960f4afa2f5171))
+
+
 ## 0.10.12 (2026-10-02)
 
 **Note:** Version bump only for package omuapps
