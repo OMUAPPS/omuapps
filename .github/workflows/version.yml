@@ -5,11 +5,14 @@ on:
 
 permissions:
     contents: write # for checkout and tag
-    pull-requests: write # for comments
-    packages: write # for publish
+
+concurrency:
+    group: version
+    cancel-in-progress: false
 
 jobs:
     version:
+        if: startsWith(github.ref, 'refs/heads/')
         runs-on: ubuntu-latest
         env:
             NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
@@ -20,14 +23,9 @@ jobs:
             COMMIT: ${{ steps.git_commit.outputs.COMMIT }}
         steps:
             - uses: actions/checkout@v6
-
-            - name: Git Identity
-              run: |
-                  git config --global user.name 'github-actions[bot]'
-                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-                  git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/$GITHUB_REPOSITORY
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  ref: ${{ github.ref_name }}
+                  fetch-depth: 0
 
             - name: Cache Bun dependencies
               uses: actions/cache@v4
@@ -44,49 +42,70 @@ jobs:
               run: bun install --frozen-lockfile
 
             - name: Version
-              run: bunx lerna version --yes
+              run: bunx lerna version --yes --no-git-tag-version --no-push
 
             - name: Get version
               id: get_version
               run: |
                   echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
 
-            - name: Push
-              run: |
-                  git push --follow-tags
-                  echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
-
-            - name: Output git commit
-              id: git_commit
-              run: |
-                  echo "COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-    update:
-        needs: version
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v6
-              with:
-                  ref: ${{ needs.version.outputs.COMMIT }}
-
-            - name: Setup Bun
-              uses: oven-sh/setup-bun@v2
-
-            - name: Git Identity
-              run: |
-                  git config --global user.name 'github-actions[bot]'
-                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-                  git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/$GITHUB_REPOSITORY
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
             - name: Generate version file
               run: |
                   bun ./scripts/js-generate-version.ts
+                  git add --all
 
-            - name: Push
-              run: |
-                  git add .
-                  git commit -m "chore: bump version"
-                  git push origin HEAD:${{ github.ref_name }}
+            - name: Commit with GitHub signature and tag
+              id: git_commit
+              uses: actions/github-script@v8
+              with:
+                  script: |
+                      const { execFileSync } = require('node:child_process');
+                      const { readFileSync } = require('node:fs');
+                      const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+                      const head = git('rev-parse', 'HEAD');
+                      if (git('diff', '--cached', '--name-only') === '') {
+                          core.info('No version changes.');
+                          core.setOutput('COMMIT', head);
+                          return;
+                      }
+                      const { version } = JSON.parse(readFileSync('lerna.json', 'utf8'));
+                      const tag = `v${version}`;
+                      try {
+                          await github.rest.git.getRef({ ...context.repo, ref: `tags/${tag}` });
+                          throw new Error(`Tag ${tag} already exists. Resolve the existing tag before retrying.`);
+                      } catch (error) {
+                          if (error.status !== 404) throw error;
+                      }
+                      const paths = (filter) => execFileSync('git', [
+                          'diff', '--cached', '--name-only', '--no-renames', `--diff-filter=${filter}`, '-z',
+                      ], { encoding: 'utf8' }).split('\0').filter(Boolean);
+                      // GitHub signs API commits; a local bot identity does not provide a signature.
+                      const result = await github.graphql(`
+                          mutation($input: CreateCommitOnBranchInput!) {
+                              createCommitOnBranch(input: $input) { commit { oid } }
+                          }
+                      `, {
+                          input: {
+                              branch: {
+                                  repositoryNameWithOwner: `${context.repo.owner}/${context.repo.repo}`,
+                                  branchName: process.env.GITHUB_REF_NAME,
+                              },
+                              expectedHeadOid: head,
+                              message: { headline: `ci(release): ${version} [skip ci]` },
+                              fileChanges: {
+                                  additions: paths('AM').map(path => ({
+                                      path, contents: readFileSync(path).toString('base64'),
+                                  })),
+                                  deletions: paths('D').map(path => ({ path })),
+                              },
+                          },
+                      });
+                      const commit = result.createCommitOnBranch.commit.oid;
+                      core.setOutput('COMMIT', commit);
+                      const { data: annotatedTag } = await github.rest.git.createTag({
+                          ...context.repo, tag, message: tag, object: commit, type: 'commit',
+                      });
+                      await github.rest.git.createRef({
+                          ...context.repo, ref: `refs/tags/${tag}`, sha: annotatedTag.sha,
+                      });
 
