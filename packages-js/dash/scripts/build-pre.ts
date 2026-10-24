@@ -59,8 +59,18 @@ async function buildServer() {
     }
     const extension = process.platform === 'win32' ? '.exe' : '';
     const outfile = path.join('src-tauri', 'binaries', `omuserver-${target}${extension}`);
+    const { version } = await Bun.file(path.join('..', 'omu', 'package.json')).json();
+    const windowsOptions = process.platform === 'win32'
+        ? [
+            `--windows-icon=${path.join('src-tauri', 'icons', 'icon.ico')}`,
+            '--windows-title=OMUAPPS Server',
+            '--windows-publisher=OMUAPPS',
+            '--windows-description=OMUAPPS Server',
+            `--windows-version=${version}.0`,
+        ]
+        : [];
     const build = Bun.spawnSync(
-        ['bun', 'build', path.join('..', 'server', 'src', 'main.ts'), '--compile', '--outfile', outfile],
+        ['bun', 'build', path.join('..', 'server', 'src', 'main.ts'), '--compile', '--outfile', outfile, ...windowsOptions],
         { stdout: 'inherit', stderr: 'inherit' },
     );
     if (build.exitCode !== 0) {
