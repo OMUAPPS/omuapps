@@ -55,7 +55,7 @@ const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
 
 export const ASSET_PERMISSION_ID: Identifier = ASSET_EXTENSION_TYPE.join('permission');
 
-const ASSET_UPLOAD_ENDPOINT = EndpointType.createSerialized<Asset, Identifier>(
+export const ASSET_UPLOAD_ENDPOINT: EndpointType<Asset, Identifier> = EndpointType.createSerialized<Asset, Identifier>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'upload',
@@ -64,7 +64,7 @@ const ASSET_UPLOAD_ENDPOINT = EndpointType.createSerialized<Asset, Identifier>(
         permissionId: ASSET_PERMISSION_ID,
     },
 );
-const ASSET_UPLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Asset[], Identifier[]>(
+export const ASSET_UPLOAD_MANY_ENDPOINT: EndpointType<Asset[], Identifier[]> = EndpointType.createSerialized<Asset[], Identifier[]>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'upload_many',
@@ -73,7 +73,7 @@ const ASSET_UPLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Asset[], Identi
         permissionId: ASSET_PERMISSION_ID,
     },
 );
-const ASSET_DOWNLOAD_ENDPOINT = EndpointType.createSerialized<Identifier, Asset>(
+export const ASSET_DOWNLOAD_ENDPOINT: EndpointType<Identifier, Asset> = EndpointType.createSerialized<Identifier, Asset>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'download',
@@ -82,7 +82,7 @@ const ASSET_DOWNLOAD_ENDPOINT = EndpointType.createSerialized<Identifier, Asset>
         permissionId: ASSET_PERMISSION_ID,
     },
 );
-const ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Identifier[], Asset[]>(
+export const ASSET_DOWNLOAD_MANY_ENDPOINT: EndpointType<Identifier[], Asset[]> = EndpointType.createSerialized<Identifier[], Asset[]>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'download_many',
@@ -91,7 +91,7 @@ const ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Identifier[],
         permissionId: ASSET_PERMISSION_ID,
     },
 );
-const ASSET_DELETE_ENDPOINT = EndpointType.createJson<Identifier, null>(
+export const ASSET_DELETE_ENDPOINT: EndpointType<Identifier, null> = EndpointType.createJson<Identifier, null>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'delete',
@@ -100,7 +100,7 @@ const ASSET_DELETE_ENDPOINT = EndpointType.createJson<Identifier, null>(
     },
 );
 
-const ASSET_GENERATE_TOKEN_ENDPOINT = EndpointType.createJson<object, { token: string }>(
+export const ASSET_GENERATE_TOKEN_ENDPOINT: EndpointType<object, { token: string }> = EndpointType.createJson<object, { token: string }>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'token_generate',

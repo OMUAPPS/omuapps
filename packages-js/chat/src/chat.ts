@@ -18,7 +18,7 @@ import {
     CHAT_WRITE_PERMISSION_ID,
 } from './permissions';
 
-const MESSAGE_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
+export const MESSAGE_TABLE_TYPE: TableType<Message> = TableType.createJson(PLUGIN_ID, {
     name: 'messages',
     serializer: Message,
     key: (item) => item.key(),
@@ -28,7 +28,7 @@ const MESSAGE_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const AUTHOR_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
+export const AUTHOR_TABLE_TYPE: TableType<Author> = TableType.createJson(PLUGIN_ID, {
     name: 'authors',
     serializer: Author,
     key: (item) => item.key(),
@@ -38,7 +38,7 @@ const AUTHOR_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const CHANNEL_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
+export const CHANNEL_TABLE_TYPE: TableType<Channel> = TableType.createJson(PLUGIN_ID, {
     name: 'channels',
     serializer: Channel,
     key: (item) => item.key(),
@@ -48,7 +48,7 @@ const CHANNEL_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const PROVIDER_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
+export const PROVIDER_TABLE_TYPE: TableType<Provider> = TableType.createJson(PLUGIN_ID, {
     name: 'providers',
     serializer: Provider,
     key: (item) => item.key(),
@@ -58,7 +58,7 @@ const PROVIDER_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const ROOM_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
+export const ROOM_TABLE_TYPE: TableType<Room> = TableType.createJson(PLUGIN_ID, {
     name: 'rooms',
     serializer: Room,
     key: (item) => item.key(),
@@ -68,7 +68,7 @@ const ROOM_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const VOTE_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
+export const VOTE_TABLE_TYPE: TableType<Vote> = TableType.createJson(PLUGIN_ID, {
     name: 'votes',
     serializer: Vote,
     key: (item) => item.key(),
@@ -78,16 +78,20 @@ const VOTE_TABLE_TYPE = TableType.createJson(PLUGIN_ID, {
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const CREATE_CHANNEL_TREE_ENDPOINT = EndpointType.createJson(PLUGIN_ID, {
+export const CREATE_CHANNEL_TREE_ENDPOINT: EndpointType<string, Channel[]> = EndpointType.createJson(PLUGIN_ID, {
     name: 'create_channel_tree',
     requestSerializer: Serializer.noop<string>(),
     responseSerializer: Serializer.of(Channel).toArray(),
     permissionId: CHAT_CHANNEL_TREE_PERMISSION_ID,
 });
-const REACTION_SIGNAL = SignalType.createJson(PLUGIN_ID, {
+export const REACTION_SIGNAL: SignalType<Reaction> = SignalType.createJson(PLUGIN_ID, {
     name: 'reaction',
     serializer: Reaction,
-    permissions: { all: CHAT_PERMISSION_ID },
+    permissions: {
+        all: CHAT_PERMISSION_ID,
+        listen: CHAT_READ_PERMISSION_ID,
+        send: CHAT_WRITE_PERMISSION_ID,
+    },
 });
 
 export class Chat {

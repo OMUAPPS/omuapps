@@ -22,33 +22,12 @@ export type Progress = {
     total: number;
 };
 
-export type UvEnsureProgress = SerdeEnum<{
-    Downloading: Progress;
-    Extracting: Progress;
-    UvCleanupOldVersions: Progress;
-    UvUpdatePip: {
-        msg: string;
-    };
-    UpdateRequirements: {
-        msg: string;
-    };
-}>;
-
-export type UvEnsureError = SerdeEnum<{
-    CleanupOldVersionsFailed: { msg: string };
-    UpdatePipFailed: { msg: string };
-    UpdateRequirementsFailed: { msg: string };
-    NoDownloadFound: { msg: string };
-}>;
-
 export type ServerEnsureProgress = SerdeEnum<{
-    UpdatingDependencies: { progress: UvEnsureProgress };
     ServerStopping: { msg: string };
+    LegacyRemoving: { msg: string };
 }>;
 
 export type ServerEnsureError = {
-    VersionReadFailed: { msg: string };
-    UpdateDependenciesFailed: { reason: UvEnsureError };
     StopFailed: { msg: string };
     TokenReadFailed: { msg: string };
     TokenWriteFailed: { msg: string };
@@ -57,26 +36,12 @@ export type ServerEnsureError = {
     AlreadyRunning: { msg: string };
 };
 
-export type PythonEnsureError = SerdeEnum<{
-    ChecksumFailed: { msg: string };
-    ExtractFailed: { msg: string };
-    UnkownVersion: { msg: string };
-}>;
-export type PythonEnsureProgress = SerdeEnum<{
-    Downloading: Progress;
-    Extracting: Progress;
-}>;
-
 export type StartError = SerdeEnum<{
     ServerStartFailed: { msg: string };
-    PythonEnsureError: { reason: PythonEnsureError };
-    UvEnsureError: { reason: UvEnsureError };
     ServerEnsureError: { reason: ServerEnsureError };
 }>;
 
 export type StartProgress = SerdeEnum<{
-    Python: { progress: PythonEnsureProgress };
-    Uv: { progress: UvEnsureProgress };
     Server: { progress: ServerEnsureProgress };
 }>;
 
@@ -85,43 +50,30 @@ export type StartResult = SerdeEnum<{
     Starting: { token: string };
 }>;
 
-export type StopError = SerdeEnum< {
-    PythonEnsureError: { reason: PythonEnsureError };
+export type StopError = SerdeEnum<{
     ServerEnsureError: { reason: ServerEnsureError };
 }>;
 
-export type StopProgress = SerdeEnum< {
-    Python: { progress: PythonEnsureProgress };
+export type StopProgress = SerdeEnum<{
     ServerStopping: { msg: string };
 }>;
 
 export type CleanError = SerdeEnum<{
-    PythonError: { reason: PythonEnsureError };
     ServerError: { reason: string };
-    RemovePythonError: { reason: string };
-    RemoveUvError: { reason: string };
 }>;
 
 export type CleanProgress = SerdeEnum<{
-    Python: { progress: PythonEnsureProgress };
-    PythonRemoving: { progress: Progress };
-    UvRemoving: { progress: Progress };
+    Server: { progress: ServerEnsureProgress };
 }>;
 
 export type UninstallProgress = SerdeEnum<{
-    Python: { progress: PythonEnsureProgress };
     PluginRemoving: unknown;
     AppDataRemoving: { progress: Progress };
-    PythonRemoving: { progress: Progress };
-    UvRemoving: { progress: Progress };
 }>;
 
 export type UninstallError = SerdeEnum<{
-    PythonError: { reason: PythonEnsureError };
     ServerError: { reason: string };
     RemoveAppDataError: { reason: string };
-    RemovePythonError: { reason: string };
-    RemoveUvError: { reason: string };
 }>;
 
 export type ServerState = SerdeEnum<{
@@ -186,8 +138,6 @@ type Commands = {
         };
     }): Cookie[];
     generate_log_file(): string;
-    open_python_path(): void;
-    open_uv_path(): void;
 };
 
 declare module '@tauri-apps/api/core' {

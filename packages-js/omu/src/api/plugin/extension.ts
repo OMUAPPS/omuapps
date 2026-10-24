@@ -41,7 +41,7 @@ export class PluginExtension {
     }
 }
 
-const PLUGIN_REQUIRE_PACKET = PacketType.createJson<Record<string, string | null>>(
+export const PLUGIN_REQUIRE_PACKET: PacketType<Record<string, string | null>> = PacketType.createJson<Record<string, string | null>>(
     PLUGIN_EXTENSION_TYPE,
     {
         name: 'require',
@@ -80,10 +80,13 @@ export class PluginPackageInfo {
 export const PLUGIN_READ_PACKAGE_PERMISSION_ID: Identifier = PLUGIN_EXTENSION_TYPE.join('package', 'read');
 export const PLUGIN_MANAGE_PACKAGE_PERMISSION_ID: Identifier = PLUGIN_EXTENSION_TYPE.join('package', 'manage');
 
-const PLUGIN_ALLOWED_PACKAGE_TABLE = TableType.createJson(PLUGIN_EXTENSION_TYPE, {
+export const PLUGIN_ALLOWED_PACKAGE_TABLE: TableType<PluginPackageInfo> = TableType.createJson(PLUGIN_EXTENSION_TYPE, {
     name: 'allowed_package',
     serializer: PluginPackageInfo,
     key: (item) => item.key(),
+    permissions: {
+        read: PLUGIN_READ_PACKAGE_PERMISSION_ID,
+    },
 });
 
 type ReloadOptions = {
@@ -94,7 +97,7 @@ type ReloadResult = {
     packages: Record<string, string>;
 };
 
-const PLUGIN_RELOAD_ENDPOINT_TYPE = EndpointType.createJson<ReloadOptions, ReloadResult>(PLUGIN_EXTENSION_TYPE, {
+export const PLUGIN_RELOAD_ENDPOINT_TYPE: EndpointType<ReloadOptions, ReloadResult> = EndpointType.createJson<ReloadOptions, ReloadResult>(PLUGIN_EXTENSION_TYPE, {
     name: 'reload',
     permissionId: PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,
 });

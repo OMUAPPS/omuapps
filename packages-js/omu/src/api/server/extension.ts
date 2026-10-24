@@ -33,7 +33,7 @@ export const SERVER_INDEX_REGISTRY_TYPE: RegistryType<AppIndex> = RegistryType.c
         read: SERVER_INDEX_READ_PERMISSION_ID,
     },
 });
-const APP_TABLE_TYPE = TableType.createJson(SERVER_EXTENSION_TYPE, {
+export const SERVER_APP_TABLE_TYPE: TableType<App> = TableType.createJson(SERVER_EXTENSION_TYPE, {
     name: 'apps',
     serializer: App,
     key: (app) => app.id.key(),
@@ -44,13 +44,13 @@ const APP_TABLE_TYPE = TableType.createJson(SERVER_EXTENSION_TYPE, {
 });
 
 export const SERVER_SHUTDOWN_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('shutdown');
-const SHUTDOWN_ENDPOINT_TYPE = EndpointType.createJson<boolean, boolean>(SERVER_EXTENSION_TYPE, {
+export const SHUTDOWN_ENDPOINT_TYPE: EndpointType<boolean, boolean> = EndpointType.createJson<boolean, boolean>(SERVER_EXTENSION_TYPE, {
     name: 'shutdown',
     permissionId: SERVER_SHUTDOWN_PERMISSION_ID,
 });
 export const TRUSTED_ORIGINS_GET_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('trusted_origins', 'get');
 export const TRUSTED_ORIGINS_SET_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('trusted_origins', 'set');
-const TRUSTED_HOSTS_REGISTRY_TYPE = RegistryType.createJson<Record<string, string>>(SERVER_EXTENSION_TYPE, {
+export const TRUSTED_HOSTS_REGISTRY_TYPE: RegistryType<Record<string, string>> = RegistryType.createJson<Record<string, string>>(SERVER_EXTENSION_TYPE, {
     name: 'trusted_hosts',
     defaultValue: {},
     permissions: {
@@ -66,7 +66,7 @@ export class ServerExtension implements Extension {
     public readonly trustedHosts: Registry<Record<string, string>>;
 
     constructor(private readonly omu: Omu) {
-        this.apps = omu.tables.get(APP_TABLE_TYPE);
+        this.apps = omu.tables.get(SERVER_APP_TABLE_TYPE);
         this.index = omu.registries.get(SERVER_INDEX_REGISTRY_TYPE);
         this.trustedHosts = omu.registries.get(TRUSTED_HOSTS_REGISTRY_TYPE);
     }

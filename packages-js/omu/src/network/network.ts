@@ -143,7 +143,7 @@ export class Network {
     }
 
     private async scheduleReconnect(attempt: number): Promise<boolean> {
-        const timeout = Math.min(30000, 2000 * (Math.pow(1.5, attempt) - 1) + 2000);
+        const timeout = Math.min(30000, 500 * Math.pow(1.5, attempt - 1));
         const date = new Date();
         let cancelled = false;
         const status: Extract<NetworkStatus, { type: 'reconnecting' }> = {

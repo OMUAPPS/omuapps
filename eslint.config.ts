@@ -40,7 +40,6 @@ export default [
             '**/.svelte-kit/',
             '**/*.{js,cjs,mjs}',
             '**/src-tauri/',
-            '.venv/',
             'appdata/',
         ],
     },

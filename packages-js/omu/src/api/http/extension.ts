@@ -3,7 +3,9 @@ import { textEncoder } from '../../const';
 import { Identifier } from '../../identifier';
 import { PacketType } from '../../network/packet';
 import { Omu } from '../../omu';
+import { DASHBOARD_SET_PERMISSION_ID } from '../dashboard';
 import { Extension, ExtensionType } from '../extension';
+import { TableType } from '../table';
 import { DataChunk, HttpRequest, OmuResponse, RequestHandle } from './http';
 import { OmuWS, WebSocketClose, WebSocketError, WebSocketOpen, WSData, WSDataMeta, WSHandleState, WSMsgType } from './websocket';
 
@@ -14,22 +16,22 @@ export const HTTP_EXTENSION_TYPE: ExtensionType<HttpExtension> = new ExtensionTy
 
 export const HTTP_REQUEST_PERMISSION_ID: Identifier = HTTP_EXTENSION_TYPE.join('request');
 
-const REQUEST_CREATE = PacketType.createJson<HttpRequest>(HTTP_EXTENSION_TYPE, {
+export const HTTP_REQUEST_CREATE: PacketType<HttpRequest> = PacketType.createJson<HttpRequest>(HTTP_EXTENSION_TYPE, {
     name: 'request_create',
 });
 
-const REQUEST_SEND = PacketType.createSerialized<DataChunk<RequestHandle>>(HTTP_EXTENSION_TYPE, {
+export const HTTP_REQUEST_SEND: PacketType<DataChunk<RequestHandle>> = PacketType.createSerialized<DataChunk<RequestHandle>>(HTTP_EXTENSION_TYPE, {
     name: 'request_send',
     serializer: DataChunk,
 });
 
 type HttpRequestClose = RequestHandle;
 
-const REQUEST_CLOSE = PacketType.createJson<HttpRequestClose>(HTTP_EXTENSION_TYPE, {
+export const HTTP_REQUEST_CLOSE: PacketType<HttpRequestClose> = PacketType.createJson<HttpRequestClose>(HTTP_EXTENSION_TYPE, {
     name: 'request_close',
 });
 
-type HttpResponse = RequestHandle & {
+export type HttpResponse = RequestHandle & {
     header: Record<string, string>;
     status: number;
     statusText: string;
@@ -38,16 +40,16 @@ type HttpResponse = RequestHandle & {
     redirected: boolean;
 };
 
-const RESPONSE_CREATE = PacketType.createJson<HttpResponse>(HTTP_EXTENSION_TYPE, {
+export const HTTP_RESPONSE_CREATE: PacketType<HttpResponse> = PacketType.createJson<HttpResponse>(HTTP_EXTENSION_TYPE, {
     name: 'response_create',
 });
 
-const RESPONSE_CHUNK = PacketType.createSerialized<DataChunk<RequestHandle>>(HTTP_EXTENSION_TYPE, {
+export const HTTP_RESPONSE_CHUNK: PacketType<DataChunk<RequestHandle>> = PacketType.createSerialized<DataChunk<RequestHandle>>(HTTP_EXTENSION_TYPE, {
     name: 'response_chunk',
     serializer: DataChunk,
 });
 
-const RESPONSE_CLOSE = PacketType.createJson<RequestHandle>(HTTP_EXTENSION_TYPE, {
+export const HTTP_RESPONSE_CLOSE: PacketType<RequestHandle> = PacketType.createJson<RequestHandle>(HTTP_EXTENSION_TYPE, {
     name: 'response_close',
 });
 
@@ -64,25 +66,38 @@ type HandleStateCreated = {
 
 type HandleState = HandleStateCreated | HandleStateReceiving;
 
-const WEBSOCKET_CREATE = PacketType.createJson<HttpRequest>(HTTP_EXTENSION_TYPE, {
+export const WEBSOCKET_CREATE: PacketType<HttpRequest> = PacketType.createJson<HttpRequest>(HTTP_EXTENSION_TYPE, {
     name: 'ws_create',
 });
 
-const WEBSOCKET_OPEN = PacketType.createJson<WebSocketOpen>(HTTP_EXTENSION_TYPE, {
+export const WEBSOCKET_OPEN: PacketType<WebSocketOpen> = PacketType.createJson<WebSocketOpen>(HTTP_EXTENSION_TYPE, {
     name: 'ws_open',
 });
 
-const WEBSOCKET_DATA = PacketType.createSerialized<DataChunk<WSDataMeta>>(HTTP_EXTENSION_TYPE, {
+export const WEBSOCKET_DATA: PacketType<DataChunk<WSDataMeta>> = PacketType.createSerialized<DataChunk<WSDataMeta>>(HTTP_EXTENSION_TYPE, {
     name: 'ws_data',
     serializer: DataChunk,
 });
 
-const WEBSOCKET_CLOSE = PacketType.createJson<WebSocketClose>(HTTP_EXTENSION_TYPE, {
+export const WEBSOCKET_CLOSE: PacketType<WebSocketClose> = PacketType.createJson<WebSocketClose>(HTTP_EXTENSION_TYPE, {
     name: 'ws_close',
 });
 
-const WEBSOCKET_ERROR = PacketType.createJson<WebSocketError>(HTTP_EXTENSION_TYPE, {
+export const WEBSOCKET_ERROR: PacketType<WebSocketError> = PacketType.createJson<WebSocketError>(HTTP_EXTENSION_TYPE, {
     name: 'ws_error',
+});
+
+export type AllowedPorts = {
+    id: string;
+    ports: number[];
+};
+
+export const HTTP_ALLOWED_PORTS: TableType<AllowedPorts> = TableType.createJson<AllowedPorts>(HTTP_EXTENSION_TYPE, {
+    name: 'allowed_ports',
+    key: (entry) => entry.id,
+    permissions: {
+        all: DASHBOARD_SET_PERMISSION_ID,
+    },
 });
 
 function createFuture<T>(): {
@@ -122,19 +137,19 @@ export class HttpExtension implements Extension {
         private readonly omu: Omu,
     ) {
         omu.network.registerPacket(
-            REQUEST_CREATE,
-            REQUEST_SEND,
-            REQUEST_CLOSE,
-            RESPONSE_CREATE,
-            RESPONSE_CHUNK,
-            RESPONSE_CLOSE,
+            HTTP_REQUEST_CREATE,
+            HTTP_REQUEST_SEND,
+            HTTP_REQUEST_CLOSE,
+            HTTP_RESPONSE_CREATE,
+            HTTP_RESPONSE_CHUNK,
+            HTTP_RESPONSE_CLOSE,
             WEBSOCKET_CLOSE,
             WEBSOCKET_CREATE,
             WEBSOCKET_DATA,
             WEBSOCKET_OPEN,
             WEBSOCKET_ERROR,
         );
-        omu.network.addPacketHandler(RESPONSE_CREATE, (packet) => {
+        omu.network.addPacketHandler(HTTP_RESPONSE_CREATE, (packet) => {
             const handle = this.httpHandles[packet.id];
             if (!handle) {
                 console.warn('Received response for unknown request', packet.id);
@@ -146,7 +161,7 @@ export class HttpExtension implements Extension {
             }
             handle.setResponse(packet);
         });
-        omu.network.addPacketHandler(RESPONSE_CHUNK, (packet) => {
+        omu.network.addPacketHandler(HTTP_RESPONSE_CHUNK, (packet) => {
             const handle = this.httpHandles[packet.meta.id];
             if (!handle) {
                 console.warn('Received response for unknown request', packet.meta.id);
@@ -158,7 +173,7 @@ export class HttpExtension implements Extension {
             }
             handle.receive(packet.body);
         });
-        omu.network.addPacketHandler(RESPONSE_CLOSE, (packet) => {
+        omu.network.addPacketHandler(HTTP_RESPONSE_CLOSE, (packet) => {
             const handle = this.httpHandles[packet.id];
             if (!handle) {
                 console.warn('Received response for unknown request', packet.id);
@@ -275,7 +290,7 @@ export class HttpExtension implements Extension {
     public async request(input: string | URL | globalThis.Request, init?: RequestInit): Promise<{ response: HttpResponse; stream: ReadableStream }> {
         const request = new Request(input, init);
         const id = this.generateId().key();
-        this.omu.send(REQUEST_CREATE, {
+        this.omu.send(HTTP_REQUEST_CREATE, {
             id,
             header: this.generateHeaders(request, init),
             method: request.method,
@@ -289,13 +304,13 @@ export class HttpExtension implements Extension {
                 if (result.done) {
                     break;
                 }
-                this.omu.send(REQUEST_SEND, {
+                this.omu.send(HTTP_REQUEST_SEND, {
                     meta: { id },
                     body: result.value,
                 });
             }
         }
-        this.omu.send(REQUEST_CLOSE, { id });
+        this.omu.send(HTTP_REQUEST_CLOSE, { id });
         const chunks: Uint8Array[] = [];
         const responseFuture = createFuture<HttpResponse>();
         let chunkEvent = createFuture<boolean>();

@@ -1,11 +1,9 @@
 <script lang="ts">
-    import { t } from '$lib/i18n/i18n-context';
     import { cleanProgress, type CleanError } from '$lib/tauri.js';
     import { Button, Spinner } from '@omujs/ui';
     import { invoke } from '@tauri-apps/api/core';
     import { error } from '@tauri-apps/plugin-log';
     import { relaunch } from '@tauri-apps/plugin-process';
-    import ProgressBar from './ProgressBar.svelte';
 
     interface Props {
         retry: () => void;
@@ -79,12 +77,7 @@
     {:else if restoreState.type === 'cleaning'}
         <small>
             {#if $cleanProgress}
-                {#if $cleanProgress.type === 'Python'}
-                    {$t(`setup.progress.${$cleanProgress.type}.${$cleanProgress.progress.type}`)}
-                    <ProgressBar progress={$cleanProgress.progress} />
-                {:else if $cleanProgress.type === 'PythonRemoving' || $cleanProgress.type === 'UvRemoving'}
-                    <ProgressBar progress={$cleanProgress.progress} />
-                {/if}
+                {$cleanProgress.progress.msg}
             {/if}
         </small>
     {:else if restoreState.type === 'cleaning_failed'}

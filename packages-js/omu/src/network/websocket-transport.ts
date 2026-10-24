@@ -34,6 +34,7 @@ export class WebsocketConnection implements Connection {
 
     public static fromSocket(socket: WebSocket): Promise<WebsocketConnection> {
         const connection = new WebsocketConnection(socket);
+        socket.binaryType = 'arraybuffer';
         return new Promise((resolve, reject) => {
             socket.onerror = reject;
             socket.onclose = () => {
@@ -54,11 +55,13 @@ export class WebsocketConnection implements Connection {
         });
     }
 
-    private async onMessage(event: MessageEvent<string | Blob>): Promise<void> {
+    private async onMessage(event: MessageEvent<string | Blob | ArrayBuffer>): Promise<void> {
         if (typeof event.data === 'string') {
             throw new Error('Received string data');
         }
-        const reader = await ByteReader.fromBlob(event.data);
+        const reader = event.data instanceof Blob
+            ? await ByteReader.fromBlob(event.data)
+            : ByteReader.fromArrayBuffer(event.data);
         const data = {
             type: reader.readString(),
             data: reader.readUint8Array(),

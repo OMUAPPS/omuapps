@@ -69,17 +69,8 @@ jobs:
               with:
                   ref: ${{ needs.version.outputs.COMMIT }}
 
-            - name: Set up Python
-              uses: actions/setup-python@v5.1.0
-              with:
-                  python-version: '3.12'
-
-            - name: Install uv
-              uses: astral-sh/setup-uv@v6
-
-            - name: Install dependencies
-              run: |
-                  uv sync
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
 
             - name: Git Identity
               run: |
@@ -91,11 +82,7 @@ jobs:
 
             - name: Generate version file
               run: |
-                  uv run ./scripts/py-generate_version.py
-
-            - name: Update lock
-              run: |
-                  uv sync
+                  bun ./scripts/js-generate-version.ts
 
             - name: Push
               run: |

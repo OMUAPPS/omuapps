@@ -13,25 +13,14 @@ packages-js/
 ├── site/               # サイトとアプリを提供するパッケージ
 ├── ui/                 # UIコンポーネント
 ├── omu/                # OMU APIのJavascript版実装
+├── server/             # OMU APIのサーバー。管理画面に同梱する
+├── i18n/               # 翻訳
 │  # プラグイン
 ├── chat/               # OMUのChat APIプラグイン
-└── plugin-obs/         # OBSプラグイン
+├── chat-provider/      # YouTube、Twitch、Picartoのチャットの取得
+├── iwashi/             # リンクをたどってアカウントの木を作る
+└── plugin-obs/         # OBSプラグインの仕様
 
-packages-py/
-│  # OMUの実装
-├── omu/                # OMU APIのPython版実装
-├── server/             # OMU APIのサーバー実装
-│  # チャット取得プラグイン
-├── chat/               # Chatの定義
-├── chat-provider/      # チャットの取得をまとめて管理するプラグイン
-├── chat-youtube/       # YouTubeのチャット取得プラグイン
-├── chat-twitch/        # Twitchのチャット取得プラグイン
-│  # その他プラグイン
-├── plugin-archive/     # 配信アーカイブプラグイン
-├── plugin-discordrpc/  # Discord RPCプラグイン
-├── plugin-emoji/       # 絵文字プラグイン
-├── plugin-marshmallow/ # マシュマロプラグイン
-├── plugin-nyanya/      # ﾆｬﾆｬ!!プラグイン
-├── plugin-obs/         # OBSプラグイン
-└── plugin-translator/  # 翻訳プラグイン
+packages-cpp/
+└── plugin-obs/         # OBSのC++プラグイン
 ```

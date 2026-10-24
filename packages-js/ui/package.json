@@ -35,29 +35,29 @@
         "url": "git+https://github.com/OMUAPPS/omuapps.git"
     },
     "devDependencies": {
-        "@fontsource/noto-sans-jp": "^5.2.9",
+        "@fontsource/noto-sans-jp": "^5.3.1",
         "@sveltejs/adapter-auto": "^7.0.1",
-        "@sveltejs/package": "^2.5.7",
-        "@sveltejs/vite-plugin-svelte": "^6.2.1",
+        "@sveltejs/package": "^2.5.8",
+        "@sveltejs/vite-plugin-svelte": "^6.2.4",
         "@tabler/icons-webfont": "3.19.0",
-        "chromatic": "^15.2.0",
+        "chromatic": "^15.3.1",
         "esm-env": "^1.2.2",
-        "publint": "^0.3.17",
+        "publint": "^0.3.25",
         "react": "19.2.4",
         "react-dom": "19.2.4",
-        "sass": "^1.97.3",
-        "svelte": "^5.43.12",
-        "svelte-check": "^4.4.3",
+        "sass": "^1.106.1",
+        "svelte": "^5.57.2",
+        "svelte-check": "^4.7.7",
         "tslib": "^2.8.1",
-        "vite": "^7.3.1",
-        "vitest": "^4.0.18"
+        "vite": "^7.3.7",
+        "vitest": "^4.1.12"
     },
     "peerDependencies": {
         "@omujs/chat": "workspace:*",
         "@omujs/i18n": "workspace:*",
         "@omujs/obs": "workspace:*",
         "@omujs/omu": "workspace:*",
-        "@sveltejs/kit": "^2.53.2",
+        "@sveltejs/kit": "^2.70.3",
         "svelte": "^5.53.5"
     },
     "files": [

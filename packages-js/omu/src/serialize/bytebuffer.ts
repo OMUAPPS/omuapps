@@ -34,7 +34,7 @@ export class Flags {
     }
 
     public write(writer: ByteWriter): void {
-        const bits = new Uint8Array((this.length + 7) / 8);
+        const bits = new Uint8Array(Math.ceil(this.length / 8));
         for (let i = 0; i < bits.length; i++) {
             bits[i] = (this.value >> (i * 8)) & 0xff;
         }
@@ -43,7 +43,7 @@ export class Flags {
 
     public static read(reader: ByteReader, length: number): Flags {
         let value = 0;
-        for (let i = 0; i < (length + 7) / 8; i++) {
+        for (let i = 0; i < Math.ceil(length / 8); i++) {
             value |= reader.readUint8() << (i * 8);
         }
         return new Flags({ value, length });

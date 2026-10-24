@@ -1,43 +1,21 @@
 use std::fs::canonicalize;
-use std::io::BufRead;
+use std::io::{BufRead, Read, Write};
+use std::net::TcpStream;
 use std::path::PathBuf;
-use std::process::Stdio;
+use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use anyhow::Result;
 use log::{info, warn};
-use once_cell::sync::Lazy;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use tauri::utils::platform::current_exe;
 use tauri::{AppHandle, Emitter};
-use tempfile::NamedTempFile;
 
 use crate::options::AppOptions;
-use crate::uv::{UvEnsureError, UvEnsureProgress};
+use crate::utils::filesystem::remove_dir_all;
 use crate::version::VERSION;
-use crate::{python::Python, uv::Uv};
-
-const LATEST_PIP: &str = "pip==23.3.2";
-static REQUIREMENTS: Lazy<String> = Lazy::new(|| {
-    format!(
-        "
-omuserver=={VERSION}
-omuplugin_obs=={VERSION}
-omu_chat=={VERSION}
-omu_chat_youtube=={VERSION}
-omu_chat_twitch=={VERSION}
-omu_chat_picarto=={VERSION}
-omu_chatprovider=={VERSION}"
-    )
-});
-static DEPRECATED_REQUIREMENTS: Lazy<String> = Lazy::new(|| {
-    format!(
-        "
-omuplugin_discordrpc=={VERSION}
-    "
-    )
-});
 
 const RESTART_CODE: i32 = 100;
 
@@ -110,8 +88,7 @@ pub struct ServerProcess(Arc<Mutex<std::process::Child>>);
 
 pub struct Server {
     config: ServerConfig,
-    python: Python,
-    uv: Uv,
+    executable: PathBuf,
     process: Arc<Mutex<Option<ServerProcess>>>,
     app_handle: Arc<Mutex<Option<AppHandle>>>,
     pub token: String,
@@ -129,15 +106,13 @@ pub enum ServerState {
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum ServerEnsureProgress {
-    UpdatingDependencies { progress: UvEnsureProgress },
     ServerStopping { msg: String },
+    LegacyRemoving { msg: String },
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum ServerEnsureError {
-    VersionReadFailed { msg: String },
-    UpdateDependenciesFailed { reason: UvEnsureError },
     StopFailed { msg: String },
     TokenReadFailed { msg: String },
     TokenWriteFailed { msg: String },
@@ -147,40 +122,53 @@ pub enum ServerEnsureError {
 }
 
 impl Server {
+    pub fn executable() -> PathBuf {
+        let directory = canonicalize(current_exe().unwrap())
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        directory.join(format!("omuserver{}", std::env::consts::EXE_SUFFIX))
+    }
+
+    fn command(executable: &PathBuf, config: &ServerConfig) -> Command {
+        let mut command = Command::new(executable);
+        command.current_dir(&config.workdir);
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            command.creation_flags(0x08000000);
+        }
+        command
+    }
+
     pub fn ensure_server(
         config: &ServerConfig,
-        python: Python,
-        uv: Uv,
+        options: &AppOptions,
         on_progress: impl Fn(ServerEnsureProgress) + Send + Sync + Clone + 'static,
         app_handle: Arc<Mutex<Option<AppHandle>>>,
     ) -> Result<Self, ServerEnsureError> {
+        let executable = Self::executable();
         let mut already_started = !is_port_free(config.port);
 
-        let version = Self::read_version(&config)?;
-        let needs_update = version.as_deref() != Some(VERSION);
-        if already_started && needs_update {
-            let callback = on_progress.clone();
-            uv.uninstall_requirements(DEPRECATED_REQUIREMENTS.as_str(), &move |progress| {
-                callback(ServerEnsureProgress::UpdatingDependencies { progress });
-            })
-            .map_err(|err: UvEnsureError| {
-                ServerEnsureError::UpdateDependenciesFailed { reason: err }
-            })?;
-            let callback = on_progress.clone();
-            uv.update(LATEST_PIP, REQUIREMENTS.as_str(), move |progress| {
-                callback(ServerEnsureProgress::UpdatingDependencies { progress });
-            })
-            .map_err(|err| ServerEnsureError::UpdateDependenciesFailed { reason: err })?;
-            on_progress(ServerEnsureProgress::ServerStopping {
-                msg: format!(
-                    "Server version mismatch ({} != {}), stopping server",
-                    version.unwrap_or("none".to_string()),
-                    VERSION
-                ),
-            });
-            Self::stop_server(&python, &config)
-                .map_err(|err| ServerEnsureError::StopFailed { msg: err })?;
-            already_started = false;
+        if already_started {
+            let version = fetch_version(config.port);
+            if version.as_deref() != Some(VERSION) {
+                on_progress(ServerEnsureProgress::ServerStopping {
+                    msg: format!(
+                        "Server version mismatch ({} != {}), stopping server",
+                        version.unwrap_or("none".to_string()),
+                        VERSION
+                    ),
+                });
+                Self::stop_server(&executable, &config)
+                    .map_err(|err| ServerEnsureError::StopFailed { msg: err })?;
+                already_started = false;
+            }
+        }
+
+        if !already_started {
+            Self::remove_legacy(options, &on_progress);
         }
 
         let token = if already_started {
@@ -190,23 +178,9 @@ impl Server {
             Self::generate_token(&config)?
         };
 
-        let callback = on_progress.clone();
-        uv.uninstall_requirements(DEPRECATED_REQUIREMENTS.as_str(), &move |progress| {
-            callback(ServerEnsureProgress::UpdatingDependencies { progress });
-        })
-        .map_err(
-            |err: UvEnsureError| ServerEnsureError::UpdateDependenciesFailed { reason: err },
-        )?;
-        let callback = on_progress.clone();
-        uv.update(LATEST_PIP, REQUIREMENTS.as_str(), move |progress| {
-            callback(ServerEnsureProgress::UpdatingDependencies { progress });
-        })
-        .map_err(|err| ServerEnsureError::UpdateDependenciesFailed { reason: err })?;
-
         let server = Self {
             config: config.clone(),
-            python,
-            uv,
+            executable,
             process: Arc::new(Mutex::new(None)),
             app_handle,
             token,
@@ -228,69 +202,48 @@ impl Server {
         Ok(server)
     }
 
-    pub fn stop_server(python: &Python, option: &ServerConfig) -> Result<(), String> {
-        let mut cmd = python.cmd();
-        cmd.arg("-m");
-        cmd.arg("omuserver");
+    pub fn remove_legacy(options: &AppOptions, on_progress: &impl Fn(ServerEnsureProgress)) {
+        for directory in options.legacy_directories() {
+            if !directory.exists() {
+                continue;
+            }
+            on_progress(ServerEnsureProgress::LegacyRemoving {
+                msg: format!("Removing {}", directory.display()),
+            });
+            if let Err(err) = remove_dir_all(&directory, |_, _| {}) {
+                warn!("Failed to remove {}: {}", directory.display(), err);
+            }
+        }
+    }
+
+    pub fn stop_server(executable: &PathBuf, option: &ServerConfig) -> Result<(), String> {
+        Self::run(executable, option, "--stop")
+    }
+
+    pub fn uninstall(executable: &PathBuf, option: &ServerConfig) -> Result<(), String> {
+        Self::run(executable, option, "--uninstall")
+    }
+
+    fn run(executable: &PathBuf, option: &ServerConfig, action: &str) -> Result<(), String> {
+        let mut cmd = Self::command(executable, option);
         cmd.arg("--port");
         cmd.arg(option.port.to_string());
-        cmd.arg("--stop");
+        cmd.arg(action);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
-        cmd.current_dir(&option.workdir);
-        info!("Stopping server with command: {:?}", cmd);
-        let output = cmd.output().map_err(|err| {
-            let msg = format!("Failed to stop server with command {:?}: {}", cmd, err);
-            msg
-        })?;
+        info!("Running server with command: {:?}", cmd);
+        let output = cmd
+            .output()
+            .map_err(|err| format!("Failed to run server with command {:?}: {}", cmd, err))?;
         if !output.status.success() {
             warn!(
-                "Failed to stop server with command {:?}: exited with code {}: {}",
+                "Server command {:?} exited with code {}: {}",
                 cmd,
                 output.status.code().unwrap_or(-1),
                 String::from_utf8_lossy(&output.stderr)
             );
         }
         Ok(())
-    }
-
-    pub fn uninstall(python: &Python, option: &ServerConfig) -> Result<(), String> {
-        let mut cmd = python.cmd();
-        cmd.arg("-m");
-        cmd.arg("omuserver");
-        cmd.arg("--port");
-        cmd.arg(option.port.to_string());
-        cmd.arg("--uninstall");
-        cmd.stderr(Stdio::piped());
-        cmd.stdout(Stdio::piped());
-        cmd.current_dir(&option.workdir);
-        info!("Uninstalling server with command: {:?}", cmd);
-        let output = cmd.output().map_err(|err| {
-            let msg = format!("Failed to uninstall server with command {:?}: {}", cmd, err);
-            msg
-        })?;
-        if !output.status.success() {
-            warn!(
-                "Failed to uninstall server with command {:?}: exited with code {}: {}",
-                cmd,
-                output.status.code().unwrap_or(-1),
-                String::from_utf8_lossy(&output.stderr)
-            );
-        }
-        Ok(())
-    }
-
-    pub fn read_version(option: &ServerConfig) -> Result<Option<String>, ServerEnsureError> {
-        let path = option.workdir.join("VERSION");
-        if !path.exists() {
-            return Ok(None);
-        }
-        match std::fs::read_to_string(&path) {
-            Ok(version) => Ok(Some(version)),
-            Err(err) => Err(ServerEnsureError::VersionReadFailed {
-                msg: format!("Failed to read version file at {}: {}", path.display(), err),
-            }),
-        }
     }
 
     fn generate_token(option: &ServerConfig) -> Result<String, ServerEnsureError> {
@@ -345,8 +298,7 @@ impl Server {
                 msg: format!("Server is already running on port {}", self.config.port),
             });
         }
-        let mut cmd = self.python.cmd();
-        cmd.arg("-m").arg("omuserver");
+        let mut cmd = Self::command(&self.executable, &self.config);
         cmd.arg("--token-file").arg(self.config.get_token_path());
         cmd.arg("--port").arg(self.config.port.to_string());
         let hash = if cfg!(dev) {
@@ -361,16 +313,8 @@ impl Server {
             .to_string();
         info!("Executable: {}", executable);
         cmd.arg("--dashboard-path").arg(executable);
-
-        let index_url = if cfg!(dev) {
-            "http://localhost:26410/simple/".to_string()
-        } else {
-            "https://pypi.org/simple/".to_string()
-        };
-        cmd.arg("--index-url").arg(index_url);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
-        cmd.current_dir(&self.config.workdir);
         info!(
             "Starting server with args: {:?} in {:?}",
             cmd, self.config.workdir
@@ -471,6 +415,22 @@ fn generate_token() -> String {
         .take(32)
         .map(char::from)
         .collect::<String>()
+}
+
+fn fetch_version(port: u16) -> Option<String> {
+    let address = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+    let mut stream = TcpStream::connect_timeout(&address, Duration::from_secs(3)).ok()?;
+    stream.set_read_timeout(Some(Duration::from_secs(3))).ok()?;
+    let request = format!(
+        "GET /version HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nConnection: close\r\n\r\n",
+        port
+    );
+    stream.write_all(request.as_bytes()).ok()?;
+    let mut response = String::new();
+    stream.read_to_string(&mut response).ok()?;
+    let body = response.split("\r\n\r\n").nth(1)?;
+    let json: serde_json::Value = serde_json::from_str(body.trim()).ok()?;
+    json.get("version")?.as_str().map(|version| version.to_string())
 }
 
 fn is_port_free(port: u16) -> bool {

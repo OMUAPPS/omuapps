@@ -122,7 +122,7 @@ export type DragDropHandler = {
     read(id: string): Promise<DragDropReadResponse>;
 };
 
-const DASHBOARD_DRAG_DROP_READ_ENDPOINT = EndpointType.createSerialized<DragDropReadRequest, DragDropReadResponse>(DASHBOARD_EXTENSION_TYPE, {
+export const DASHBOARD_DRAG_DROP_READ_ENDPOINT: EndpointType<DragDropReadRequest, DragDropReadResponse> = EndpointType.createSerialized<DragDropReadRequest, DragDropReadResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'drag_drop_read',
     requestSerializer: Serializer.json(),
     responseSerializer: DragDropReadResponse,
@@ -132,7 +132,7 @@ const DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT = EndpointType.createJson<DragDropReq
     name: 'drag_drop_request',
     permissionId: DASHBOARD_DRAG_DROP_PERMISSION_ID,
 });
-const DASHBOARD_DRAG_DROP_STATE_PACKET = PacketType.createJson<FileDragPacket>(DASHBOARD_EXTENSION_TYPE, {
+export const DASHBOARD_DRAG_DROP_STATE_PACKET: PacketType<FileDragPacket> = PacketType.createJson<FileDragPacket>(DASHBOARD_EXTENSION_TYPE, {
     name: 'drag_drop_state',
     serializer: Serializer.noop<FileDragPacket>()
         .field('app', App),

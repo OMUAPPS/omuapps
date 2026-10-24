@@ -1,0 +1,131 @@
+{
+    "identifiers": [
+        {
+            "key": "com.example:app",
+            "sanitized_path": "com_example-d0b17419f33be62aa5340fec07269030/app-d2a57dc1d883fd21fb9951699df71cc7",
+            "sanitized_key": "com_example_app-094e24f107d4ae37c61d522ec02546c8"
+        },
+        {
+            "key": "com.omuapps:chat/messages",
+            "sanitized_path": "com_omuapps-08894f97b823581c9d26079868875daf/chat-messages-a2c51a37bab33ab22aebb07910d6f28d",
+            "sanitized_key": "com_omuapps_chat_messages-a091499159e1176747d7705e9d8982e8"
+        },
+        {
+            "key": "ext:table/permission",
+            "sanitized_path": "ext-abf77184f55403d75b9d51d79162a7ca/table-permission-bbdcfffc9b15ba471502d0d0c48cfe06",
+            "sanitized_key": "ext_table_permission-a24a7452bc3a8a3e3a57d9862f77d0ca"
+        },
+        {
+            "key": "my-app.example:a b/c.d-e_f",
+            "sanitized_path": "my_app_example-bab5d005fd93a7290bf4c27e248fd917/a_b-c_d_e_f-432f463a4862c329185fb7c35c816d34",
+            "sanitized_key": "my_app_example_a_b_c_d_e_f-a364de4a9e5ebf4d16243d45dce1cc6a"
+        },
+        {
+            "key": "jp.example:チャット/メッセージ",
+            "sanitized_path": "jp_example-1208b1488988d779f551e7191b46b382/チャット-メッセージ-75c4159450b957727c0d923b4ccd2d0e",
+            "sanitized_key": "jp_example_チャット_メッセージ-a69150d92ee4e1ba31dd8dde9ca89199"
+        },
+        {
+            "key": "jp.example:①②/full　width",
+            "sanitized_path": "jp_example-1208b1488988d779f551e7191b46b382/①②-full_width-147d607198d286cc2c5a8cc2a43dbcc3",
+            "sanitized_key": "jp_example_①②_full_width-81acc43c25352be6eb5785dc9abf7cdd"
+        },
+        {
+            "key": "com.example:café/😀",
+            "sanitized_path": "com_example-d0b17419f33be62aa5340fec07269030/cafe_-_-f67049fae9ba452710799cf57c8deffa",
+            "sanitized_key": "com_example_cafe___-3f3142288d4dca4fe7937aafb3addd0b"
+        }
+    ],
+    "tables": [
+        {
+            "id": "com.example:app/items",
+            "file": "data/tables/com_example-d0b17419f33be62aa5340fec07269030/app-items-8313c03d78fac6d96fed3e8ce2aef83b.db",
+            "rows": [
+                {
+                    "id": 1,
+                    "key": "key1",
+                    "value": "dmFsdWUx"
+                },
+                {
+                    "id": 4,
+                    "key": "key4",
+                    "value": "dmFsdWU0"
+                },
+                {
+                    "id": 5,
+                    "key": "key5",
+                    "value": "dmFsdWU1"
+                },
+                {
+                    "id": 6,
+                    "key": "key3",
+                    "value": "dmFsdWUzLXVwZGF0ZWQ="
+                },
+                {
+                    "id": 7,
+                    "key": "key6",
+                    "value": "AAEC/w=="
+                }
+            ]
+        }
+    ],
+    "registries": [
+        {
+            "id": "com.example:app/settings",
+            "file": "data/registry/com_example-d0b17419f33be62aa5340fec07269030/app-settings-5a904525beaa6dd14455d7d5afcaf7a2",
+            "meta_file": "data/registry/com_example-d0b17419f33be62aa5340fec07269030/app-settings-5a904525beaa6dd14455d7d5afcaf7a2.json",
+            "value": "eyJ2b2x1bWUiOiAwLjUsICJuYW1lIjogIuODhuOCueODiCJ9",
+            "permissions": {
+                "all": null,
+                "read": "com.example:app/settings/read",
+                "write": "com.example:app/settings/write"
+            }
+        }
+    ],
+    "assets": [
+        {
+            "id": "com.example:app/images/icon.png",
+            "file": "assets/com_example-d0b17419f33be62aa5340fec07269030/app-images-icon_png-15087b8c2e1ebe8fa8a8267684e8b004",
+            "index_path": "com_example-d0b17419f33be62aa5340fec07269030/app-images-icon_png-15087b8c2e1ebe8fa8a8267684e8b004",
+            "content": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w=="
+        }
+    ],
+    "apps": [
+        {
+            "id": "com.example:app",
+            "token": "JidNu5T9HWuKpOjUQ-fzipmcZbW7bo4P",
+            "app": {
+                "id": "com.example:app",
+                "parent_id": null,
+                "version": "1.0.0",
+                "url": "https://app.example.com/",
+                "type": "app",
+                "metadata": {
+                    "locale": "ja",
+                    "name": {
+                        "ja": "アプリ",
+                        "en": "App"
+                    }
+                },
+                "dependencies": null
+            },
+            "permissions": [
+                "com.example:app/permission"
+            ]
+        },
+        {
+            "id": "com.example:app/child",
+            "token": "TjH88JS_4oBWptVdNK3e2QtnluG0plqS",
+            "app": {
+                "id": "com.example:app/child",
+                "parent_id": "com.example:app",
+                "version": null,
+                "url": "https://app.example.com/child",
+                "type": "remote",
+                "metadata": null,
+                "dependencies": null
+            },
+            "permissions": []
+        }
+    ]
+}

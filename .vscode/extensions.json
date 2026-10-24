@@ -1,14 +1,12 @@
 {
     "recommendations": [
-        "charliermarsh.ruff",
+        "oven.bun-vscode",
         "svelte.svelte-vscode",
         "Swellaby.rust-pack",
         "dbaeumer.vscode-eslint",
         "vadimcn.vscode-lldb",
     ],
     "unwantedRecommendations": [
-        "ms-python.pylint",
         "esbenp.prettier-vscode",
-        "ms-python.isort",
     ]
 }

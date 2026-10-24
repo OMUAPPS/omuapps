@@ -137,7 +137,7 @@ export const PACKET_TYPES: {
     CONNECT: PacketType<ConnectPacket>;
     DISCONNECT: PacketType<DisconnectPacket>;
     TOKEN: PacketType<string>;
-    READY: PacketType<undefined>;
+    READY: PacketType<null>;
     ENCRYPTED_PACKET: PacketType<Uint8Array>;
 } = {
     SERVER_META: PacketType.createJson<ServerMeta>(IDENTIFIER, {
@@ -154,7 +154,7 @@ export const PACKET_TYPES: {
     TOKEN: PacketType.createJson<string>(IDENTIFIER, {
         name: 'token',
     }),
-    READY: PacketType.createJson<undefined>(IDENTIFIER, {
+    READY: PacketType.createJson<null>(IDENTIFIER, {
         name: 'ready',
     }),
     ENCRYPTED_PACKET: PacketType.createSerialized<Uint8Array>(IDENTIFIER, {

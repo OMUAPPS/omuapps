@@ -1,14 +1,12 @@
 use std::{fs::create_dir_all, path::PathBuf};
 
 use crate::{
-    python::{Python, PythonEnsureError, PythonEnsureProgress},
     server::{Server, ServerEnsureError, ServerEnsureProgress},
     utils::{archive::pack_archive, filesystem::remove_dir_all},
-    uv::{Uv, UvEnsureError, UvEnsureProgress},
     AppState,
 };
 use log::info;
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Progress {
@@ -21,16 +19,12 @@ pub struct Progress {
 #[serde(tag = "type")]
 pub enum StartError {
     ServerStartFailed { msg: String },
-    PythonEnsureError { reason: PythonEnsureError },
-    UvEnsureError { reason: UvEnsureError },
     ServerEnsureError { reason: ServerEnsureError },
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum StartProgress {
-    Python { progress: PythonEnsureProgress },
-    Uv { progress: UvEnsureProgress },
     Server { progress: ServerEnsureProgress },
 }
 
@@ -68,26 +62,10 @@ pub async fn start_server(
         };
     }
 
-    let config = state.config.lock().unwrap().clone();
-    let callback = on_progress.clone();
-    let python = Python::ensure(&state.options, move |progress: PythonEnsureProgress| {
-        callback(StartProgress::Python { progress: progress });
-    })
-    .map_err(|err| StartError::PythonEnsureError { reason: err })?;
-    let callback = on_progress.clone();
-    let uv = Uv::ensure(
-        &state.options,
-        &python.python_bin,
-        move |progress: UvEnsureProgress| {
-            callback(StartProgress::Uv { progress });
-        },
-    )
-    .map_err(|err| StartError::UvEnsureError { reason: err })?;
     let callback = on_progress.clone();
     let server = Server::ensure_server(
         &state.server_config,
-        python,
-        uv,
+        &state.options,
         move |progress: ServerEnsureProgress| {
             callback(StartProgress::Server { progress });
         },
@@ -118,14 +96,12 @@ pub async fn start_server(
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum StopError {
-    PythonEnsureError { reason: PythonEnsureError },
     ServerEnsureError { reason: ServerEnsureError },
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum StopProgress {
-    Python { progress: PythonEnsureProgress },
     ServerStopping { msg: String },
 }
 
@@ -139,19 +115,10 @@ pub async fn stop_server(
         window.emit("stop_progress", progress).unwrap();
     };
 
-    let options = &state.options;
-    let python = {
-        let callback = on_progress.clone();
-        Python::ensure(&options, move |progress| {
-            callback(StopProgress::Python { progress });
-        })
-        .map_err(|err| StopError::PythonEnsureError { reason: err })?
-    };
-
     on_progress(StopProgress::ServerStopping {
         msg: "Stopping server".to_string(),
     });
-    Server::stop_server(&python, &state.server_config).map_err(|err| {
+    Server::stop_server(&Server::executable(), &state.server_config).map_err(|err| {
         StopError::ServerEnsureError {
             reason: ServerEnsureError::StopFailed { msg: err },
         }
@@ -162,18 +129,13 @@ pub async fn stop_server(
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum CleanError {
-    PythonError { reason: PythonEnsureError },
     ServerError { reason: String },
-    RemovePythonError { reason: String },
-    RemoveUvError { reason: String },
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum CleanProgress {
-    Python { progress: PythonEnsureProgress },
-    PythonRemoving { progress: Progress },
-    UvRemoving { progress: Progress },
+    Server { progress: ServerEnsureProgress },
 }
 
 #[tauri::command]
@@ -186,44 +148,11 @@ pub async fn clean_environment(
         window.emit("clean_progress", progress).unwrap();
     };
 
-    let options = &state.options;
-    let python = {
-        let callback = on_progress.clone();
-        Python::ensure(&options, move |progress| {
-            callback(CleanProgress::Python { progress });
-        })
-        .map_err(|err| CleanError::PythonError { reason: err })?
-    };
-
-    Server::stop_server(&python, &state.server_config)
+    Server::stop_server(&Server::executable(), &state.server_config)
         .map_err(|err| CleanError::ServerError { reason: err })?;
-
-    let callback = on_progress.clone();
-    remove_dir_all(&options.python_path, |current, total| {
-        callback(CleanProgress::PythonRemoving {
-            progress: Progress {
-                msg: format!("Removing python at {}", options.python_path.display()),
-                progress: current,
-                total,
-            },
-        });
-    })
-    .map_err(|err| CleanError::RemovePythonError {
-        reason: err.to_string(),
-    })?;
-    let callback = on_progress.clone();
-    remove_dir_all(&options.uv_path, |current, total| {
-        callback(CleanProgress::UvRemoving {
-            progress: Progress {
-                msg: format!("Removing uv at {}", options.uv_path.display()),
-                progress: current,
-                total,
-            },
-        });
-    })
-    .map_err(|err| CleanError::RemoveUvError {
-        reason: err.to_string(),
-    })?;
+    Server::remove_legacy(&state.options, &|progress| {
+        on_progress(CleanProgress::Server { progress })
+    });
 
     info!("Environment cleaned");
 
@@ -233,21 +162,15 @@ pub async fn clean_environment(
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum UninstallProgress {
-    Python { progress: PythonEnsureProgress },
     PluginRemoving {},
     AppDataRemoving { progress: Progress },
-    PythonRemoving { progress: Progress },
-    UvRemoving { progress: Progress },
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum UninstallError {
-    PythonError { reason: PythonEnsureError },
     ServerError { reason: String },
     RemoveAppDataError { reason: String },
-    RemovePythonError { reason: String },
-    RemoveUvError { reason: String },
 }
 
 #[tauri::command]
@@ -261,19 +184,12 @@ pub async fn uninstall(
     };
 
     let options = &state.options;
-    let python = {
-        let callback = on_progress.clone();
-        Python::ensure(&options, move |progress| {
-            callback(UninstallProgress::Python { progress });
-        })
-        .map_err(|err| UninstallError::PythonError { reason: err })?
-    };
-
-    Server::stop_server(&python, &state.server_config)
+    let executable = Server::executable();
+    Server::stop_server(&executable, &state.server_config)
         .map_err(|err| UninstallError::ServerError { reason: err })?;
 
     on_progress(UninstallProgress::PluginRemoving {});
-    Server::uninstall(&python, &state.server_config)
+    Server::uninstall(&executable, &state.server_config)
         .map_err(|err| UninstallError::ServerError { reason: err })?;
 
     let callback = on_progress.clone();
@@ -290,32 +206,7 @@ pub async fn uninstall(
         reason: err.to_string(),
     })?;
 
-    let callback = on_progress.clone();
-    remove_dir_all(&options.python_path, |current, total| {
-        callback(UninstallProgress::PythonRemoving {
-            progress: Progress {
-                msg: format!("Removing python at {}", options.python_path.display()),
-                progress: current,
-                total,
-            },
-        });
-    })
-    .map_err(|err| UninstallError::RemovePythonError {
-        reason: err.to_string(),
-    })?;
-    let callback = on_progress.clone();
-    remove_dir_all(&options.uv_path, |current, total| {
-        callback(UninstallProgress::UvRemoving {
-            progress: Progress {
-                msg: format!("Removing uv at {}", options.uv_path.display()),
-                progress: current,
-                total,
-            },
-        });
-    })
-    .map_err(|err| UninstallError::RemoveUvError {
-        reason: err.to_string(),
-    })?;
+    Server::remove_legacy(options, &|_| {});
 
     info!("Environment cleaned");
     Ok(())
@@ -329,21 +220,6 @@ pub fn get_token(state: tauri::State<'_, AppState>) -> Result<Option<String>, St
     };
     let server = server.as_ref().unwrap();
     Ok(Some(server.token.clone()))
-}
-
-#[tauri::command]
-pub fn open_python_path(state: tauri::State<'_, AppState>) -> Result<String, String> {
-    let options = &state.options;
-    open::that(&options.python_path)
-        .map_err(|err| format!("Failed to open python path: {}", err))?;
-    Ok(options.python_path.to_string_lossy().to_string())
-}
-
-#[tauri::command]
-pub fn open_uv_path(state: tauri::State<'_, AppState>) -> Result<String, String> {
-    let options = &state.options;
-    open::that(&options.uv_path).map_err(|err| format!("Failed to open uv path: {}", err))?;
-    Ok(options.uv_path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
