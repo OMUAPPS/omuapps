@@ -57,6 +57,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "DashboardDebug",
+            "preLaunchTask": "prepare-dash-debug",
             "cwd": "${workspaceFolder}/packages-js/dash/src-tauri",
             "cargo": {
                 "args": [

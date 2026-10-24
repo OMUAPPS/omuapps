@@ -27,6 +27,15 @@
             }]
         },
         {
+            "label": "prepare-dash-debug",
+            "type": "process",
+            "command": "bun",
+            "args": ["run", "--cwd", "packages-js/dash", "build-pre"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "dependsOn": "dev-apps",
+            "problemMatcher": []
+        },
+        {
             "label": "dev-dash",
             "type": "process",
             "command": "bun",
