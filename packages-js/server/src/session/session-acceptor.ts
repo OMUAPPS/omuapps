@@ -2,7 +2,7 @@ import { VERSION } from '@omujs/omu';
 import {
     AES,
     type ConnectPacket,
-    Decryptor,
+    type Decryptor,
     DisconnectPacket,
     DisconnectType,
     PACKET_TYPES,
@@ -12,6 +12,7 @@ import {
 
 import type { PermissionManager } from '../security';
 
+import { DecryptorGenerator } from './decryptor-generator.js';
 import { Session } from './session.js';
 import type { SessionConnection } from './session-connection.js';
 
@@ -22,7 +23,7 @@ export type AcceptedSession = {
 
 export class SessionAcceptor {
     private static readonly BRAND = 'Official server implementation by omuapps.com';
-    private readonly decryptor: Promise<Decryptor> = Decryptor.new();
+    private readonly decryptor: Promise<Decryptor> = DecryptorGenerator.generate();
 
     public constructor(
         private readonly manager: PermissionManager,

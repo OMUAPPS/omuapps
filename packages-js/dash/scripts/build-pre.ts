@@ -70,7 +70,16 @@ async function buildServer() {
         ]
         : [];
     const build = Bun.spawnSync(
-        ['bun', 'build', path.join('..', 'server', 'src', 'main.ts'), '--compile', '--outfile', outfile, ...windowsOptions],
+        [
+            'bun',
+            'build',
+            path.join('..', 'server', 'src', 'main.ts'),
+            path.join('..', 'server', 'src', 'session', 'decryptor-worker.ts'),
+            '--compile',
+            '--outfile',
+            outfile,
+            ...windowsOptions,
+        ],
         { stdout: 'inherit', stderr: 'inherit' },
     );
     if (build.exitCode !== 0) {

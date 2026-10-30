@@ -5,7 +5,7 @@
     "private": true,
     "scripts": {
         "dev": "bun run src/main.ts",
-        "build": "bun build src/main.ts --compile --outfile dist/omuserver",
+        "build": "bun build src/main.ts src/session/decryptor-worker.ts --compile --outfile dist/omuserver",
         "test": "bun test"
     },
     "repository": {
