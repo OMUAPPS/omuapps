@@ -4,7 +4,7 @@ use std::net::TcpStream;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use log::{info, warn};
@@ -406,6 +406,24 @@ impl Server {
 
     pub fn is_running(&self) -> bool {
         self.process.lock().unwrap().is_some()
+    }
+
+    pub fn wait_until_ready(&self, timeout: Duration) -> Result<(), ServerEnsureError> {
+        let deadline = Instant::now() + timeout;
+        while Instant::now() < deadline {
+            if fetch_version(self.config.port).is_some() {
+                return Ok(());
+            }
+            if !self.is_running() {
+                return Err(ServerEnsureError::StartFailed {
+                    msg: "Server exited before it became ready".to_string(),
+                });
+            }
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        Err(ServerEnsureError::StartFailed {
+            msg: format!("Server did not become ready within {} seconds", timeout.as_secs()),
+        })
     }
 }
 

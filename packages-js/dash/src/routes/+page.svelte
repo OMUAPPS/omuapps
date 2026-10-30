@@ -35,9 +35,16 @@
         }
     });
 
+    const RECONNECT_GIVE_UP_MS = 15_000;
+    let reconnectingSince: number | undefined;
+
     $effect(() => {
+        if ($netState?.type === 'connected' || $netState?.type === 'ready') {
+            reconnectingSince = undefined;
+        }
         if ($netState?.type === 'reconnecting') {
-            if ($netState.attempt && $netState.attempt > 2) {
+            reconnectingSince ??= Date.now();
+            if (Date.now() - reconnectingSince > RECONNECT_GIVE_UP_MS) {
                 $appState = { type: 'restore', message: omu.network.reason?.message };
                 omu.stop();
             }

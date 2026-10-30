@@ -1,4 +1,4 @@
-use std::{fs::create_dir_all, path::PathBuf};
+use std::{fs::create_dir_all, path::PathBuf, time::Duration};
 
 use crate::{
     server::{Server, ServerEnsureError, ServerEnsureProgress},
@@ -7,6 +7,8 @@ use crate::{
 };
 use log::info;
 use tauri::Emitter;
+
+const SERVER_READY_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Progress {
@@ -74,21 +76,25 @@ pub async fn start_server(
     .map_err(|err| StartError::ServerEnsureError { reason: err })?;
 
     let token = server.token.clone();
+    let already_started = server.already_started;
+    if !already_started {
+        server
+            .start()
+            .map_err(|err| StartError::ServerEnsureError { reason: err })?;
+        server
+            .wait_until_ready(SERVER_READY_TIMEOUT)
+            .map_err(|err| StartError::ServerEnsureError { reason: err })?;
+    }
     let mut server_mutex = state
         .server
         .lock()
         .map_err(|err| StartError::ServerStartFailed {
             msg: format!("Failed to lock server mutex: {}", err),
         })?;
-    if server.already_started {
-        *server_mutex = Some(server);
+    *server_mutex = Some(server);
+    if already_started {
         Ok(StartResult::AlreadyRunning { token })
     } else {
-        server
-            .start()
-            .map_err(|err| StartError::ServerEnsureError { reason: err })?;
-
-        *server_mutex = Some(server);
         Ok(StartResult::Starting { token })
     }
 }
