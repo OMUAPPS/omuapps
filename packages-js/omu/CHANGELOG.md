@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.11.1](https://github.com/OMUAPPS/omuapps/compare/v0.11.0...v0.11.1) (2026-11-12)
+
+### Performance Improvements
+
+* **server:** RSA鍵を別スレッドで作り、起動を待たせない ([cab85ce](https://github.com/OMUAPPS/omuapps/commit/cab85ce93a20a29305899ee65005b56f78347808))
+
+
 # [0.11.0](https://github.com/OMUAPPS/omuapps/compare/v0.10.12...v0.11.0) (2026-10-24)
 
 ### Features
