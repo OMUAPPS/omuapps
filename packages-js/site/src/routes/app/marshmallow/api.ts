@@ -1,5 +1,6 @@
 import { VERSION } from '$lib/version';
 import type { Omu } from '@omujs/omu';
+import type { CookieList } from '@omujs/omu/api/dashboard';
 import type { AnyNode, Element, ParentNode } from 'domhandler';
 import { DEV } from 'esm-env';
 import { DomUtils, ElementType, parseDocument } from 'htmlparser2';
@@ -18,6 +19,15 @@ async function script() {
     }
     if (location.pathname === '/') {
         location.href = 'https://marshmallow-qa.com/session/new';
+    }
+    if (location.pathname === '/session/new') {
+        const google = document.querySelector('form[action="/auth/google"]');
+        if (!google || google.querySelector('input[name="prompt"]')) return;
+        const prompt = document.createElement('input');
+        prompt.type = 'hidden';
+        prompt.name = 'prompt';
+        prompt.value = 'select_account';
+        google.append(prompt);
     }
 }
 
@@ -152,19 +162,22 @@ export class MarshmallowSession {
         public readonly displayId: string,
     ) {}
 
-    private static async fetchId(omu: Omu, cookie: string): Promise<{ id: string; displayId: string } | undefined> {
-        const idResp = await omu.http.fetch('https://marshmallow-qa.com/', {
+    private static async fromCookies(omu: Omu, cookies: CookieList): Promise<MarshmallowSession | undefined> {
+        if (!cookies.some(({ name }) => name === '_marshmallow_token')) {
+            console.warn('No token cookie found');
+            return;
+        }
+        const cookie = cookies.toString();
+        const resp = await omu.http.fetch('https://marshmallow-qa.com/', {
             headers: {
                 cookie,
             },
         });
-        const idUrl = new URL(idResp.url);
-        const id = idUrl.pathname.split('/')[1];
-        if (!id) {
-            console.warn('No user id found in URL');
+        if (new URL(resp.url).pathname === '/') {
+            console.warn('Not logged in');
             return;
         }
-        const dom = parseDocument(await idResp.text());
+        const dom = parseDocument(await resp.text());
         const userId = DOM.query(dom, {
             name: 'input',
             attrs: { name: 'message[user_id]' },
@@ -172,56 +185,48 @@ export class MarshmallowSession {
         if (!userId) {
             throw new Error('No user id found');
         }
-        const value = userId.attribs.value;
-        if (!value) {
+        const id = userId.attribs.value;
+        if (!id) {
             throw new Error('No user id value found');
         }
-        return { id: value, displayId: id };
+        const canonical = DOM.query(dom, {
+            name: 'link',
+            attrs: { rel: 'canonical' },
+        });
+        if (!canonical) {
+            throw new Error('No canonical link found');
+        }
+        const href = canonical.attribs.href;
+        if (!href) {
+            throw new Error('No canonical href found');
+        }
+        const displayId = new URL(href).pathname.split('/')[1];
+        if (!displayId) {
+            throw new Error('No display id found');
+        }
+        return new MarshmallowSession(cookie, id, displayId);
     }
 
     public static async get(omu: Omu): Promise<MarshmallowSession | undefined> {
-        const url = 'https://marshmallow-qa.com/';
         const cookies = await omu.dashboard.getCookies({
-            url,
+            url: 'https://marshmallow-qa.com/',
         });
-        const session = cookies.find(
-            ({ name }) => name === '_marshmallow_session',
-        )?.value;
-        if (!session) {
-            console.warn('No session cookie found');
-            return;
-        }
-        const cookie = cookies.map(({ name, value }) => `${name}=${value}`).join('; ');
-        const id = await this.fetchId(omu, cookie);
-        if (!id) return;
-        return new MarshmallowSession(cookie, id.id, id.displayId);
+        return this.fromCookies(omu, cookies);
     }
 
     public static async login(omu: Omu): Promise<MarshmallowSession | undefined> {
-        const url = 'https://marshmallow-qa.com/';
         const handle = await omu.dashboard.requestWebview({
-            url,
+            url: 'https://marshmallow-qa.com/',
             script: LOGIN_SCRIPT,
         });
         await handle.join();
-        const cookies = await handle.getCookies();
-        const session = cookies.find(
-            ({ name }) => name === '_marshmallow_session',
-        )?.value;
-        if (!session) {
-            console.warn('No session cookie found');
-            return;
-        }
-        const cookie = cookies.map(({ name, value }) => `${name}=${value}`).join('; ');
-        const id = await this.fetchId(omu, cookie);
-        if (!id) return;
-        return new MarshmallowSession(cookie, id.id, id.displayId);
+        return this.fromCookies(omu, await handle.getCookies());
     }
 
     public getCookie(): string {
         return this.cookie;
     }
-};
+}
 
 export class MarshmallowAPI {
     private constructor(
@@ -276,7 +281,10 @@ export class MarshmallowAPI {
         const pictureSource = DOM.query(profilePicture, {
             name: 'source',
         });
-        const image = pictureSource?.attribs.srcset;
+        const pictureImage = DOM.query(profilePicture, {
+            name: 'img',
+        });
+        const image = pictureSource?.attribs.srcset ?? pictureImage?.attribs.src;
         return {
             nickname,
             description: DomUtils.textContent(description),
@@ -299,7 +307,7 @@ export class MarshmallowAPI {
         if (!setting) throw new Error('Premium setting not found');
         const hasCheckoutForm = DOM.query(setting, {
             name: 'form',
-            attrs: { action: /\/stripe\/checkout\/sessions?price=/gm },
+            attrs: { action: /\/stripe\/checkout\/sessions\?price=/ },
         });
         const hasWithdrawalButton = DOM.query(setting, { attrs: { 'data-bs-target': '#premium-withdrawal-confirmation' } });
         const hasPremium = hasWithdrawalButton && !hasCheckoutForm;

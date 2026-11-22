@@ -267,7 +267,6 @@ export class Dashboard implements DashboardHandler {
     async getCookies(request: GetCookiesRequest): Promise<UserResponse<Cookie[]>> {
         const cookies = await invoke('get_cookies', {
             options: {
-                label: appWindow.label,
                 url: request.url,
             },
         });

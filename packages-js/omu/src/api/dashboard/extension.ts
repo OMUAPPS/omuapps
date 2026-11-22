@@ -9,7 +9,7 @@ import { DragDropAPI, DragDropHandler, FileDragPacket } from './dragdrop.js';
 
 import type { DashboardHandler } from './handler.js';
 import { DASHBOARD_OPEN_APP_PACKET, DASHBOARD_PROMPT_REQUEST, DASHBOARD_PROMPT_RESPONSE, PromptRequest, PromptResult } from './packets.js';
-import { GetCookiesRequest, WebviewAPI, WebviewHandle, WebviewRequest } from './webview.js';
+import { CookieList, GetCookiesRequest, WebviewAPI, WebviewHandle, WebviewRequest } from './webview.js';
 
 export { DASHBOARD_EXTENSION_TYPE };
 

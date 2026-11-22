@@ -133,7 +133,6 @@ type Commands = {
     }): Cookie[];
     get_cookies(options: {
         options: {
-            label: string;
             url: string;
         };
     }): Cookie[];
