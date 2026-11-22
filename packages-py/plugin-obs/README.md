@@ -1,3 +1,0 @@
-# omuplugin_obs
-
-OBSにアクセスする機能を提供するOMUAPPSプラグインです

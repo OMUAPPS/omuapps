@@ -12,7 +12,7 @@ import { Table, TableType } from '../table';
 export const SESSION_EXTENSION_TYPE: ExtensionType<SessionExtension> = new ExtensionType('sessions', (omu: Omu) => new SessionExtension(omu));
 
 export const SESSIONS_READ_PERMISSION_ID: Identifier = SESSION_EXTENSION_TYPE.join('read');
-const SESSION_TABLE_TYPE = TableType.createJson(SESSION_EXTENSION_TYPE, {
+export const SESSION_TABLE_TYPE: TableType<App> = TableType.createJson(SESSION_EXTENSION_TYPE, {
     name: 'sessions',
     serializer: App,
     key: (app) => app.id.key(),
@@ -20,24 +20,24 @@ const SESSION_TABLE_TYPE = TableType.createJson(SESSION_EXTENSION_TYPE, {
         read: SESSIONS_READ_PERMISSION_ID,
     },
 });
-const REQUIRE_APPS_PACKET_TYPE = PacketType.createJson<Identifier[]>(SESSION_EXTENSION_TYPE, {
+export const SESSION_REQUIRE_PACKET_TYPE: PacketType<Identifier[]> = PacketType.createJson<Identifier[]>(SESSION_EXTENSION_TYPE, {
     name: 'require',
     serializer: Serializer.of(Identifier).toArray(),
 });
-const SESSION_OBSERVE_PACKET_TYPE = PacketType.createJson<Identifier[]>(SESSION_EXTENSION_TYPE, {
+export const SESSION_OBSERVE_PACKET_TYPE: PacketType<Identifier[]> = PacketType.createJson<Identifier[]>(SESSION_EXTENSION_TYPE, {
     name: 'observe',
     serializer: Serializer.of(Identifier).toArray(),
 });
-const SESSION_CONNECTED_PACKET_TYPE = PacketType.createJson<App>(SESSION_EXTENSION_TYPE, {
+export const SESSION_CONNECTED_PACKET_TYPE: PacketType<App> = PacketType.createJson<App>(SESSION_EXTENSION_TYPE, {
     name: 'session_connected',
     serializer: App,
 });
-const SESSION_DISCONNECTED_PACKET_TYPE = PacketType.createJson<App>(SESSION_EXTENSION_TYPE, {
+export const SESSION_DISCONNECTED_PACKET_TYPE: PacketType<App> = PacketType.createJson<App>(SESSION_EXTENSION_TYPE, {
     name: 'session_disconnected',
     serializer: App,
 });
 
-type RemoteAppRequestPayload = {
+export type RemoteAppRequestPayload = {
     app: AppJson;
     permissions: string[];
 };
@@ -53,7 +53,7 @@ export type RequestRemoteAppResponse = {
 
 export const REMOTE_APP_REQUEST_PERMISSION_ID: Identifier = SESSION_EXTENSION_TYPE.join('remote_app', 'request');
 
-const REMOTE_APP_REQUEST_ENDPOINT_TYPE = EndpointType.createJson<RemoteAppRequestPayload, RequestRemoteAppResponse>(SESSION_EXTENSION_TYPE, {
+export const REMOTE_APP_REQUEST_ENDPOINT_TYPE: EndpointType<RemoteAppRequestPayload, RequestRemoteAppResponse> = EndpointType.createJson<RemoteAppRequestPayload, RequestRemoteAppResponse>(SESSION_EXTENSION_TYPE, {
     name: 'remote_app_request',
     permissionId: REMOTE_APP_REQUEST_PERMISSION_ID,
 });
@@ -68,12 +68,12 @@ export type GenerateTokenResponse = {
 
 export const GENERATE_TOKEN_PERMISSION_ID: Identifier = SESSION_EXTENSION_TYPE.join('generate_token');
 
-type GenerateTokenPayload = {
+export type GenerateTokenPayload = {
     app: AppJson;
     permissions: string[];
 };
 
-const GENERATE_TOKEN_ENDPOINT_TYPE = EndpointType.createJson<GenerateTokenPayload, GenerateTokenResponse>(SESSION_EXTENSION_TYPE, {
+export const GENERATE_TOKEN_ENDPOINT_TYPE: EndpointType<GenerateTokenPayload, GenerateTokenResponse> = EndpointType.createJson<GenerateTokenPayload, GenerateTokenResponse>(SESSION_EXTENSION_TYPE, {
     name: 'generate_token',
     permissionId: GENERATE_TOKEN_PERMISSION_ID,
 });
@@ -86,7 +86,7 @@ export class SessionExtension implements Extension {
 
     constructor(private readonly omu: Omu) {
         omu.network.registerPacket(
-            REQUIRE_APPS_PACKET_TYPE,
+            SESSION_REQUIRE_PACKET_TYPE,
             SESSION_OBSERVE_PACKET_TYPE,
             SESSION_CONNECTED_PACKET_TYPE,
             SESSION_DISCONNECTED_PACKET_TYPE,
@@ -156,7 +156,7 @@ export class SessionExtension implements Extension {
 
     private async onTask(): Promise<void> {
         if (this.requiredApps.size > 0) {
-            this.omu.send(REQUIRE_APPS_PACKET_TYPE, Array.from(this.requiredApps.values()));
+            this.omu.send(SESSION_REQUIRE_PACKET_TYPE, Array.from(this.requiredApps.values()));
         }
     }
 

@@ -1,14 +1,4 @@
 {
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-    "python.analysis.typeCheckingMode": "strict",
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": [
-        "packages-py"
-    ],
-    "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff",
-    },
     "eslint.probe": [
         "astro",
         "civet",
@@ -40,9 +30,6 @@
         "svelte"
     ],
     "files.exclude": {
-        "**/.mypy_cache": true,
-        "**/.ruff_cache": true,
-        "**/.pytest_cache": true,
         "**/__node_modules__": true,
     },
     "search.exclude": {
@@ -61,7 +48,6 @@
         ".gitignore": ".gitattributes, .gitmodules",
         "README.md": "LICENSE, *.md",
         "package.json": "bun.lock, .npmrc, .npmignore",
-        "pyproject.toml": "requirements.lock, requirements-dev.lock, .python-version",
     },
     "files.insertFinalNewline": true,
     "files.eol": "\n",
@@ -89,6 +75,4 @@
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features"
     },
-    "python.terminal.activateEnvironment": false,
-    "python.analysis.autoImportCompletions": true,
 }

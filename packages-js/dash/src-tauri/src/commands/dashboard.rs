@@ -4,7 +4,6 @@ use crate::AppState;
 
 #[derive(serde::Deserialize)]
 pub struct GetCookiesOptions {
-    label: String,
     url: String,
 }
 
@@ -19,7 +18,6 @@ pub struct Cookie {
 pub enum GetCookiesError {
     AppHandleError { msg: String },
     NoAppHandle { msg: String },
-    NoWindow { msg: String },
     InvalidUrl { msg: String },
     FailedToGetCookies { msg: String },
 }
@@ -40,20 +38,15 @@ pub async fn get_cookies(
             msg: "App handle is not initialized".to_string(),
         })?
         .clone();
-    let window = app_handle
-        .get_webview_window(&options.label)
-        .ok_or_else(|| GetCookiesError::NoWindow {
-            msg: format!("No window with label: {}", options.label),
-        })?;
     let url = Url::parse(&options.url).map_err(|err| GetCookiesError::InvalidUrl {
         msg: format!("Invalid URL: {}", err),
     })?;
-    let cookies =
-        window
-            .cookies_for_url(url)
-            .map_err(|err| GetCookiesError::FailedToGetCookies {
-                msg: format!("Failed to get cookies: {}", err),
-            })?;
+    let cookies = state
+        .webview_api
+        .cookies(&app_handle, url)
+        .map_err(|err| GetCookiesError::FailedToGetCookies {
+            msg: format!("Failed to get cookies: {}", err),
+        })?;
     let cookies: Vec<Cookie> = cookies
         .iter()
         .map(|cookie| Cookie {
@@ -130,7 +123,7 @@ pub async fn create_webview_window(
     let label = options.label.clone();
     let handle = state.app_handle.clone();
 
-    let mut builder =
+    let builder =
         tauri::WebviewWindowBuilder::new(&app_handle, &options.label, WebviewUrl::External(url))
             .title(host)
             .initialization_script(&init_script)
@@ -152,21 +145,7 @@ pub async fn create_webview_window(
                 true
             });
 
-    #[cfg(target_os = "windows")]
-    {
-        // Separate WebView2 processes from the dashboard so their GPU arguments can differ.
-        let data_directory = app_handle
-            .path()
-            .app_local_data_dir()
-            .map_err(|err| err.to_string())?
-            .join("webview-api");
-        builder = builder
-            .data_directory(data_directory)
-            // Preserve Wry's default arguments when overriding them.
-            .additional_browser_args(
-                "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-gpu",
-            );
-    }
+    let mut builder = state.webview_api.configure(&app_handle, builder)?;
 
     if let Some(center) = options.center {
         if center {

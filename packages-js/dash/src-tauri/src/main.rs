@@ -3,18 +3,16 @@
 
 mod commands;
 mod options;
-mod python;
 mod server;
-mod sources;
-mod sync;
 mod utils;
-mod uv;
 mod version;
+mod webview_api;
 
 use crate::{
     commands::*,
     options::AppOptions,
     server::{Server, ServerConfig},
+    webview_api::WebviewApiProfile,
 };
 use directories::ProjectDirs;
 use log::{error, info};
@@ -44,6 +42,7 @@ struct AppState {
     server_config: ServerConfig,
     server: Arc<Mutex<Option<Server>>>,
     app_handle: Arc<Mutex<Option<tauri::AppHandle>>>,
+    webview_api: WebviewApiProfile,
 }
 
 impl AppState {
@@ -77,6 +76,7 @@ fn main() {
         app_handle: app_handle.clone(),
         config: Arc::new(Mutex::new(app_config.clone())),
         server_config: server_config,
+        webview_api: WebviewApiProfile::new(),
     };
 
     let default_hook = panic::take_hook();
@@ -138,9 +138,7 @@ fn main() {
             set_config,
             create_webview_window,
             get_cookies,
-            generate_log_file,
-            open_python_path,
-            open_uv_path
+            generate_log_file
         ])
         .on_window_event(|window, event| match event {
             tauri::WindowEvent::CloseRequested { api, .. } => {

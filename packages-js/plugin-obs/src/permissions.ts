@@ -3,6 +3,7 @@ import { PLUGIN_ID } from './const.js';
 
 export const OBS_PERMISSION_ID: Identifier = PLUGIN_ID.join('obs');
 export const OBS_SOURCE_READ_PERMISSION_ID: Identifier = PLUGIN_ID.join('source', 'read');
+export const OBS_INSTALL_PERMISSION_ID: Identifier = PLUGIN_ID.join('install');
 export const OBS_SOURCE_CREATE_PERMISSION_ID: Identifier = PLUGIN_ID.join('source', 'create');
 export const OBS_SOURCE_UPDATE_PERMISSION_ID: Identifier = PLUGIN_ID.join('source', 'write');
 export const OBS_SOURCE_REMOVE_PERMISSION_ID: Identifier = PLUGIN_ID.join('source', 'remove');

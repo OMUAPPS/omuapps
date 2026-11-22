@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json.schemastore.org/tsconfig",
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "isolatedDeclarations": true,
+        "declaration": true,
+        "types": ["bun"]
+    },
+    "include": [
+        "./src/**/*",
+        "./test/**/*"
+    ]
+}

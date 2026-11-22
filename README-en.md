@@ -38,15 +38,26 @@ Please install the following.
 
 - Install [Rust](https://www.rust-lang.org/)
 - Install [bun](https://bun.sh/)
-- Install [uv](https://docs.astral.sh/uv/)
+
+To build the OBS plugin, you also need:
+
+- Install [CMake](https://cmake.org/) 3.28 or later
+- Install [Visual Studio 2022](https://visualstudio.microsoft.com/) (Desktop development with C++)
 
 ### Setup
 
-Run `uv sync` `bun i`.
+Run `bun i`.
 
 ```bash
-uv sync
 bun i
+```
+
+Build the OBS plugin in `packages-cpp/plugin-obs`:
+
+```bash
+cmake --preset windows-x64
+cmake --build --preset windows-x64
+cmake --install build_x64 --prefix release --config RelWithDebInfo
 ```
 
 ### Start

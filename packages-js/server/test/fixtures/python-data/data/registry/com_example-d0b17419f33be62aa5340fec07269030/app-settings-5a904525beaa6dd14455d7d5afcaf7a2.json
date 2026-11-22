@@ -1,0 +1,1 @@
+{"permissions": {"all": null, "read": "com.example:app/settings/read", "write": "com.example:app/settings/write"}}

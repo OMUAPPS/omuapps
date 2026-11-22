@@ -46,7 +46,12 @@ export class Decryptor {
     ) {}
 
     public static async new(): Promise<Decryptor> {
-        const { privateKey, publicKey } = await crypto.subtle.generateKey(
+        const { privateKey, publicKey } = await Decryptor.generateKeyPair();
+        return new Decryptor(privateKey, publicKey);
+    }
+
+    public static generateKeyPair(): Promise<CryptoKeyPair> {
+        return crypto.subtle.generateKey(
             {
                 name: 'RSA-OAEP',
                 modulusLength: 4096,
@@ -56,7 +61,9 @@ export class Decryptor {
             true,
             ['encrypt', 'decrypt'],
         );
+    }
 
+    public static fromKeys(privateKey: CryptoKey, publicKey: CryptoKey): Decryptor {
         return new Decryptor(privateKey, publicKey);
     }
 

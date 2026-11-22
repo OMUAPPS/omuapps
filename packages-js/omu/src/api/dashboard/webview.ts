@@ -95,7 +95,7 @@ export type WebviewEventEmit = <T extends WebviewEvent['type']>(event: Extract<W
 
 export const DASHBOARD_WEBVIEW_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('webview');
 
-const DASHBOARD_ALLOWED_WEBVIEW_HOSTS = TableType.createJson<AllowedHost>(DASHBOARD_EXTENSION_TYPE, {
+export const DASHBOARD_ALLOWED_WEBVIEW_HOSTS: TableType<AllowedHost> = TableType.createJson<AllowedHost>(DASHBOARD_EXTENSION_TYPE, {
     name: 'allowed_webview_hosts',
     key: (entry) => entry.id,
     permissions: { all: DASHBOARD_SET_PERMISSION_ID },

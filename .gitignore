@@ -1,13 +1,10 @@
-# python
-**/__pycache__/**
+/diagnostics
+/documentation/plans
+
 /dist
 
 # Github Actions
 release-assets
-
-# pytest
-.coverage
-coverage.xml
 
 # typescript
 **/tsconfig.tsbuildinfo

@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.11.2](https://github.com/OMUAPPS/omuapps/compare/v0.11.1...v0.11.2) (2026-11-22)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+## [0.11.1](https://github.com/OMUAPPS/omuapps/compare/v0.11.0...v0.11.1) (2026-11-12)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+# [0.11.0](https://github.com/OMUAPPS/omuapps/compare/v0.10.12...v0.11.0) (2026-10-24)
+
+### Features
+
+* プロジェクトからPythonへの依存を削除 ([#104](https://github.com/OMUAPPS/omuapps/issues/104)) ([1b7e5d0](https://github.com/OMUAPPS/omuapps/commit/1b7e5d038920e112c720740d7f960f4afa2f5171))
+
+
 ## 0.10.12 (2026-10-02)
 
 **Note:** Version bump only for package @omujs/chat

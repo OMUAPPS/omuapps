@@ -308,22 +308,22 @@ export const REGISTRY_EXTENSION_TYPE: ExtensionType<RegistryExtension> = new Ext
     (omu: Omu) => new RegistryExtension(omu),
 );
 export const REGISTRY_PERMISSION_ID: Identifier = REGISTRY_EXTENSION_TYPE.join('permission');
-const REGISTRY_REGISTER_PACKET = PacketType.createJson<RegisterPacket>(REGISTRY_EXTENSION_TYPE, {
+export const REGISTRY_REGISTER_PACKET: PacketType<RegisterPacket> = PacketType.createJson<RegisterPacket>(REGISTRY_EXTENSION_TYPE, {
     name: 'register',
     serializer: RegisterPacket,
 });
-const REGISTRY_UPDATE_PACKET = PacketType.createSerialized<RegistryPacket>(
+export const REGISTRY_UPDATE_PACKET: PacketType<RegistryPacket> = PacketType.createSerialized<RegistryPacket>(
     REGISTRY_EXTENSION_TYPE,
     {
         name: 'update',
         serializer: RegistryPacket,
     },
 );
-const REGISTRY_LISTEN_PACKET = PacketType.createJson<Identifier>(REGISTRY_EXTENSION_TYPE, {
+export const REGISTRY_LISTEN_PACKET: PacketType<Identifier> = PacketType.createJson<Identifier>(REGISTRY_EXTENSION_TYPE, {
     name: 'listen',
     serializer: Identifier,
 });
-const REGISTRY_GET_ENDPOINT = EndpointType.createSerialized<Identifier, RegistryPacket>(
+export const REGISTRY_GET_ENDPOINT: EndpointType<Identifier, RegistryPacket> = EndpointType.createSerialized<Identifier, RegistryPacket>(
     REGISTRY_EXTENSION_TYPE,
     {
         name: 'get',

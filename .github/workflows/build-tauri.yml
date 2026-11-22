@@ -58,6 +58,21 @@ jobs:
                   # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
                   targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
+            - name: Cache OBS dependencies (windows only)
+              if: matrix.platform == 'windows-latest'
+              uses: actions/cache@v4
+              with:
+                path: packages-cpp/plugin-obs/.deps
+                key: obs-deps-${{ runner.os }}-${{ hashFiles('packages-cpp/plugin-obs/buildspec.json') }}
+
+            - name: Build OBS plugin (windows only)
+              if: matrix.platform == 'windows-latest'
+              working-directory: packages-cpp/plugin-obs
+              run: |
+                  cmake --preset windows-ci-x64
+                  cmake --build --preset windows-ci-x64
+                  cmake --install build_x64 --prefix release --config RelWithDebInfo
+
             - name: build-pre
               run: |
                   bun run build

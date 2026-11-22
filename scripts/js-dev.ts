@@ -8,7 +8,7 @@ const { values } = parseArgs({ options: {
 } });
 
 if (values.stop) {
-    for (const name of ['dash', 'apps', 'index', 'prelaunch']) stopProcessTree(name);
+    for (const name of ['dash', 'apps', 'prelaunch']) stopProcessTree(name);
     process.exit(0);
 }
 if (Number(!!values.apps) + Number(!!values.dash) !== 1) {

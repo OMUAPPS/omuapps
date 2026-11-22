@@ -3,6 +3,38 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.11.2](https://github.com/OMUAPPS/omuapps/compare/v0.11.1...v0.11.2) (2026-11-22)
+
+### Bug Fixes
+
+* **dash, site:** マシュマロにログインできるようにする ([bae0ad8](https://github.com/OMUAPPS/omuapps/commit/bae0ad898b4d86b52af0e27687faa288385b3e0a))
+
+
+## [0.11.1](https://github.com/OMUAPPS/omuapps/compare/v0.11.0...v0.11.1) (2026-11-12)
+
+### Bug Fixes
+
+* **dash:** サーバーの準備を待ってからつなぎ、諦める条件を経過時間にする ([387e782](https://github.com/OMUAPPS/omuapps/commit/387e782b5ce63b80a5787bd70a654ee32525819e))
+
+### Performance Improvements
+
+* **server:** RSA鍵を別スレッドで作り、起動を待たせない ([cab85ce](https://github.com/OMUAPPS/omuapps/commit/cab85ce93a20a29305899ee65005b56f78347808))
+
+
+# [0.11.0](https://github.com/OMUAPPS/omuapps/compare/v0.10.12...v0.11.0) (2026-10-24)
+
+### Bug Fixes
+
+* **app-replay:** 時間が表示されない問題を修正 ([8d40f46](https://github.com/OMUAPPS/omuapps/commit/8d40f461af92743c960c7001003d58a5e770e540))
+* **ci:** 版の更新のコミットをGitHub APIで作り、署名を付ける ([#105](https://github.com/OMUAPPS/omuapps/issues/105)) ([5843174](https://github.com/OMUAPPS/omuapps/commit/58431745cf6f79876f4f9e4789ecf26504e62b72))
+* **dash:** Bunのビルド一時ファイルをViteの監視対象から除外する ([0104f83](https://github.com/OMUAPPS/omuapps/commit/0104f8394990f16f0a06781c2435270f5c274282))
+* **debug:** Dashboardのデバッグ前に準備ビルドを実行する ([9ebb802](https://github.com/OMUAPPS/omuapps/commit/9ebb80266e5482bf3836d815d251f085ea7c6de5))
+
+### Features
+
+* プロジェクトからPythonへの依存を削除 ([#104](https://github.com/OMUAPPS/omuapps/issues/104)) ([1b7e5d0](https://github.com/OMUAPPS/omuapps/commit/1b7e5d038920e112c720740d7f960f4afa2f5171))
+
+
 ## 0.10.12 (2026-10-02)
 
 **Note:** Version bump only for package omuapps

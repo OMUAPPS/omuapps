@@ -12,15 +12,15 @@ export const SIGNAL_EXTENSION_TYPE: ExtensionType<SignalExtension> = new Extensi
     (omu: Omu) => new SignalExtension(omu),
 );
 
-const SIGNAL_REGISTER_PACKET = PacketType.createJson<SignalRegisterPacket>(SIGNAL_EXTENSION_TYPE, {
+export const SIGNAL_REGISTER_PACKET: PacketType<SignalRegisterPacket> = PacketType.createJson<SignalRegisterPacket>(SIGNAL_EXTENSION_TYPE, {
     name: 'register',
     serializer: SignalRegisterPacket,
 });
-const SIGNAL_LISTEN_PACKET = PacketType.createJson<Identifier>(SIGNAL_EXTENSION_TYPE, {
+export const SIGNAL_LISTEN_PACKET: PacketType<Identifier> = PacketType.createJson<Identifier>(SIGNAL_EXTENSION_TYPE, {
     name: 'listen',
     serializer: Identifier,
 });
-const SIGNAL_NOTIFY_PACKET = PacketType.createSerialized<SignalPacket>(SIGNAL_EXTENSION_TYPE, {
+export const SIGNAL_NOTIFY_PACKET: PacketType<SignalPacket> = PacketType.createSerialized<SignalPacket>(SIGNAL_EXTENSION_TYPE, {
     name: 'notify',
     serializer: SignalPacket,
 });

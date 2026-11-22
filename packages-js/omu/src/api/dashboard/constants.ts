@@ -88,5 +88,6 @@ export const DASHBOARD_SPEECH_RECOGNITION_START: EndpointType<SpeechRecognitionS
 
 export const DASHBOARD_PROMPT_CLEAR_BLOCKED: EndpointType<null, null> = EndpointType.createJson<null, null>(DASHBOARD_EXTENSION_TYPE, {
     name: 'prompt_clear_blocked',
+    permissionId: DASHBOARD_SET_PERMISSION_ID,
 });
 export const DASHBOARD_DRAG_DROP_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('drag_drop');

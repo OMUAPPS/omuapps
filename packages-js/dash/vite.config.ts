@@ -14,6 +14,7 @@ export default defineConfig({
         strictPort: true,
         watch: {
             ignored: [
+                '**/*.bun-build',
                 '**/src-tauri/**',
                 '**/.svelte-kit/**',
             ],

@@ -22,8 +22,8 @@ export class EndpointRegisterPacket {
         const endpoints = new IdentifierMap<Identifier | undefined>();
         for (let i = 0; i < count; i++) {
             const key = Identifier.fromKey(reader.readString());
-            const value = Identifier.fromKey(reader.readString());
-            endpoints.set(key, value);
+            const permission = reader.readString();
+            endpoints.set(key, permission ? Identifier.fromKey(permission) : undefined);
         }
         return new EndpointRegisterPacket(endpoints);
     }

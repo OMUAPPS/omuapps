@@ -1,3 +1,0 @@
-# omu_chatprovider
-
-OMUAPPSにチャットを取得する機能を追加するプラグインです

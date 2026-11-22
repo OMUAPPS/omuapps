@@ -1,2 +1,31 @@
-export { TABLE_PERMISSION_ID } from './extension.js';
-export { TableType, type Table, type TableConfig, type TableEvents } from './table.js';
+export {
+    TABLE_FETCH_ALL_ENDPOINT,
+    TABLE_FETCH_ENDPOINT,
+    TABLE_FETCH_RANGE_ENDPOINT,
+    TABLE_ITEM_ADD_PACKET,
+    TABLE_ITEM_CLEAR_PACKET,
+    TABLE_ITEM_GET_ENDPOINT,
+    TABLE_ITEM_HAS_ALL_ENDPOINT,
+    TABLE_ITEM_HAS_ANY_ENDPOINT,
+    TABLE_ITEM_HAS_ENDPOINT,
+    TABLE_ITEM_REMOVE_PACKET,
+    TABLE_ITEM_UPDATE_PACKET,
+    TABLE_LISTEN_PACKET,
+    TABLE_PERMISSION_ID,
+    TABLE_PROXY_LISTEN_PACKET,
+    TABLE_PROXY_PACKET,
+    TABLE_SET_CONFIG_PACKET,
+    TABLE_SET_PERMISSION_PACKET,
+    TABLE_SIZE_ENDPOINT,
+} from './extension.js';
+export {
+    SetConfigPacket,
+    SetPermissionPacket,
+    TableFetchPacket,
+    TableFetchRangePacket,
+    TableItemsPacket,
+    TableKeysPacket,
+    TablePacket,
+    TableProxyPacket,
+} from './packets.js';
+export { TableType, type Table, type TableConfig, type TableEvents, type TablePermissions } from './table.js';

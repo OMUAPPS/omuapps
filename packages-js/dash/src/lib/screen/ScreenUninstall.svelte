@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { t } from '$lib/i18n/i18n-context';
     import { type ScreenHandle } from '$lib/screen/screen.js';
     import Screen from '$lib/screen/Screen.svelte';
     import { uninstallProgress, type UninstallError } from '$lib/tauri';
@@ -104,10 +103,7 @@
             {#if !$uninstallProgress}
                 <Spinner />
             {:else}
-                {#if $uninstallProgress.type === 'Python'}
-                    {$t(`setup.progress.${$uninstallProgress.type}.${$uninstallProgress.progress.type}`)}
-                    <ProgressBar progress={$uninstallProgress.progress} />
-                {:else if $uninstallProgress.type === 'PythonRemoving' || $uninstallProgress.type === 'UvRemoving' || $uninstallProgress.type === 'AppDataRemoving'}
+                {#if $uninstallProgress.type === 'AppDataRemoving'}
                     <ProgressBar progress={$uninstallProgress.progress} />
                 {:else if $uninstallProgress.type === 'PluginRemoving'}
                     プラグインを削除しています...
