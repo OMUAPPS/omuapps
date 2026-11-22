@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.11.2](https://github.com/OMUAPPS/omuapps/compare/v0.11.1...v0.11.2) (2026-11-22)
+
+### Bug Fixes
+
+* **dash, site:** マシュマロにログインできるようにする ([bae0ad8](https://github.com/OMUAPPS/omuapps/commit/bae0ad898b4d86b52af0e27687faa288385b3e0a))
+
+
 ## [0.11.1](https://github.com/OMUAPPS/omuapps/compare/v0.11.0...v0.11.1) (2026-11-12)
 
 ### Performance Improvements
